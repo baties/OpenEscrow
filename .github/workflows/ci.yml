@@ -1,0 +1,176 @@
+###############################################################################
+# ci.yml — OpenEscrow GitHub Actions CI
+#
+# Handles: lint → test → build on every PR and push to main.
+# Does NOT: deploy, push Docker images, or run e2e tests (post-MVP).
+#
+# Required GitHub Secrets (set in repo Settings → Secrets → Actions):
+#   None required for CI — all values are test/build-only defaults.
+###############################################################################
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  # ─── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+  # ─── Test (API + Bot) ──────────────────────────────────────────────────────
+  test:
+    name: Test (TypeScript)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: escrow_test
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: open_escrow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://escrow_test:test_password@localhost:5432/open_escrow_test
+      JWT_SECRET: test_jwt_secret_not_used_in_production_64chars_padding_here
+      JWT_EXPIRY: 1h
+      ALLOWED_ORIGIN: http://localhost:3000
+      CONTRACT_ADDRESS: "0x0000000000000000000000000000000000000000"
+      RPC_URL: https://sepolia.example.com/test
+      CHAIN_ID: "11155111"
+      USDC_ADDRESS: "0x0000000000000000000000000000000000000001"
+      USDT_ADDRESS: "0x0000000000000000000000000000000000000002"
+      INDEXER_POLL_INTERVAL_MS: "60000"
+      PORT: "3001"
+      LOG_LEVEL: silent
+      TELEGRAM_BOT_TOKEN: "000000000:test_token"
+      BOT_API_SECRET: test_bot_api_secret_32chars_padding
+      BOT_API_BASE_URL: http://localhost:3001
+      BOT_POLL_INTERVAL_MS: "60000"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @open-escrow/shared build
+
+      - name: Run tests
+        run: pnpm test
+
+  # ─── Test (Smart Contracts) ───────────────────────────────────────────────
+  test-contracts:
+    name: Test (Contracts)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm --filter @open-escrow/contracts build
+
+      - name: Run contract tests
+        run: pnpm --filter @open-escrow/contracts test:contracts
+
+  # ─── Build ────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        env:
+          # Provide dummy build-time env vars for Next.js
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_CHAIN_ID: "11155111"
+          NEXT_PUBLIC_CONTRACT_ADDRESS: "0x0000000000000000000000000000000000000000"
+          NEXT_PUBLIC_USDC_ADDRESS: "0x0000000000000000000000000000000000000001"
+          NEXT_PUBLIC_USDT_ADDRESS: "0x0000000000000000000000000000000000000002"
+          NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: dummy_project_id
+        run: pnpm build

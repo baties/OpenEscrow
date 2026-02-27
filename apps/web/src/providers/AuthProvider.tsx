@@ -1,0 +1,201 @@
+/**
+ * AuthProvider.tsx — OpenEscrow Web Dashboard
+ *
+ * React context provider for SIWE authentication state.
+ * Handles: SIWE sign-in flow (nonce → sign → verify), sign-out, JWT persistence,
+ *          listening for 'auth:expired' events to auto-clear state.
+ * Does NOT: manage wallet connection (that's RainbowKit/wagmi),
+ *            make direct API calls (delegates to api-client.ts),
+ *            render any UI beyond the context tree.
+ *
+ * Auth token is stored in localStorage — see auth-storage.ts for rationale.
+ */
+
+'use client';
+
+import {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from 'react';
+import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
+import { authApi } from '@/lib/api-client';
+import { saveAuth, getAuthToken, getStoredWalletAddress, clearAuth } from '@/lib/auth-storage';
+import { buildSiweMessage } from '@/lib/siwe';
+import { config } from '@/lib/config';
+import { getErrorMessage } from '@/lib/errors';
+
+/**
+ * Shape of the authentication context value.
+ * Consumers can check isAuthenticated and call signIn / signOut.
+ */
+export interface AuthContextValue {
+  /** True if a valid JWT is stored and the wallet is connected */
+  isAuthenticated: boolean;
+  /** The authenticated wallet address (lowercase), or null */
+  walletAddress: string | null;
+  /** True while the SIWE sign-in flow is in progress */
+  isSigningIn: boolean;
+  /** Error message from the last failed sign-in attempt, null if none */
+  signInError: string | null;
+  /**
+   * Initiates the SIWE sign-in flow for the currently connected wallet.
+   * No-op if no wallet is connected or user is already authenticated.
+   *
+   * @returns void
+   */
+  signIn: () => Promise<void>;
+  /**
+   * Signs the user out: clears JWT from storage and disconnects the wallet.
+   *
+   * @returns void
+   */
+  signOut: () => void;
+}
+
+/**
+ * The React context. Default value is null — enforced by the useAuth hook.
+ */
+export const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * Props for the AuthProvider component.
+ */
+interface AuthProviderProps {
+  /** Child components that need access to auth state */
+  children: ReactNode;
+}
+
+/**
+ * Provides authentication state and SIWE sign-in/out to the component tree.
+ * Must wrap all components that use the useAuth hook.
+ *
+ * @param props - Children to render within the auth context
+ * @returns JSX.Element — the context provider wrapping children
+ */
+export function AuthProvider({ children }: AuthProviderProps) {
+  const { address, chainId, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const { disconnect } = useDisconnect();
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+
+  // On mount: restore auth state from localStorage if wallet matches stored address
+  useEffect(() => {
+    const storedToken = getAuthToken();
+    const storedAddress = getStoredWalletAddress();
+    if (storedToken && storedAddress) {
+      setIsAuthenticated(true);
+      setWalletAddress(storedAddress);
+    }
+  }, []);
+
+  // When wallet connects/disconnects: validate stored auth matches connected wallet
+  useEffect(() => {
+    if (!isConnected || !address) {
+      // Wallet disconnected — clear auth
+      clearAuth();
+      setIsAuthenticated(false);
+      setWalletAddress(null);
+      return;
+    }
+
+    const storedAddress = getStoredWalletAddress();
+    const storedToken = getAuthToken();
+
+    if (storedToken && storedAddress?.toLowerCase() === address.toLowerCase()) {
+      // Already authenticated with this wallet
+      setIsAuthenticated(true);
+      setWalletAddress(storedAddress);
+    } else {
+      // Different wallet connected, or no stored token — require re-auth
+      clearAuth();
+      setIsAuthenticated(false);
+      setWalletAddress(null);
+    }
+  }, [isConnected, address]);
+
+  // Listen for 'auth:expired' events dispatched by the API client on 401 responses
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      clearAuth();
+      setIsAuthenticated(false);
+      setWalletAddress(null);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:expired', handleAuthExpired);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:expired', handleAuthExpired);
+      }
+    };
+  }, []);
+
+  const signIn = useCallback(async (): Promise<void> => {
+    if (!address || !isConnected) {
+      setSignInError('Connect your wallet first.');
+      return;
+    }
+    if (isAuthenticated) {
+      return; // Already authenticated
+    }
+
+    setIsSigningIn(true);
+    setSignInError(null);
+
+    try {
+      // Step 1: Get nonce from API
+      const { nonce } = await authApi.getNonce(address);
+
+      // Step 2: Build SIWE message
+      const message = buildSiweMessage({
+        address,
+        chainId: chainId ?? config.chainId,
+        nonce,
+      });
+
+      // Step 3: Ask wallet to sign the message
+      const signature = await signMessageAsync({ message });
+
+      // Step 4: Send message + signature to API, get JWT
+      const { token, walletAddress: verifiedAddress } = await authApi.verify(message, signature);
+
+      // Step 5: Persist and update state
+      saveAuth(token, verifiedAddress);
+      setIsAuthenticated(true);
+      setWalletAddress(verifiedAddress.toLowerCase());
+    } catch (err) {
+      const message = getErrorMessage(err);
+      console.error('[AuthProvider] signIn failed:', { error: message });
+      setSignInError(message);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [address, chainId, isConnected, isAuthenticated, signMessageAsync]);
+
+  const signOut = useCallback((): void => {
+    clearAuth();
+    setIsAuthenticated(false);
+    setWalletAddress(null);
+    setSignInError(null);
+    disconnect();
+  }, [disconnect]);
+
+  const contextValue: AuthContextValue = {
+    isAuthenticated,
+    walletAddress,
+    isSigningIn,
+    signInError,
+    signIn,
+    signOut,
+  };
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+}

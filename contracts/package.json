@@ -1,0 +1,25 @@
+{
+  "name": "@open-escrow/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenEscrow Solidity smart contracts — Hardhat + OpenZeppelin",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "test:contracts": "hardhat test",
+    "lint": "solhint 'src/**/*.sol'",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "export-abi": "hardhat run scripts/export-abi.ts",
+    "clean": "hardhat clean"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.4.0",
+    "hardhat": "^2.22.0",
+    "solhint": "^6.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

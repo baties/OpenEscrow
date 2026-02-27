@@ -1,0 +1,59 @@
+/**
+ * globals.css — OpenEscrow Web Dashboard
+ *
+ * Global base styles and Tailwind CSS directives.
+ * Handles: Tailwind base/components/utilities import, minimal custom properties.
+ * Does NOT: contain component-specific styles (use Tailwind classes in components),
+ *            contain business logic, or import any JavaScript.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 99 102 241; /* indigo-500 */
+  }
+
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Smooth scrolling for anchor links */
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent FOUC on RainbowKit modal */
+  body {
+    overflow-y: scroll;
+  }
+
+  /* Focus ring baseline reset — we use Tailwind focus: utilities */
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    @apply ring-2 ring-indigo-500 ring-offset-2;
+  }
+}
+
+@layer utilities {
+  /* Line clamp utilities for truncating multi-line text */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}

@@ -1,0 +1,57 @@
+###############################################################################
+# apps/web/Dockerfile — OpenEscrow Web Dashboard
+#
+# Multi-stage build: deps → builder (Next.js build) → runner (standalone output).
+# Handles: building and running the Next.js web dashboard.
+# Does NOT: serve static assets via CDN — single-server MVP uses Next.js server.
+###############################################################################
+
+# ─── Stage 1: Dependencies ────────────────────────────────────────────────────
+FROM node:20-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@9 --activate
+WORKDIR /app
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
+
+RUN pnpm install --frozen-lockfile --filter @open-escrow/web --filter @open-escrow/shared
+
+# ─── Stage 2: Builder ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+
+COPY tsconfig.json ./
+COPY packages/shared ./packages/shared
+COPY apps/web ./apps/web
+
+# Build shared first, then web
+RUN cd packages/shared && npx tsc
+RUN cd apps/web && npx next build
+
+# ─── Stage 3: Runner ──────────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
