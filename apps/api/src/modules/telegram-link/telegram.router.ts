@@ -2,7 +2,6 @@
  * modules/telegram-link/telegram.router.ts — OpenEscrow API
  *
  * Handles: Registering all Telegram linking routes with Fastify.
- *          All routes require authentication.
  * Does NOT: contain business logic (see telegram.service.ts),
  *            interact with the Telegram Bot API.
  *
@@ -10,6 +9,8 @@
  *   POST   /api/v1/telegram/generate-code — generate 15-min OTP (auth)
  *   POST   /api/v1/telegram/link          — verify OTP, link Telegram ID (auth)
  *   DELETE /api/v1/telegram/unlink        — remove Telegram link (auth)
+ *   GET    /api/v1/telegram/status        — get current link status (auth)
+ *   POST   /api/v1/telegram/bot-session   — issue JWT for linked bot user (X-Bot-Secret)
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -18,8 +19,9 @@ import {
   generateCodeHandler,
   linkTelegramHandler,
   unlinkTelegramHandler,
+  getStatusHandler,
+  getBotSessionHandler,
 } from './telegram.controller.js';
-// Zod validation occurs in telegram.controller.ts — Fastify schema option uses AJV, not Zod.
 
 /**
  * Registers all Telegram linking routes on the Fastify instance.
@@ -43,4 +45,12 @@ export async function telegramRouter(fastify: FastifyInstance): Promise<void> {
   fastify.delete('/telegram/unlink', {
     preHandler: [requireAuth],
   }, unlinkTelegramHandler);
+
+  // GET /api/v1/telegram/status — check if a Telegram account is linked (auth)
+  fastify.get('/telegram/status', {
+    preHandler: [requireAuth],
+  }, getStatusHandler);
+
+  // POST /api/v1/telegram/bot-session — issue JWT for the bot (X-Bot-Secret header auth)
+  fastify.post('/telegram/bot-session', getBotSessionHandler);
 }

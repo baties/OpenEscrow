@@ -11,6 +11,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as telegramService from './telegram.service.js';
 import { LinkTelegramSchema } from './telegram.schema.js';
 import { logger } from '../../lib/logger.js';
+import { env } from '../../config/env.js';
 
 const log = logger.child({ module: 'telegram.controller' });
 
@@ -101,4 +102,98 @@ export async function unlinkTelegramHandler(
 
   await telegramService.unlinkTelegram(userId);
   await reply.status(200).send({ success: true, message: 'Telegram account unlinked successfully' });
+}
+
+/**
+ * GET /api/v1/telegram/status
+ * Returns whether the authenticated user has a Telegram account linked,
+ * along with the linked Telegram user ID and the time it was linked.
+ *
+ * @param request - Fastify request with user JWT
+ * @param reply - Fastify reply
+ * @returns 200 with { linked, telegramUserId, linkedAt }
+ */
+export async function getStatusHandler(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  const userId = request.user.userId;
+
+  log.info({
+    module: 'telegram.controller',
+    operation: 'getStatusHandler',
+    userId,
+  }, 'Handling get-status request');
+
+  const status = await telegramService.getTelegramStatus(userId);
+  await reply.status(200).send(status);
+}
+
+/**
+ * POST /api/v1/telegram/bot-session
+ * Issues a JWT for a linked Telegram user.
+ * Authenticated via the X-Bot-Secret header (must match BOT_API_SECRET env var).
+ * Used by the Telegram bot to obtain user JWTs after the web-based linking flow.
+ *
+ * @param request - Fastify request with X-Bot-Secret header and body { telegramUserId }
+ * @param reply - Fastify reply
+ * @returns 200 with { token, userId, walletAddress }
+ * @returns 401 if bot secret is wrong
+ * @returns 404 if no user is linked with this Telegram ID
+ */
+export async function getBotSessionHandler(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> {
+  // Authenticate via shared bot secret header.
+  const botSecret = (request.headers as Record<string, string | undefined>)['x-bot-secret'];
+  if (!botSecret || botSecret !== env.BOT_API_SECRET) {
+    log.warn({
+      module: 'telegram.controller',
+      operation: 'getBotSessionHandler',
+    }, 'Rejected bot-session request: invalid or missing X-Bot-Secret');
+    await reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Invalid bot secret' });
+    return;
+  }
+
+  const body = request.body as { telegramUserId?: unknown };
+  if (typeof body?.telegramUserId !== 'string' || !body.telegramUserId) {
+    await reply.status(400).send({
+      error: 'VALIDATION_ERROR',
+      message: 'telegramUserId (string) is required',
+    });
+    return;
+  }
+
+  log.info({
+    module: 'telegram.controller',
+    operation: 'getBotSessionHandler',
+  }, 'Handling bot-session request');
+
+  const user = await telegramService.getUserByTelegramId(body.telegramUserId);
+  if (!user) {
+    await reply.status(404).send({
+      error: 'NOT_LINKED',
+      message: 'No user is linked with this Telegram ID',
+    });
+    return;
+  }
+
+  // Issue a JWT using the same Fastify JWT plugin as the SIWE auth flow.
+  const token = request.server.jwt.sign({
+    userId: user.userId,
+    walletAddress: user.walletAddress,
+  });
+
+  log.info({
+    module: 'telegram.controller',
+    operation: 'getBotSessionHandler',
+    userId: user.userId,
+  }, 'Bot session JWT issued');
+
+  await reply.status(200).send({
+    token,
+    userId: user.userId,
+    walletAddress: user.walletAddress,
+  });
 }

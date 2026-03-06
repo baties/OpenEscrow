@@ -29,6 +29,7 @@ import type {
   AgreeDealResponse,
   CancelDealResponse,
   ApiErrorResponse,
+  BotSessionResponse,
 } from './types.js';
 
 const log = logger.child({ module: 'api-client' });
@@ -373,4 +374,66 @@ export async function rejectMilestone(
     jwt,
     body,
   );
+}
+
+/**
+ * Requests a JWT for a linked Telegram user by calling POST /api/v1/telegram/bot-session.
+ * Authenticates via the X-Bot-Secret header (shared secret between bot and API).
+ * Returns null (404) if the given Telegram user ID is not yet linked to any wallet.
+ *
+ * @param telegramUserId - The Telegram numeric user ID as a string
+ * @param botApiSecret - The BOT_API_SECRET shared with the API (from env)
+ * @returns BotSessionResponse with token, userId, walletAddress; or null if not linked
+ * @throws {ApiClientError} On 401 (wrong secret) or 5xx
+ */
+export async function getBotSession(
+  telegramUserId: string,
+  botApiSecret: string,
+): Promise<BotSessionResponse | null> {
+  log.info(
+    { module: 'api-client', operation: 'getBotSession' },
+    'Requesting bot session for Telegram user',
+  );
+
+  const url = `${env.API_BASE_URL}/api/v1/telegram/bot-session`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Bot-Secret': botApiSecret,
+      },
+      body: JSON.stringify({ telegramUserId }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const parsed: unknown = contentType.includes('application/json')
+      ? await response.json()
+      : await response.text();
+
+    if (response.status === 404) return null; // Not yet linked — normal state
+
+    if (!response.ok) {
+      const apiErr = isApiErrorResponse(parsed) ? parsed : null;
+      throw new ApiClientError(
+        response.status,
+        apiErr,
+        `Bot-session API error ${response.status}: ${apiErr?.message ?? String(parsed)}`,
+      );
+    }
+
+    return parsed as BotSessionResponse;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof ApiClientError) throw err;
+    throw new Error(
+      `getBotSession network error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }

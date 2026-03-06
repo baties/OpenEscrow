@@ -50,6 +50,9 @@ const nextConfig = {
 
   // ─── Webpack polyfills for browser-incompatible Node.js built-ins ───────────
   // Required by wagmi/viem and their ethers.js/secp256k1 dependencies.
+  // @react-native-async-storage/async-storage: MetaMask SDK imports this React
+  // Native module in its browser bundle. Aliasing to false tells webpack to
+  // skip it — it is never used in the actual browser code path.
   webpack(webpackConfig) {
     webpackConfig.resolve = webpackConfig.resolve ?? {};
     webpackConfig.resolve.fallback = {
@@ -64,6 +67,10 @@ const nextConfig = {
       http: false,
       https: false,
       zlib: false,
+    };
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
     };
     return webpackConfig;
   },

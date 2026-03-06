@@ -148,6 +148,16 @@ export interface TelegramLinkResponse {
 }
 
 /**
+ * Response from POST /api/v1/telegram/bot-session.
+ * Returns a JWT the bot can use to call the API on behalf of the linked user.
+ */
+export interface BotSessionResponse {
+  token: string;
+  userId: string;
+  walletAddress: string;
+}
+
+/**
  * A session entry stored in the in-memory sessions map.
  * Holds all state the bot needs to act on behalf of a linked user.
  */

@@ -23,6 +23,7 @@ import { dealsCommandHandler } from './commands/deals.js';
 import { statusCommandHandler } from './commands/status.js';
 import { milestoneCallbackHandler } from './callbacks/milestone.js';
 import { startNotificationPolling } from './polling/notifier.js';
+import { startSessionCreatorPolling } from './polling/session-creator.js';
 
 const log = logger.child({ module: 'index' });
 
@@ -95,8 +96,11 @@ async function main(): Promise<void> {
     'Starting OpenEscrow Telegram Bot',
   );
 
-  // Start notification polling loop
+  // Start notification polling loop (deal events for linked users)
   const pollingInterval = startNotificationPolling(bot);
+
+  // Start session-creator polling loop (confirms newly linked users from web dashboard)
+  const sessionCreatorInterval = startSessionCreatorPolling(bot);
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string): Promise<void> => {
@@ -105,6 +109,7 @@ async function main(): Promise<void> {
       'Shutting down bot gracefully',
     );
     clearInterval(pollingInterval);
+    clearInterval(sessionCreatorInterval);
     bot.stop(signal);
     process.exit(0);
   };
@@ -154,6 +159,7 @@ async function main(): Promise<void> {
       'Fatal error starting bot — exiting',
     );
     clearInterval(pollingInterval);
+    clearInterval(sessionCreatorInterval);
     process.exit(1);
   }
 }

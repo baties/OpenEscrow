@@ -165,12 +165,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const signature = await signMessageAsync({ message });
 
       // Step 4: Send message + signature to API, get JWT
-      const { token, walletAddress: verifiedAddress } = await authApi.verify(message, signature);
+      const { token } = await authApi.verify(message, signature);
 
       // Step 5: Persist and update state
-      saveAuth(token, verifiedAddress);
+      // Use `address` directly — the API verified it, and we already have it from useAccount().
+      saveAuth(token, address);
       setIsAuthenticated(true);
-      setWalletAddress(verifiedAddress.toLowerCase());
+      setWalletAddress(address.toLowerCase());
     } catch (err) {
       const message = getErrorMessage(err);
       console.error('[AuthProvider] signIn failed:', { error: message });

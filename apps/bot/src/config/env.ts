@@ -9,6 +9,7 @@
  * Environment variables (see .env.example for full documentation):
  *   TELEGRAM_BOT_TOKEN  — Bot token from @BotFather (required)
  *   API_BASE_URL        — Base URL of the backend API (required)
+ *   BOT_API_SECRET      — Shared secret matching the API's BOT_API_SECRET, used for bot-session calls
  *   POLL_INTERVAL_MS    — Notification polling interval in ms (default: 30000)
  *   LOG_LEVEL           — pino log level (default: info)
  *   NODE_ENV            — Node environment (default: development)
@@ -34,6 +35,14 @@ const envSchema = z.object({
     .string()
     .url({ message: 'API_BASE_URL must be a valid URL' })
     .default('http://localhost:3001'),
+
+  /**
+   * Shared secret for bot-to-API authentication.
+   * Must match the BOT_API_SECRET in the API's .env.
+   * Used for POST /api/v1/telegram/bot-session calls.
+   * Never log this value.
+   */
+  BOT_API_SECRET: z.string().min(32, { message: 'BOT_API_SECRET must be at least 32 characters' }),
 
   /** Polling interval for notification checks in milliseconds (MVP spec: 30 seconds). */
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(30000),

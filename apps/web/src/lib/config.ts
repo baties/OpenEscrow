@@ -30,14 +30,17 @@ export interface AppConfig {
 }
 
 /**
- * Reads and validates a required NEXT_PUBLIC_* environment variable.
+ * Validates a required string value from a NEXT_PUBLIC_* env var.
+ * The value must be passed directly as a static `process.env.NEXT_PUBLIC_*`
+ * reference at the call site so Next.js can inline it into the client bundle.
+ * Dynamic key lookups (process.env[key]) are NOT inlined by Next.js webpack.
  *
- * @param key - The environment variable name to read
- * @returns The string value of the variable
- * @throws {Error} If the variable is not set or is an empty string
+ * @param key - Variable name used only for the error message
+ * @param value - The already-read env value (pass process.env.NEXT_PUBLIC_FOO directly)
+ * @returns The trimmed string value
+ * @throws {Error} If the value is not set or is an empty string
  */
-function requireEnv(key: string): string {
-  const value = process.env[key];
+function requireEnv(key: string, value: string | undefined): string {
   if (!value || value.trim() === '') {
     throw new Error(`[config] Required environment variable ${key} is not set`);
   }
@@ -45,51 +48,53 @@ function requireEnv(key: string): string {
 }
 
 /**
- * Reads and validates an EVM address environment variable.
+ * Validates an EVM address value from a NEXT_PUBLIC_* env var.
  *
- * @param key - The environment variable name to read
+ * @param key - Variable name used only for the error message
+ * @param value - The already-read env value (pass process.env.NEXT_PUBLIC_FOO directly)
  * @returns The address cast to the 0x-prefixed string type
- * @throws {Error} If the variable is not set or does not start with "0x"
+ * @throws {Error} If the value is not set or does not start with "0x"
  */
-function requireAddressEnv(key: string): `0x${string}` {
-  const value = requireEnv(key);
-  if (!value.startsWith('0x')) {
-    throw new Error(`[config] ${key} must be a hex address starting with 0x, got: ${value}`);
+function requireAddressEnv(key: string, value: string | undefined): `0x${string}` {
+  const str = requireEnv(key, value);
+  if (!str.startsWith('0x')) {
+    throw new Error(`[config] ${key} must be a hex address starting with 0x, got: ${str}`);
   }
-  return value as `0x${string}`;
+  return str as `0x${string}`;
 }
 
 /**
- * Reads and validates a numeric environment variable.
+ * Validates a numeric value from a NEXT_PUBLIC_* env var.
  *
- * @param key - The environment variable name to read
- * @param defaultValue - Optional fallback if the variable is not set
+ * @param key - Variable name used only for the error message
+ * @param value - The already-read env value (pass process.env.NEXT_PUBLIC_FOO directly)
+ * @param defaultValue - Fallback if the value is not set
  * @returns The parsed integer value
  * @throws {Error} If the value cannot be parsed as a finite integer
  */
-function requireNumberEnv(key: string, defaultValue?: number): number {
-  const raw = process.env[key];
-  if (!raw || raw.trim() === '') {
+function requireNumberEnv(key: string, value: string | undefined, defaultValue?: number): number {
+  if (!value || value.trim() === '') {
     if (defaultValue !== undefined) return defaultValue;
     throw new Error(`[config] Required numeric environment variable ${key} is not set`);
   }
-  const parsed = parseInt(raw.trim(), 10);
+  const parsed = parseInt(value.trim(), 10);
   if (!Number.isFinite(parsed)) {
-    throw new Error(`[config] Environment variable ${key} is not a valid integer: ${raw}`);
+    throw new Error(`[config] Environment variable ${key} is not a valid integer: ${value}`);
   }
   return parsed;
 }
 
 /**
  * Singleton application config, initialized at module load time.
- * Throws immediately if any required env var is missing, preventing silent
- * misconfiguration from reaching users.
+ * Each process.env.NEXT_PUBLIC_* reference is static so Next.js can inline
+ * the values into the client bundle at compile time.
+ * Throws immediately if any required env var is missing.
  */
 export const config: AppConfig = {
-  apiUrl: requireEnv('NEXT_PUBLIC_API_URL'),
-  chainId: requireNumberEnv('NEXT_PUBLIC_CHAIN_ID', 11155111),
-  contractAddress: requireAddressEnv('NEXT_PUBLIC_CONTRACT_ADDRESS'),
-  usdcAddress: requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS'),
-  usdtAddress: requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS'),
-  walletConnectProjectId: requireEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID'),
+  apiUrl:                requireEnv('NEXT_PUBLIC_API_URL',                    process.env.NEXT_PUBLIC_API_URL),
+  chainId:               requireNumberEnv('NEXT_PUBLIC_CHAIN_ID',             process.env.NEXT_PUBLIC_CHAIN_ID, 11155111),
+  contractAddress:       requireAddressEnv('NEXT_PUBLIC_CONTRACT_ADDRESS',    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS),
+  usdcAddress:           requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS',        process.env.NEXT_PUBLIC_USDC_ADDRESS),
+  usdtAddress:           requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS',        process.env.NEXT_PUBLIC_USDT_ADDRESS),
+  walletConnectProjectId: requireEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
 } as const;

@@ -79,6 +79,14 @@ import { logger } from '../lib/logger.js';
 const log = logger.child({ module: 'commands.link' });
 
 /**
+ * In-memory set of Telegram user IDs waiting for their web-dashboard link to be confirmed.
+ * Populated when a user sends /link <code> to the bot.
+ * The session-creator poller checks this set and creates sessions once the API confirms linking.
+ * Exported so the session-creator can read and clear entries.
+ */
+export const pendingLinks = new Set<string>();
+
+/**
  * Zod schema for validating the /link command argument.
  * The OTP is an 8-char hex string (4 bytes from randomBytes per the API).
  */
@@ -167,6 +175,9 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         `_You'll receive a confirmation message here once linked._`,
     );
 
+    // Track this user so the session-creator poller can confirm when they're linked.
+    pendingLinks.add(String(telegramUserId));
+
     log.info(
       {
         module: 'commands.link',
@@ -174,7 +185,7 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         telegramUserId,
         chatId,
       },
-      'Link code received — instructed user to complete on web dashboard',
+      'Link code received — instructed user to complete on web dashboard, added to pending links',
     );
   } catch (err) {
     log.error(

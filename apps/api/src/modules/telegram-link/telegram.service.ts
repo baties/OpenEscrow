@@ -15,7 +15,7 @@
  */
 
 import { randomBytes } from 'crypto';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, isNotNull, desc } from 'drizzle-orm';
 import { db } from '../../database/index.js';
 import { telegramLinks, users } from '../../database/schema.js';
 import { AppError } from '../../lib/errors.js';
@@ -217,5 +217,83 @@ export async function unlinkTelegram(userId: string): Promise<void> {
       error: err instanceof Error ? err.message : String(err),
     }, 'Failed to unlink Telegram account');
     throw new AppError('TELEGRAM_UNLINK_FAILED', 'Failed to unlink Telegram account');
+  }
+}
+
+/**
+ * Returns the Telegram link status for an authenticated user.
+ * Derives `linkedAt` from the most recently consumed OTP record.
+ *
+ * @param userId - UUID of the authenticated user
+ * @returns Object with `linked` flag, `telegramUserId` (or null), and `linkedAt` ISO string (or null)
+ * @throws {AppError} TELEGRAM_STATUS_FAILED on database error
+ */
+export async function getTelegramStatus(userId: string): Promise<{
+  linked: boolean;
+  telegramUserId: string | null;
+  linkedAt: string | null;
+}> {
+  try {
+    const [user] = await db
+      .select({ telegramUserId: users.telegramUserId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user?.telegramUserId) {
+      return { linked: false, telegramUserId: null, linkedAt: null };
+    }
+
+    // Derive linkedAt from the most recently used OTP for this user.
+    const [lastLink] = await db
+      .select({ usedAt: telegramLinks.usedAt })
+      .from(telegramLinks)
+      .where(and(eq(telegramLinks.userId, userId), isNotNull(telegramLinks.usedAt)))
+      .orderBy(desc(telegramLinks.usedAt))
+      .limit(1);
+
+    return {
+      linked: true,
+      telegramUserId: user.telegramUserId,
+      linkedAt: lastLink?.usedAt?.toISOString() ?? null,
+    };
+  } catch (err) {
+    log.error({
+      module: 'telegram.service',
+      operation: 'getTelegramStatus',
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    }, 'Failed to fetch Telegram status');
+    throw new AppError('TELEGRAM_STATUS_FAILED', 'Failed to fetch Telegram link status');
+  }
+}
+
+/**
+ * Looks up a user by their Telegram user ID.
+ * Used by the bot's bot-session endpoint to issue JWTs for linked users.
+ *
+ * @param telegramUserId - The Telegram numeric user ID as a string
+ * @returns `{ userId, walletAddress }` if found, or null if no user is linked with this ID
+ * @throws {AppError} TELEGRAM_STATUS_FAILED on database error
+ */
+export async function getUserByTelegramId(
+  telegramUserId: string,
+): Promise<{ userId: string; walletAddress: string } | null> {
+  try {
+    const [user] = await db
+      .select({ id: users.id, walletAddress: users.walletAddress })
+      .from(users)
+      .where(eq(users.telegramUserId, telegramUserId))
+      .limit(1);
+
+    if (!user) return null;
+    return { userId: user.id, walletAddress: user.walletAddress };
+  } catch (err) {
+    log.error({
+      module: 'telegram.service',
+      operation: 'getUserByTelegramId',
+      error: err instanceof Error ? err.message : String(err),
+    }, 'Failed to look up user by Telegram ID');
+    throw new AppError('TELEGRAM_STATUS_FAILED', 'Failed to look up Telegram user');
   }
 }

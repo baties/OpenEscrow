@@ -41,9 +41,8 @@ export default function HomePage() {
       {/* Hero section */}
       <div className="mb-10 max-w-2xl">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-          Milestone-based escrow
-          <br />
-          <span className="text-indigo-600">for Web3 projects</span>
+          <span className="block">Milestone-based escrow</span>
+          <span className="block mt-4 text-indigo-600">for Web3 projects</span>
         </h1>
         <p className="mt-4 text-lg text-gray-600">
           Lock USDC or USDT in a smart contract. Get paid on verified milestones.

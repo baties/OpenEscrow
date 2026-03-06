@@ -40,7 +40,7 @@ export function buildSiweMessage(params: BuildSiweMessageParams): string {
   const message = new SiweMessage({
     domain: typeof window !== 'undefined' ? window.location.host : 'localhost',
     address,
-    statement: 'Sign in to OpenEscrow — Milestone-based Escrow for Web3',
+    statement: 'Sign in to OpenEscrow - Milestone-based Escrow for Web3',
     uri: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
     version: '1',
     chainId,

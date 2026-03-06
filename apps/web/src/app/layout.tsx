@@ -12,11 +12,21 @@
  */
 
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import '@rainbow-me/rainbowkit/styles.css';
 import '@/styles/globals.css';
-import { Web3Provider } from '@/providers/Web3Provider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { Navbar } from '@/components/Navbar';
+
+/**
+ * Web3Provider loaded client-side only (ssr: false) to prevent wagmi/WalletConnect
+ * from accessing browser-only APIs (indexedDB, localStorage) during SSR.
+ * These connectors call setup() at module load time which crashes in Node.js.
+ */
+const Web3Provider = dynamic(
+  () => import('@/providers/Web3Provider').then(m => ({ default: m.Web3Provider })),
+  { ssr: false }
+);
 
 /**
  * Next.js metadata for the OpenEscrow app.

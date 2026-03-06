@@ -141,6 +141,11 @@ export const telegramLinkSchema = z.object({
     .min(6, 'Code must be at least 6 characters')
     .max(64, 'Code too long')
     .regex(/^[a-zA-Z0-9]+$/, 'Code must be alphanumeric'),
+  telegramUserId: z
+    .string()
+    .trim()
+    .min(1, 'Telegram user ID is required')
+    .regex(/^\d+$/, 'Telegram user ID must be a numeric ID (shown by the bot)'),
 });
 
 export type TelegramLinkFormValues = z.infer<typeof telegramLinkSchema>;

@@ -36,13 +36,16 @@ import {
 /**
  * Builds request headers for an API call, including the Authorization header
  * when a JWT is present in storage.
+ * Content-Type: application/json is only set when hasBody is true — sending
+ * that header with an empty body causes Fastify to reject the request with 400.
  *
+ * @param hasBody - Whether the request includes a JSON body
  * @param extraHeaders - Optional additional headers to merge in
  * @returns A Record of HTTP headers
  */
-function buildHeaders(extraHeaders?: Record<string, string>): Record<string, string> {
+function buildHeaders(hasBody: boolean, extraHeaders?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...extraHeaders,
   };
   const token = getAuthToken();
@@ -109,7 +112,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     const response = await fetch(url, {
       ...options,
-      headers: buildHeaders(options.headers as Record<string, string> | undefined),
+      headers: buildHeaders(options.body !== undefined, options.headers as Record<string, string> | undefined),
       signal: controller.signal,
     });
     return await parseResponse<T>(response);
@@ -136,20 +139,28 @@ export interface NonceResponse {
 /** Response from POST /auth/verify */
 export interface AuthVerifyResponse {
   token: string;
-  userId: string;
-  walletAddress: string;
 }
 
 /** Response from POST /telegram/generate-code */
 export interface TelegramCodeResponse {
-  code: string;
+  oneTimeCode: string;
   expiresAt: string;
 }
 
 /** Response from POST /telegram/link */
 export interface TelegramLinkResponse {
+  success: boolean;
+  message: string;
+}
+
+/** Response from GET /telegram/status */
+export interface TelegramStatusResponse {
+  /** True if a Telegram account is currently linked to this wallet */
   linked: boolean;
-  telegramUserId: string;
+  /** The linked Telegram numeric user ID, or null if not linked */
+  telegramUserId: string | null;
+  /** ISO 8601 timestamp of when the account was linked, or null if not linked */
+  linkedAt: string | null;
 }
 
 /** Response from POST /deals/:id/agree */
@@ -445,10 +456,10 @@ export const telegramApi = {
    * @throws {ApiCallError} On 400 (invalid/expired code) or non-2xx
    * @throws {NetworkError} On network failure
    */
-  async link(code: string): Promise<TelegramLinkResponse> {
+  async link(oneTimeCode: string, telegramUserId: string): Promise<TelegramLinkResponse> {
     return request<TelegramLinkResponse>('/api/v1/telegram/link', {
       method: 'POST',
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ oneTimeCode, telegramUserId }),
     });
   },
 
@@ -463,6 +474,18 @@ export const telegramApi = {
    */
   async unlink(): Promise<void> {
     return request<void>('/api/v1/telegram/unlink', { method: 'DELETE' });
+  },
+
+  /**
+   * Returns the current Telegram link status for the authenticated user.
+   *
+   * @returns Status object with linked flag, telegramUserId, and linkedAt timestamp
+   * @throws {AuthExpiredError} If JWT is invalid or expired
+   * @throws {ApiCallError} On non-2xx response
+   * @throws {NetworkError} On network failure
+   */
+  async getStatus(): Promise<TelegramStatusResponse> {
+    return request<TelegramStatusResponse>('/api/v1/telegram/status');
   },
 };
 
