@@ -2,9 +2,12 @@
  * page.tsx — OpenEscrow Web Dashboard (Home / Landing)
  *
  * Home page displayed to unauthenticated and authenticated users.
- * Handles: wallet connect prompt, SIWE sign-in button, redirect to /deals when authed.
+ * Handles: wallet connect prompt, auto-SIWE status display, redirect to /deals when authed.
  * Does NOT: fetch any data, manage auth state (reads via useAuth hook),
  *            or contain any business logic.
+ *
+ * Auth UX: user connects wallet once — SIWE is triggered automatically by AuthProvider.
+ * If the user rejects the signature, an error + "Try again" button is shown.
  */
 
 'use client';
@@ -87,25 +90,36 @@ export default function HomePage() {
             <p className="text-sm text-gray-500">Connect your wallet to get started</p>
             <ConnectButton label="Connect Wallet" />
           </>
-        ) : (
-          <>
-            <p className="text-sm text-gray-600">
-              Wallet connected. Sign in with Ethereum to continue.
+        ) : isSigningIn ? (
+          /* Auto-SIWE in progress — wallet signature request is open */
+          <div className="flex flex-col items-center gap-3">
+            <LoadingSpinner size="lg" />
+            <p className="text-sm font-medium text-gray-700">Verifying wallet identity…</p>
+            <p className="text-xs text-gray-400">
+              Check your wallet — a signature request is waiting (no gas fee)
             </p>
+          </div>
+        ) : signInError ? (
+          /* User rejected the signature or an error occurred */
+          <div className="flex flex-col items-center gap-3">
             <ErrorAlert message={signInError} className="max-w-sm" />
             <button
               type="button"
               onClick={() => { void signIn(); }}
-              disabled={isSigningIn}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
             >
-              {isSigningIn && <LoadingSpinner size="sm" />}
-              {isSigningIn ? 'Signing in...' : 'Sign in with Ethereum'}
+              Try Again
             </button>
             <p className="text-xs text-gray-400">
-              You will be asked to sign a message in your wallet (no gas fee)
+              Sign the message in your wallet to continue (no gas fee)
             </p>
-          </>
+          </div>
+        ) : (
+          /* Wallet connected, auto-sign-in about to trigger */
+          <div className="flex flex-col items-center gap-3">
+            <LoadingSpinner size="lg" />
+            <p className="text-sm text-gray-500">Preparing sign-in…</p>
+          </div>
         )}
       </div>
 

@@ -3,12 +3,20 @@
  *
  * React context provider for SIWE authentication state.
  * Handles: SIWE sign-in flow (nonce → sign → verify), sign-out, JWT persistence,
- *          listening for 'auth:expired' events to auto-clear state.
+ *          auto-sign-in when wallet connects, listening for 'auth:expired' events.
  * Does NOT: manage wallet connection (that's RainbowKit/wagmi),
  *            make direct API calls (delegates to api-client.ts),
  *            render any UI beyond the context tree.
  *
  * Auth token is stored in localStorage — see auth-storage.ts for rationale.
+ *
+ * Auto sign-in: SIWE is triggered automatically when the wallet connects so the
+ * user only needs one action (connecting the wallet). If the user rejects the
+ * signature, `signInError` is set and they can retry manually via signIn().
+ *
+ * Reconnect safety: wagmi briefly sets isConnected=false while reconnecting on
+ * page load. We guard against that with isReconnecting/isConnecting so a page
+ * refresh never clears auth unnecessarily.
  */
 
 'use client';
@@ -76,7 +84,7 @@ interface AuthProviderProps {
  * @returns JSX.Element — the context provider wrapping children
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, chainId, isConnected } = useAccount();
+  const { address, chainId, isConnected, isConnecting, isReconnecting } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
 
@@ -95,10 +103,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // When wallet connects/disconnects: validate stored auth matches connected wallet
+  // When wallet connects/disconnects: validate stored auth matches connected wallet.
+  // Guard: skip during transient reconnecting states (wagmi briefly shows
+  // isConnected=false on page load before restoring the connection — clearing auth
+  // here would force a re-sign on every page refresh).
   useEffect(() => {
+    if (isConnecting || isReconnecting) return;
+
     if (!isConnected || !address) {
-      // Wallet disconnected — clear auth
+      // True wallet disconnect (user explicitly disconnected, not just page load)
       clearAuth();
       setIsAuthenticated(false);
       setWalletAddress(null);
@@ -109,16 +122,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const storedToken = getAuthToken();
 
     if (storedToken && storedAddress?.toLowerCase() === address.toLowerCase()) {
-      // Already authenticated with this wallet
+      // Valid JWT exists for this wallet — restore session without re-signing
       setIsAuthenticated(true);
       setWalletAddress(storedAddress);
     } else {
-      // Different wallet connected, or no stored token — require re-auth
+      // Different wallet connected, or no stored token — clear stale auth
       clearAuth();
       setIsAuthenticated(false);
       setWalletAddress(null);
     }
-  }, [isConnected, address]);
+  }, [isConnected, isConnecting, isReconnecting, address]);
 
   // Listen for 'auth:expired' events dispatched by the API client on 401 responses
   useEffect(() => {
@@ -180,6 +193,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsSigningIn(false);
     }
   }, [address, chainId, isConnected, isAuthenticated, signMessageAsync]);
+
+  // Auto sign-in: trigger SIWE immediately when a wallet connects and no valid
+  // session exists for it. This removes the need for a manual "Sign in" button.
+  // Skip if: already authenticated, already signing in, or the user previously
+  // rejected the signature (signInError set) — they must retry manually.
+  // NOTE: must be declared AFTER signIn useCallback to avoid TDZ reference error.
+  useEffect(() => {
+    if (
+      isConnected &&
+      !isConnecting &&
+      !isReconnecting &&
+      address &&
+      !isAuthenticated &&
+      !isSigningIn &&
+      !signInError
+    ) {
+      void signIn();
+    }
+  }, [isConnected, isConnecting, isReconnecting, address, isAuthenticated, isSigningIn, signInError, signIn]);
 
   const signOut = useCallback((): void => {
     clearAuth();
