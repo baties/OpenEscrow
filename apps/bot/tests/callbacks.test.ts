@@ -47,7 +47,11 @@ vi.mock('../src/api-client/index.js', () => ({
   ApiClientError: class MockApiClientError extends Error {
     statusCode: number;
     apiError: { error: string; message: string } | null;
-    constructor(statusCode: number, apiError: { error: string; message: string } | null, message: string) {
+    constructor(
+      statusCode: number,
+      apiError: { error: string; message: string } | null,
+      message: string
+    ) {
       super(message);
       this.name = 'ApiClientError';
       this.statusCode = statusCode;
@@ -77,7 +81,7 @@ vi.mock('../src/store/sessions.js', () => ({
  */
 function makeMockCallbackCtx(
   callbackData: string,
-  fromId: number = 2000,
+  fromId: number = 2000
 ): {
   from: { id: number };
   chat: { id: number };
@@ -147,8 +151,8 @@ describe('milestone callbacks', () => {
         new ApiClientError(
           400,
           { error: 'INVALID_TRANSITION', message: 'Cannot approve from PENDING' },
-          'API error 400',
-        ),
+          'API error 400'
+        )
       );
 
       const ctx = makeMockCallbackCtx('approve:ms-002');

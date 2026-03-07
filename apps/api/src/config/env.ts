@@ -37,10 +37,16 @@ const envSchema = z.object({
 
   // Chain
   CHAIN_ID: z.coerce.number().int().positive().default(11155111),
-  CONTRACT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, { message: 'CONTRACT_ADDRESS must be a valid EVM address' }),
+  CONTRACT_ADDRESS: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{40}$/, { message: 'CONTRACT_ADDRESS must be a valid EVM address' }),
   RPC_URL: z.string().url({ message: 'RPC_URL must be a valid HTTP(S) URL' }),
-  USDC_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, { message: 'USDC_ADDRESS must be a valid EVM address' }),
-  USDT_ADDRESS: z.string().regex(/^0x[0-9a-fA-F]{40}$/, { message: 'USDT_ADDRESS must be a valid EVM address' }),
+  USDC_ADDRESS: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{40}$/, { message: 'USDC_ADDRESS must be a valid EVM address' }),
+  USDT_ADDRESS: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{40}$/, { message: 'USDT_ADDRESS must be a valid EVM address' }),
   INDEXER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(12000),
 });
 

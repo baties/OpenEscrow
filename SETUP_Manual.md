@@ -9,12 +9,12 @@ four parts of the project (API, Web, Bot, Contracts) manually on your local mach
 
 Make sure these are installed before you start:
 
-| Tool | Minimum version | Check |
-|------|----------------|-------|
-| Node.js | 22.x | `node --version` |
-| pnpm | 9.x | `pnpm --version` |
-| Docker + Docker Compose | any recent | `docker compose version` |
-| Git | any | `git --version` |
+| Tool                    | Minimum version | Check                    |
+| ----------------------- | --------------- | ------------------------ |
+| Node.js                 | 22.x            | `node --version`         |
+| pnpm                    | 9.x             | `pnpm --version`         |
+| Docker + Docker Compose | any recent      | `docker compose version` |
+| Git                     | any             | `git --version`          |
 
 > **macOS with nvm:** run `nvm use v22` before any `pnpm` command in this guide.
 
@@ -394,15 +394,15 @@ Then just run `pnpm dev` in `apps/web` without any exports.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
-| API crashes immediately on start | Missing or invalid env var | Read the error — it prints exactly which variable is wrong |
-| `DATABASE_URL` error | PostgreSQL not running or wrong password | Run `docker compose ps` and verify postgres is healthy |
-| `CONTRACT_ADDRESS must be a valid EVM address` | Still has zero address in `.env` | Complete Step 4 and update `CONTRACT_ADDRESS` |
-| Web shows blank page or config error | Missing `NEXT_PUBLIC_*` var | Check `apps/web/.env.local` or your exports |
-| Bot does not respond | Wrong token or API not running | Confirm Terminal 1 (API) is healthy and token is correct |
-| Hardhat deploy: `Deployer has zero ETH balance` | Deployer wallet not funded | Get Sepolia ETH from a faucet |
-| Hardhat deploy: `No deployer signer found` | `DEPLOYER_PRIVATE_KEY` not set | Add it to `.env` (without quotes, with or without `0x` prefix) |
-| MetaMask shows wrong network | Not on Sepolia | Switch MetaMask to Sepolia testnet (chain ID 11155111) |
-| Page loads with wallet connected but no sign-in prompt | Page-load reconnect — SIWE only fires on explicit connect | Click the "Sign in with Ethereum" button shown on the home page |
-| Signature prompt fires on every page open | Old version of AuthProvider | Ensure `useAccountEffect` is used (not a state-watching `useEffect`) |
+| Symptom                                                | Likely cause                                              | Fix                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------- | -------------------------------------------------------------------- |
+| API crashes immediately on start                       | Missing or invalid env var                                | Read the error — it prints exactly which variable is wrong           |
+| `DATABASE_URL` error                                   | PostgreSQL not running or wrong password                  | Run `docker compose ps` and verify postgres is healthy               |
+| `CONTRACT_ADDRESS must be a valid EVM address`         | Still has zero address in `.env`                          | Complete Step 4 and update `CONTRACT_ADDRESS`                        |
+| Web shows blank page or config error                   | Missing `NEXT_PUBLIC_*` var                               | Check `apps/web/.env.local` or your exports                          |
+| Bot does not respond                                   | Wrong token or API not running                            | Confirm Terminal 1 (API) is healthy and token is correct             |
+| Hardhat deploy: `Deployer has zero ETH balance`        | Deployer wallet not funded                                | Get Sepolia ETH from a faucet                                        |
+| Hardhat deploy: `No deployer signer found`             | `DEPLOYER_PRIVATE_KEY` not set                            | Add it to `.env` (without quotes, with or without `0x` prefix)       |
+| MetaMask shows wrong network                           | Not on Sepolia                                            | Switch MetaMask to Sepolia testnet (chain ID 11155111)               |
+| Page loads with wallet connected but no sign-in prompt | Page-load reconnect — SIWE only fires on explicit connect | Click the "Sign in with Ethereum" button shown on the home page      |
+| Signature prompt fires on every page open              | Old version of AuthProvider                               | Ensure `useAccountEffect` is used (not a state-watching `useEffect`) |

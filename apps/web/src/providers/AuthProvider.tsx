@@ -28,13 +28,7 @@
 
 'use client';
 
-import {
-  createContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAccount, useAccountEffect, useSignMessage, useDisconnect } from 'wagmi';
 import { authApi } from '@/lib/api-client';
 import { saveAuth, getAuthToken, getStoredWalletAddress, clearAuth } from '@/lib/auth-storage';
@@ -163,30 +157,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * @param chain - Chain ID to include in the SIWE message
    * @returns void
    */
-  const performSiwe = useCallback(async (addr: string, chain: number): Promise<void> => {
-    if (isAuthenticated) return;
+  const performSiwe = useCallback(
+    async (addr: string, chain: number): Promise<void> => {
+      if (isAuthenticated) return;
 
-    setIsSigningIn(true);
-    setSignInError(null);
+      setIsSigningIn(true);
+      setSignInError(null);
 
-    try {
-      const { nonce } = await authApi.getNonce(addr);
+      try {
+        const { nonce } = await authApi.getNonce(addr);
 
-      const message = buildSiweMessage({ address: addr, chainId: chain, nonce });
-      const signature = await signMessageAsync({ message });
-      const { token } = await authApi.verify(message, signature);
+        const message = buildSiweMessage({ address: addr, chainId: chain, nonce });
+        const signature = await signMessageAsync({ message });
+        const { token } = await authApi.verify(message, signature);
 
-      saveAuth(token, addr);
-      setIsAuthenticated(true);
-      setWalletAddress(addr.toLowerCase());
-    } catch (err) {
-      const msg = getErrorMessage(err);
-      console.error('[AuthProvider] signIn failed:', { error: msg });
-      setSignInError(msg);
-    } finally {
-      setIsSigningIn(false);
-    }
-  }, [isAuthenticated, signMessageAsync]);
+        saveAuth(token, addr);
+        setIsAuthenticated(true);
+        setWalletAddress(addr.toLowerCase());
+      } catch (err) {
+        const msg = getErrorMessage(err);
+        console.error('[AuthProvider] signIn failed:', { error: msg });
+        setSignInError(msg);
+      } finally {
+        setIsSigningIn(false);
+      }
+    },
+    [isAuthenticated, signMessageAsync]
+  );
 
   /**
    * Public sign-in for manual trigger (e.g. "Sign in with Ethereum" button).

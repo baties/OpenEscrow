@@ -40,15 +40,12 @@ const log = logger.child({ module: 'deals.service' });
  * @throws Never — missing users fall back to empty string so callers don't crash
  */
 async function enrichDealsWithAddresses<T extends Deal>(
-  dealRows: T[],
+  dealRows: T[]
 ): Promise<(T & { clientAddress: string; freelancerAddress: string })[]> {
   if (dealRows.length === 0) return [];
 
   const uniqueUserIds = [
-    ...new Set([
-      ...dealRows.map((d) => d.clientId),
-      ...dealRows.map((d) => d.freelancerId),
-    ]),
+    ...new Set([...dealRows.map((d) => d.clientId), ...dealRows.map((d) => d.freelancerId)]),
   ];
 
   const userRows = await db
@@ -116,14 +113,17 @@ function assertValidTransition(from: string, to: string): void {
  */
 export async function createDeal(
   clientId: string,
-  input: CreateDealInput,
+  input: CreateDealInput
 ): Promise<Deal & { milestones: Milestone[] }> {
-  log.info({
-    module: 'deals.service',
-    operation: 'createDeal',
-    clientId,
-    freelancerAddress: input.freelancerAddress,
-  }, 'Creating deal');
+  log.info(
+    {
+      module: 'deals.service',
+      operation: 'createDeal',
+      clientId,
+      freelancerAddress: input.freelancerAddress,
+    },
+    'Creating deal'
+  );
 
   // Resolve freelancer user record (must exist — they sign in first).
   const freelancerAddress = input.freelancerAddress.toLowerCase();
@@ -155,20 +155,21 @@ export async function createDeal(
       freelancerId = freelancer.id;
     }
   } catch (err) {
-    log.error({
-      module: 'deals.service',
-      operation: 'createDeal',
-      clientId,
-      freelancerAddress,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to resolve freelancer user');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'createDeal',
+        clientId,
+        freelancerAddress,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to resolve freelancer user'
+    );
     throw new AppError('DEAL_CREATE_FAILED', 'Failed to resolve freelancer user account');
   }
 
   // Compute total amount as sum of all milestone amounts (BigInt arithmetic).
-  const totalAmount = input.milestones
-    .reduce((sum, m) => sum + BigInt(m.amount), 0n)
-    .toString();
+  const totalAmount = input.milestones.reduce((sum, m) => sum + BigInt(m.amount), 0n).toString();
 
   try {
     // Insert deal and milestones in a transaction.
@@ -200,7 +201,7 @@ export async function createDeal(
             amount: m.amount,
             sequence: i + 1,
             status: 'PENDING',
-          })),
+          }))
         )
         .returning();
 
@@ -220,23 +221,29 @@ export async function createDeal(
       return { deal, milestones: milestoneRows };
     });
 
-    log.info({
-      module: 'deals.service',
-      operation: 'createDeal',
-      dealId: result.deal.id,
-      clientId,
-      freelancerId,
-    }, 'Deal created successfully');
+    log.info(
+      {
+        module: 'deals.service',
+        operation: 'createDeal',
+        dealId: result.deal.id,
+        clientId,
+        freelancerId,
+      },
+      'Deal created successfully'
+    );
 
     return { ...result.deal, milestones: result.milestones };
   } catch (err) {
-    log.error({
-      module: 'deals.service',
-      operation: 'createDeal',
-      clientId,
-      freelancerId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Deal creation transaction failed');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'createDeal',
+        clientId,
+        freelancerId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Deal creation transaction failed'
+    );
     throw new AppError('DEAL_CREATE_FAILED', 'Failed to create deal');
   }
 }
@@ -249,7 +256,9 @@ export async function createDeal(
  * @returns Array of deals (without milestones — use getDeal for detail)
  * @throws {AppError} DEAL_LIST_FAILED on database error
  */
-export async function listDeals(userId: string): Promise<(Deal & { clientAddress: string; freelancerAddress: string })[]> {
+export async function listDeals(
+  userId: string
+): Promise<(Deal & { clientAddress: string; freelancerAddress: string })[]> {
   try {
     const result = await db
       .select()
@@ -259,12 +268,15 @@ export async function listDeals(userId: string): Promise<(Deal & { clientAddress
 
     return enrichDealsWithAddresses(result);
   } catch (err) {
-    log.error({
-      module: 'deals.service',
-      operation: 'listDeals',
-      userId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to list deals');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'listDeals',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to list deals'
+    );
     throw new AppError('DEAL_LIST_FAILED', 'Failed to retrieve deals');
   }
 }
@@ -277,13 +289,13 @@ export async function listDeals(userId: string): Promise<(Deal & { clientAddress
  * @returns Deal with milestones array, or null if not found
  * @throws {AppError} DEAL_GET_FAILED on database error
  */
-export async function getDeal(dealId: string): Promise<(Deal & { milestones: Milestone[]; clientAddress: string; freelancerAddress: string }) | null> {
+export async function getDeal(
+  dealId: string
+): Promise<
+  (Deal & { milestones: Milestone[]; clientAddress: string; freelancerAddress: string }) | null
+> {
   try {
-    const [deal] = await db
-      .select()
-      .from(deals)
-      .where(eq(deals.id, dealId))
-      .limit(1);
+    const [deal] = await db.select().from(deals).where(eq(deals.id, dealId)).limit(1);
 
     if (!deal) return null;
 
@@ -296,12 +308,15 @@ export async function getDeal(dealId: string): Promise<(Deal & { milestones: Mil
     const [enriched] = await enrichDealsWithAddresses([deal]);
     return { ...enriched!, milestones: milestoneRows };
   } catch (err) {
-    log.error({
-      module: 'deals.service',
-      operation: 'getDeal',
-      dealId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to get deal');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'getDeal',
+        dealId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to get deal'
+    );
     throw new AppError('DEAL_GET_FAILED', 'Failed to retrieve deal');
   }
 }
@@ -319,14 +334,17 @@ export async function getDeal(dealId: string): Promise<(Deal & { milestones: Mil
  */
 export async function agreeToDeal(
   dealId: string,
-  freelancerId: string,
+  freelancerId: string
 ): Promise<Deal & { milestones: Milestone[] }> {
-  log.info({
-    module: 'deals.service',
-    operation: 'agreeToDeal',
-    dealId,
-    freelancerId,
-  }, 'Freelancer agreeing to deal');
+  log.info(
+    {
+      module: 'deals.service',
+      operation: 'agreeToDeal',
+      dealId,
+      freelancerId,
+    },
+    'Freelancer agreeing to deal'
+  );
 
   const deal = await getDeal(dealId);
   if (!deal) {
@@ -339,10 +357,7 @@ export async function agreeToDeal(
     const agreedAt = new Date();
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(deals)
-        .set({ status: 'AGREED', agreedAt })
-        .where(eq(deals.id, dealId));
+      await tx.update(deals).set({ status: 'AGREED', agreedAt }).where(eq(deals.id, dealId));
 
       await tx.insert(dealEvents).values({
         dealId,
@@ -352,24 +367,30 @@ export async function agreeToDeal(
       });
     });
 
-    log.info({
-      module: 'deals.service',
-      operation: 'agreeToDeal',
-      dealId,
-      freelancerId,
-    }, 'Deal agreed successfully');
+    log.info(
+      {
+        module: 'deals.service',
+        operation: 'agreeToDeal',
+        dealId,
+        freelancerId,
+      },
+      'Deal agreed successfully'
+    );
 
     const updated = await getDeal(dealId);
     return updated!;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'deals.service',
-      operation: 'agreeToDeal',
-      dealId,
-      freelancerId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'agreeToDeal transaction failed');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'agreeToDeal',
+        dealId,
+        freelancerId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'agreeToDeal transaction failed'
+    );
     throw new AppError('DEAL_AGREE_FAILED', 'Failed to agree to deal');
   }
 }
@@ -396,15 +417,18 @@ export async function agreeToDeal(
 export async function fundDeal(
   dealId: string,
   clientId: string,
-  input: FundDealInput,
+  input: FundDealInput
 ): Promise<Deal & { milestones: Milestone[] }> {
-  log.info({
-    module: 'deals.service',
-    operation: 'fundDeal',
-    dealId,
-    clientId,
-    chainDealId: input.chainDealId,
-  }, 'Recording deal funding');
+  log.info(
+    {
+      module: 'deals.service',
+      operation: 'fundDeal',
+      dealId,
+      clientId,
+      chainDealId: input.chainDealId,
+    },
+    'Recording deal funding'
+  );
 
   const deal = await getDeal(dealId);
   if (!deal) {
@@ -432,25 +456,31 @@ export async function fundDeal(
       });
     });
 
-    log.info({
-      module: 'deals.service',
-      operation: 'fundDeal',
-      dealId,
-      clientId,
-      chainDealId: input.chainDealId,
-    }, 'Deal funded successfully');
+    log.info(
+      {
+        module: 'deals.service',
+        operation: 'fundDeal',
+        dealId,
+        clientId,
+        chainDealId: input.chainDealId,
+      },
+      'Deal funded successfully'
+    );
 
     const updated = await getDeal(dealId);
     return updated!;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'deals.service',
-      operation: 'fundDeal',
-      dealId,
-      clientId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'fundDeal transaction failed');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'fundDeal',
+        dealId,
+        clientId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'fundDeal transaction failed'
+    );
     throw new AppError('DEAL_FUND_FAILED', 'Failed to record deal funding');
   }
 }
@@ -472,14 +502,17 @@ export async function fundDeal(
  */
 export async function cancelDeal(
   dealId: string,
-  actorId: string,
+  actorId: string
 ): Promise<Deal & { milestones: Milestone[] }> {
-  log.info({
-    module: 'deals.service',
-    operation: 'cancelDeal',
-    dealId,
-    actorId,
-  }, 'Cancelling deal');
+  log.info(
+    {
+      module: 'deals.service',
+      operation: 'cancelDeal',
+      dealId,
+      actorId,
+    },
+    'Cancelling deal'
+  );
 
   const deal = await getDeal(dealId);
   if (!deal) {
@@ -501,7 +534,7 @@ export async function cancelDeal(
     // Compute unreleased amount: sum of PENDING and SUBMITTED milestones.
     const unreleasedStatuses = ['PENDING', 'SUBMITTED', 'REJECTED', 'REVISION'];
     const unreleasedMilestones = deal.milestones.filter((m) =>
-      unreleasedStatuses.includes(m.status),
+      unreleasedStatuses.includes(m.status)
     );
     refundableAmount = unreleasedMilestones
       .reduce((sum, m) => sum + BigInt(m.amount), 0n)
@@ -512,10 +545,7 @@ export async function cancelDeal(
 
   try {
     await db.transaction(async (tx) => {
-      await tx
-        .update(deals)
-        .set({ status: 'CANCELLED' })
-        .where(eq(deals.id, dealId));
+      await tx.update(deals).set({ status: 'CANCELLED' }).where(eq(deals.id, dealId));
 
       await tx.insert(dealEvents).values({
         dealId,
@@ -530,27 +560,33 @@ export async function cancelDeal(
       });
     });
 
-    log.info({
-      module: 'deals.service',
-      operation: 'cancelDeal',
-      dealId,
-      actorId,
-      previousStatus: deal.status,
-      refundRequired,
-      refundableAmount,
-    }, 'Deal cancelled successfully');
+    log.info(
+      {
+        module: 'deals.service',
+        operation: 'cancelDeal',
+        dealId,
+        actorId,
+        previousStatus: deal.status,
+        refundRequired,
+        refundableAmount,
+      },
+      'Deal cancelled successfully'
+    );
 
     const updated = await getDeal(dealId);
     return updated!;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'deals.service',
-      operation: 'cancelDeal',
-      dealId,
-      actorId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'cancelDeal transaction failed');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'cancelDeal',
+        dealId,
+        actorId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'cancelDeal transaction failed'
+    );
     throw new AppError('DEAL_CANCEL_FAILED', 'Failed to cancel deal');
   }
 }
@@ -584,12 +620,15 @@ export async function getDealTimeline(dealId: string): Promise<DealEvent[]> {
     return events;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'deals.service',
-      operation: 'getDealTimeline',
-      dealId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to retrieve deal timeline');
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'getDealTimeline',
+        dealId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to retrieve deal timeline'
+    );
     throw new AppError('DEAL_TIMELINE_FAILED', 'Failed to retrieve deal timeline');
   }
 }

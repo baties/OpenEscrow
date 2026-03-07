@@ -28,7 +28,9 @@ async function exportAbi(): Promise<void> {
   const sharedAbisDir = path.resolve(__dirname, '../../packages/shared/src/abis');
 
   if (!fs.existsSync(sharedAbisDir)) {
-    throw new Error(`Shared abis directory not found: ${sharedAbisDir}\nDid you run Phase 0 (repo bootstrap)?`);
+    throw new Error(
+      `Shared abis directory not found: ${sharedAbisDir}\nDid you run Phase 0 (repo bootstrap)?`
+    );
   }
 
   // Read compiled artifact (requires `hardhat compile` to have been run first).
@@ -38,7 +40,7 @@ async function exportAbi(): Promise<void> {
   } catch (err) {
     throw new Error(
       `Could not read OpenEscrow artifact. Run 'pnpm build' in contracts/ first.\n` +
-      `Original error: ${err instanceof Error ? err.message : String(err)}`,
+        `Original error: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 

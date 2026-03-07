@@ -95,7 +95,12 @@ export function SubmitMilestoneModal({
         </h2>
         <p className="mt-1 text-sm text-gray-500">{milestoneTitle}</p>
 
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-4 space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="mt-4 space-y-4"
+        >
           {/* Summary */}
           <div>
             <label htmlFor="summary" className="block text-sm font-medium text-gray-700">
@@ -110,9 +115,7 @@ export function SubmitMilestoneModal({
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               disabled={isLoading}
             />
-            {errors['summary'] && (
-              <p className="mt-1 text-xs text-red-600">{errors['summary']}</p>
-            )}
+            {errors['summary'] && <p className="mt-1 text-xs text-red-600">{errors['summary']}</p>}
           </div>
 
           {/* Links */}
@@ -129,9 +132,7 @@ export function SubmitMilestoneModal({
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               disabled={isLoading}
             />
-            {errors['links'] && (
-              <p className="mt-1 text-xs text-red-600">{errors['links']}</p>
-            )}
+            {errors['links'] && <p className="mt-1 text-xs text-red-600">{errors['links']}</p>}
           </div>
 
           <ErrorAlert message={submitError} onDismiss={() => setSubmitError(null)} />

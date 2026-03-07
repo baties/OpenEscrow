@@ -75,7 +75,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
 
   log.info(
     { module: 'commands.deals', operation: 'dealsCommandHandler', telegramUserId, chatId },
-    'Handling /deals command',
+    'Handling /deals command'
   );
 
   // Auth check — MUST be first, return immediately if not linked
@@ -93,18 +93,18 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
     if (!Array.isArray(deals) || deals.length === 0) {
       await ctx.replyWithMarkdown(
         '📭 *No deals found.*\n\n' +
-          'You don\'t have any deals yet.\n' +
-          'Visit the web dashboard to create a new deal.',
+          "You don't have any deals yet.\n" +
+          'Visit the web dashboard to create a new deal.'
       );
       return;
     }
 
     // Filter to active deals (not completed or cancelled) for the primary list
     const activeDeals = deals.filter(
-      (d: Deal) => d.status !== 'COMPLETED' && d.status !== 'CANCELLED',
+      (d: Deal) => d.status !== 'COMPLETED' && d.status !== 'CANCELLED'
     );
     const inactiveDeals = deals.filter(
-      (d: Deal) => d.status === 'COMPLETED' || d.status === 'CANCELLED',
+      (d: Deal) => d.status === 'COMPLETED' || d.status === 'CANCELLED'
     );
 
     const lines: string[] = ['*Your Deals*\n'];
@@ -137,10 +137,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
       return [Markup.button.callback(`📋 ${shortId}...`, `deal_status:${deal.id}`)];
     });
 
-    const keyboard =
-      dealButtons.length > 0
-        ? Markup.inlineKeyboard(dealButtons)
-        : undefined;
+    const keyboard = dealButtons.length > 0 ? Markup.inlineKeyboard(dealButtons) : undefined;
 
     if (keyboard) {
       await ctx.replyWithMarkdown(lines.join('\n'), keyboard);
@@ -156,7 +153,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
         chatId,
         dealCount: deals.length,
       },
-      'Deals listed successfully',
+      'Deals listed successfully'
     );
   } catch (err) {
     if (err instanceof ApiClientError) {
@@ -169,7 +166,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
           statusCode: err.statusCode,
           error: err.message,
         },
-        'API error fetching deals',
+        'API error fetching deals'
       );
 
       if (err.statusCode === 401) {
@@ -178,7 +175,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
             'Your session has expired. Please re-link your account:\n' +
             '1. Go to web dashboard → Settings → Telegram\n' +
             '2. Generate a new link code\n' +
-            '3. Send `/link <code>` here',
+            '3. Send `/link <code>` here'
         );
         return;
       }
@@ -195,14 +192,14 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
         chatId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Unexpected error in /deals handler',
+      'Unexpected error in /deals handler'
     );
     try {
       await ctx.reply('Something went wrong fetching your deals. Please try again.');
     } catch {
       log.error(
         { module: 'bot', operation: 'dealsCommandHandler', chatId },
-        'Failed to send error reply for /deals',
+        'Failed to send error reply for /deals'
       );
     }
   }

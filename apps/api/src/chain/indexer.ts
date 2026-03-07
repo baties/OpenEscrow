@@ -50,11 +50,11 @@ let lastProcessedBlock: bigint | null = null;
 // ─── ABI fragments for events we care about ───────────────────────────────────
 
 const DEAL_FUNDED_ABI = parseAbiItem(
-  'event DealFunded(uint256 indexed dealId, address indexed client, address token, uint256 amount)',
+  'event DealFunded(uint256 indexed dealId, address indexed client, address token, uint256 amount)'
 );
 
 const DEAL_CANCELLED_ABI = parseAbiItem(
-  'event DealCancelled(uint256 indexed dealId, address indexed cancelledBy, uint256 refundAmount)',
+  'event DealCancelled(uint256 indexed dealId, address indexed cancelledBy, uint256 refundAmount)'
 );
 
 // ─── Event handlers ───────────────────────────────────────────────────────────
@@ -72,60 +72,65 @@ const DEAL_CANCELLED_ABI = parseAbiItem(
 async function handleDealFunded(
   chainDealId: string,
   txHash: string,
-  blockNumber: bigint,
+  blockNumber: bigint
 ): Promise<void> {
-  log.info({
-    module: 'chain.indexer',
-    operation: 'handleDealFunded',
-    chainDealId,
-    txHash,
-    blockNumber: blockNumber.toString(),
-  }, 'Processing DealFunded event');
+  log.info(
+    {
+      module: 'chain.indexer',
+      operation: 'handleDealFunded',
+      chainDealId,
+      txHash,
+      blockNumber: blockNumber.toString(),
+    },
+    'Processing DealFunded event'
+  );
 
   try {
-    const [deal] = await db
-      .select()
-      .from(deals)
-      .where(eq(deals.chainDealId, chainDealId))
-      .limit(1);
+    const [deal] = await db.select().from(deals).where(eq(deals.chainDealId, chainDealId)).limit(1);
 
     if (!deal) {
-      log.warn({
-        module: 'chain.indexer',
-        operation: 'handleDealFunded',
-        chainDealId,
-        txHash,
-      }, 'No DB deal found for chain deal ID — may have been funded via API endpoint already');
+      log.warn(
+        {
+          module: 'chain.indexer',
+          operation: 'handleDealFunded',
+          chainDealId,
+          txHash,
+        },
+        'No DB deal found for chain deal ID — may have been funded via API endpoint already'
+      );
       return;
     }
 
     // Idempotent: skip if already funded.
     if (deal.status === 'FUNDED') {
-      log.info({
-        module: 'chain.indexer',
-        operation: 'handleDealFunded',
-        dealId: deal.id,
-        chainDealId,
-      }, 'Deal already in FUNDED state — skipping indexer update');
+      log.info(
+        {
+          module: 'chain.indexer',
+          operation: 'handleDealFunded',
+          dealId: deal.id,
+          chainDealId,
+        },
+        'Deal already in FUNDED state — skipping indexer update'
+      );
       return;
     }
 
     if (deal.status !== 'AGREED') {
-      log.warn({
-        module: 'chain.indexer',
-        operation: 'handleDealFunded',
-        dealId: deal.id,
-        chainDealId,
-        currentStatus: deal.status,
-      }, 'DealFunded event received but deal is not in AGREED state');
+      log.warn(
+        {
+          module: 'chain.indexer',
+          operation: 'handleDealFunded',
+          dealId: deal.id,
+          chainDealId,
+          currentStatus: deal.status,
+        },
+        'DealFunded event received but deal is not in AGREED state'
+      );
       return;
     }
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(deals)
-        .set({ status: 'FUNDED', chainDealId })
-        .where(eq(deals.id, deal.id));
+      await tx.update(deals).set({ status: 'FUNDED', chainDealId }).where(eq(deals.id, deal.id));
 
       await tx.insert(dealEvents).values({
         dealId: deal.id,
@@ -140,20 +145,26 @@ async function handleDealFunded(
       });
     });
 
-    log.info({
-      module: 'chain.indexer',
-      operation: 'handleDealFunded',
-      dealId: deal.id,
-      chainDealId,
-    }, 'Deal status updated to FUNDED from chain event');
+    log.info(
+      {
+        module: 'chain.indexer',
+        operation: 'handleDealFunded',
+        dealId: deal.id,
+        chainDealId,
+      },
+      'Deal status updated to FUNDED from chain event'
+    );
   } catch (err) {
-    log.error({
-      module: 'chain.indexer',
-      operation: 'handleDealFunded',
-      chainDealId,
-      txHash,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to process DealFunded event');
+    log.error(
+      {
+        module: 'chain.indexer',
+        operation: 'handleDealFunded',
+        chainDealId,
+        txHash,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to process DealFunded event'
+    );
     // Do not rethrow — indexer must continue running.
   }
 }
@@ -174,16 +185,19 @@ async function handleDealCancelled(
   chainDealId: string,
   txHash: string,
   refundAmount: string,
-  blockNumber: bigint,
+  blockNumber: bigint
 ): Promise<void> {
-  log.info({
-    module: 'chain.indexer',
-    operation: 'handleDealCancelled',
-    chainDealId,
-    txHash,
-    refundAmount,
-    blockNumber: blockNumber.toString(),
-  }, 'Processing DealCancelled event');
+  log.info(
+    {
+      module: 'chain.indexer',
+      operation: 'handleDealCancelled',
+      chainDealId,
+      txHash,
+      refundAmount,
+      blockNumber: blockNumber.toString(),
+    },
+    'Processing DealCancelled event'
+  );
 
   try {
     const [deal] = await db
@@ -193,12 +207,15 @@ async function handleDealCancelled(
       .limit(1);
 
     if (!deal) {
-      log.warn({
-        module: 'chain.indexer',
-        operation: 'handleDealCancelled',
-        chainDealId,
-        txHash,
-      }, 'No DB deal found for cancelled chain deal ID');
+      log.warn(
+        {
+          module: 'chain.indexer',
+          operation: 'handleDealCancelled',
+          chainDealId,
+          txHash,
+        },
+        'No DB deal found for cancelled chain deal ID'
+      );
       return;
     }
 
@@ -217,21 +234,27 @@ async function handleDealCancelled(
       },
     });
 
-    log.info({
-      module: 'chain.indexer',
-      operation: 'handleDealCancelled',
-      dealId: deal.id,
-      chainDealId,
-      refundAmount,
-    }, 'DealCancelled on-chain event recorded in audit trail');
+    log.info(
+      {
+        module: 'chain.indexer',
+        operation: 'handleDealCancelled',
+        dealId: deal.id,
+        chainDealId,
+        refundAmount,
+      },
+      'DealCancelled on-chain event recorded in audit trail'
+    );
   } catch (err) {
-    log.error({
-      module: 'chain.indexer',
-      operation: 'handleDealCancelled',
-      chainDealId,
-      txHash,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to process DealCancelled event');
+    log.error(
+      {
+        module: 'chain.indexer',
+        operation: 'handleDealCancelled',
+        chainDealId,
+        txHash,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to process DealCancelled event'
+    );
     // Do not rethrow — indexer must continue running.
   }
 }
@@ -250,22 +273,28 @@ async function pollOnce(): Promise<void> {
   try {
     currentBlock = await publicClient.getBlockNumber();
   } catch (err) {
-    log.warn({
-      module: 'chain.indexer',
-      operation: 'pollOnce',
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to fetch current block number — will retry next cycle');
+    log.warn(
+      {
+        module: 'chain.indexer',
+        operation: 'pollOnce',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to fetch current block number — will retry next cycle'
+    );
     return;
   }
 
   // On first run, start from the current block to avoid replaying old history.
   if (lastProcessedBlock === null) {
     lastProcessedBlock = currentBlock;
-    log.info({
-      module: 'chain.indexer',
-      operation: 'pollOnce',
-      startBlock: currentBlock.toString(),
-    }, 'Indexer starting from current block');
+    log.info(
+      {
+        module: 'chain.indexer',
+        operation: 'pollOnce',
+        startBlock: currentBlock.toString(),
+      },
+      'Indexer starting from current block'
+    );
     return;
   }
 
@@ -277,12 +306,15 @@ async function pollOnce(): Promise<void> {
     return;
   }
 
-  log.info({
-    module: 'chain.indexer',
-    operation: 'pollOnce',
-    fromBlock: fromBlock.toString(),
-    toBlock: toBlock.toString(),
-  }, 'Polling chain events');
+  log.info(
+    {
+      module: 'chain.indexer',
+      operation: 'pollOnce',
+      fromBlock: fromBlock.toString(),
+      toBlock: toBlock.toString(),
+    },
+    'Polling chain events'
+  );
 
   try {
     // Fetch DealFunded events.
@@ -298,7 +330,7 @@ async function pollOnce(): Promise<void> {
         await handleDealFunded(
           log_entry.args.dealId.toString(),
           log_entry.transactionHash ?? '',
-          log_entry.blockNumber ?? 0n,
+          log_entry.blockNumber ?? 0n
         );
       }
     }
@@ -317,7 +349,7 @@ async function pollOnce(): Promise<void> {
           log_entry.args.dealId.toString(),
           log_entry.transactionHash ?? '',
           (log_entry.args.refundAmount ?? 0n).toString(),
-          log_entry.blockNumber ?? 0n,
+          log_entry.blockNumber ?? 0n
         );
       }
     }
@@ -325,13 +357,16 @@ async function pollOnce(): Promise<void> {
     // Advance the last processed block only after successful processing.
     lastProcessedBlock = toBlock;
   } catch (err) {
-    log.warn({
-      module: 'chain.indexer',
-      operation: 'pollOnce',
-      fromBlock: fromBlock.toString(),
-      toBlock: toBlock.toString(),
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Event log fetch failed — will retry from same block next cycle');
+    log.warn(
+      {
+        module: 'chain.indexer',
+        operation: 'pollOnce',
+        fromBlock: fromBlock.toString(),
+        toBlock: toBlock.toString(),
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Event log fetch failed — will retry from same block next cycle'
+    );
     // Do not advance lastProcessedBlock so we retry this range.
   }
 }
@@ -348,19 +383,25 @@ let pollingInterval: ReturnType<typeof setInterval> | null = null;
  */
 export function startIndexer(): void {
   if (pollingInterval !== null) {
-    log.warn({
-      module: 'chain.indexer',
-      operation: 'startIndexer',
-    }, 'Indexer is already running — ignoring duplicate start call');
+    log.warn(
+      {
+        module: 'chain.indexer',
+        operation: 'startIndexer',
+      },
+      'Indexer is already running — ignoring duplicate start call'
+    );
     return;
   }
 
-  log.info({
-    module: 'chain.indexer',
-    operation: 'startIndexer',
-    pollIntervalMs: env.INDEXER_POLL_INTERVAL_MS,
-    contractAddress: env.CONTRACT_ADDRESS,
-  }, 'Chain indexer started');
+  log.info(
+    {
+      module: 'chain.indexer',
+      operation: 'startIndexer',
+      pollIntervalMs: env.INDEXER_POLL_INTERVAL_MS,
+      contractAddress: env.CONTRACT_ADDRESS,
+    },
+    'Chain indexer started'
+  );
 
   // Run the first poll immediately, then schedule recurring polls.
   void pollOnce();
@@ -379,9 +420,12 @@ export function stopIndexer(): void {
   if (pollingInterval !== null) {
     clearInterval(pollingInterval);
     pollingInterval = null;
-    log.info({
-      module: 'chain.indexer',
-      operation: 'stopIndexer',
-    }, 'Chain indexer stopped');
+    log.info(
+      {
+        module: 'chain.indexer',
+        operation: 'stopIndexer',
+      },
+      'Chain indexer stopped'
+    );
   }
 }

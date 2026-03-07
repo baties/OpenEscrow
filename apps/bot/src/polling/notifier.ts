@@ -166,7 +166,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
 async function pollUserNotifications(
   bot: Telegraf<Context>,
   telegramUserId: string,
-  session: { jwt: string; userId: string; lastSeenEventAt: string | null },
+  session: { jwt: string; userId: string; lastSeenEventAt: string | null }
 ): Promise<void> {
   try {
     const dealsResponse = await listDeals(session.jwt);
@@ -174,14 +174,17 @@ async function pollUserNotifications(
       dealsResponse.deals ??
       // The API may return a bare array instead of { deals: [...] } depending on version.
       // as unknown as: dealsResponse typed as ListDealsResponse but API may return Deal[] directly.
-      (dealsResponse as unknown as { id: string; clientId: string; freelancerId: string; status: string }[]);
+      (dealsResponse as unknown as {
+        id: string;
+        clientId: string;
+        freelancerId: string;
+        status: string;
+      }[]);
 
     if (!Array.isArray(deals) || deals.length === 0) return;
 
     // Only poll active deals — skip COMPLETED and CANCELLED
-    const activeDeals = deals.filter(
-      (d) => d.status !== 'COMPLETED' && d.status !== 'CANCELLED',
-    );
+    const activeDeals = deals.filter((d) => d.status !== 'COMPLETED' && d.status !== 'CANCELLED');
 
     // Track the latest createdAt timestamp seen in this poll cycle.
     // ISO 8601 string comparison is safe for chronological ordering.
@@ -222,7 +225,7 @@ async function pollUserNotifications(
                   eventType: event.eventType,
                   dealId: deal.id,
                 },
-                'Notification sent',
+                'Notification sent'
               );
             } catch (sendErr) {
               log.error(
@@ -233,7 +236,7 @@ async function pollUserNotifications(
                   eventId: event.id,
                   error: sendErr instanceof Error ? sendErr.message : String(sendErr),
                 },
-                'Failed to send notification message',
+                'Failed to send notification message'
               );
             }
           }
@@ -254,7 +257,7 @@ async function pollUserNotifications(
               statusCode: dealErr.statusCode,
               error: dealErr.message,
             },
-            'API error fetching deal timeline during poll — skipping this deal',
+            'API error fetching deal timeline during poll — skipping this deal'
           );
         } else {
           log.error(
@@ -265,7 +268,7 @@ async function pollUserNotifications(
               dealId: deal.id,
               error: dealErr instanceof Error ? dealErr.message : String(dealErr),
             },
-            'Unexpected error fetching deal timeline — skipping this deal',
+            'Unexpected error fetching deal timeline — skipping this deal'
           );
         }
       }
@@ -285,7 +288,7 @@ async function pollUserNotifications(
             telegramUserId,
             error: err.message,
           },
-          'JWT expired for user during poll — user session will remain but notifications paused',
+          'JWT expired for user during poll — user session will remain but notifications paused'
         );
       } else {
         log.error(
@@ -296,7 +299,7 @@ async function pollUserNotifications(
             statusCode: err.statusCode,
             error: err.message,
           },
-          'API error during poll for user',
+          'API error during poll for user'
         );
       }
     } else {
@@ -307,7 +310,7 @@ async function pollUserNotifications(
           telegramUserId,
           error: err instanceof Error ? err.message : String(err),
         },
-        'Unexpected error polling notifications for user',
+        'Unexpected error polling notifications for user'
       );
     }
   }
@@ -333,7 +336,7 @@ export function startNotificationPolling(bot: Telegraf<Context>): ReturnType<typ
       operation: 'startNotificationPolling',
       pollIntervalMs: env.POLL_INTERVAL_MS,
     },
-    'Starting notification polling loop',
+    'Starting notification polling loop'
   );
 
   const intervalHandle = setInterval(() => {
@@ -350,7 +353,7 @@ export function startNotificationPolling(bot: Telegraf<Context>): ReturnType<typ
             telegramUserId,
             error: unexpectedErr instanceof Error ? unexpectedErr.message : String(unexpectedErr),
           },
-          'Unhandled error escaped pollUserNotifications',
+          'Unhandled error escaped pollUserNotifications'
         );
       });
     }

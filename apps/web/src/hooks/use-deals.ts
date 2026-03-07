@@ -63,6 +63,8 @@ export function useDeals(): UseDealsResult {
     deals,
     isLoading,
     error,
-    refresh: () => { void fetchDeals(); },
+    refresh: () => {
+      void fetchDeals();
+    },
   };
 }

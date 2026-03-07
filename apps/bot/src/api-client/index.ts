@@ -89,7 +89,7 @@ async function request<T>(
   method: string,
   path: string,
   jwt: string | null,
-  body?: unknown,
+  body?: unknown
 ): Promise<T> {
   const url = `${env.API_BASE_URL}${path}`;
   const headers: Record<string, string> = {
@@ -139,22 +139,24 @@ async function request<T>(
         throw new ApiClientError(
           response.status,
           apiErr,
-          `API error ${response.status}: ${apiErr?.message ?? String(parsed)}`,
+          `API error ${response.status}: ${apiErr?.message ?? String(parsed)}`
         );
       }
 
       // 5xx — server error, retryable
       lastError = new Error(`Server error ${response.status} on attempt ${attempt}`);
-      log.warn({
-        module: 'api-client',
-        operation: 'request',
-        method,
-        path,
-        statusCode: response.status,
-        attempt,
-        maxRetries: MAX_RETRIES,
-      }, 'Retryable server error — will retry');
-
+      log.warn(
+        {
+          module: 'api-client',
+          operation: 'request',
+          method,
+          path,
+          statusCode: response.status,
+          attempt,
+          maxRetries: MAX_RETRIES,
+        },
+        'Retryable server error — will retry'
+      );
     } catch (err) {
       clearTimeout(timeoutId);
 
@@ -163,27 +165,35 @@ async function request<T>(
 
       // AbortError — request timed out
       if (err instanceof Error && err.name === 'AbortError') {
-        lastError = new Error(`Request timed out after ${REQUEST_TIMEOUT_MS}ms (attempt ${attempt})`);
-        log.warn({
-          module: 'api-client',
-          operation: 'request',
-          method,
-          path,
-          attempt,
-          maxRetries: MAX_RETRIES,
-          error: lastError.message,
-        }, 'Request timeout — will retry');
+        lastError = new Error(
+          `Request timed out after ${REQUEST_TIMEOUT_MS}ms (attempt ${attempt})`
+        );
+        log.warn(
+          {
+            module: 'api-client',
+            operation: 'request',
+            method,
+            path,
+            attempt,
+            maxRetries: MAX_RETRIES,
+            error: lastError.message,
+          },
+          'Request timeout — will retry'
+        );
       } else if (err instanceof Error) {
         lastError = err;
-        log.warn({
-          module: 'api-client',
-          operation: 'request',
-          method,
-          path,
-          attempt,
-          maxRetries: MAX_RETRIES,
-          error: err.message,
-        }, 'Network error — will retry');
+        log.warn(
+          {
+            module: 'api-client',
+            operation: 'request',
+            method,
+            path,
+            attempt,
+            maxRetries: MAX_RETRIES,
+            error: err.message,
+          },
+          'Network error — will retry'
+        );
       } else {
         lastError = new Error(String(err));
       }
@@ -196,14 +206,17 @@ async function request<T>(
     }
   }
 
-  log.error({
-    module: 'api-client',
-    operation: 'request',
-    method,
-    path,
-    maxRetries: MAX_RETRIES,
-    error: lastError.message,
-  }, 'All retry attempts exhausted');
+  log.error(
+    {
+      module: 'api-client',
+      operation: 'request',
+      method,
+      path,
+      maxRetries: MAX_RETRIES,
+      error: lastError.message,
+    },
+    'All retry attempts exhausted'
+  );
 
   throw lastError;
 }
@@ -275,7 +288,10 @@ export async function getDeal(jwt: string, dealId: string): Promise<GetDealRespo
  * @throws {ApiClientError} On 404, 403, or other API errors
  */
 export async function getDealTimeline(jwt: string, dealId: string): Promise<GetTimelineResponse> {
-  log.info({ module: 'api-client', operation: 'getDealTimeline', dealId }, 'Fetching deal timeline');
+  log.info(
+    { module: 'api-client', operation: 'getDealTimeline', dealId },
+    'Fetching deal timeline'
+  );
   return request<GetTimelineResponse>('GET', `/api/v1/deals/${dealId}/timeline`, jwt);
 }
 
@@ -320,13 +336,18 @@ export async function cancelDeal(jwt: string, dealId: string): Promise<CancelDea
 export async function submitMilestone(
   jwt: string,
   milestoneId: string,
-  body: SubmitMilestoneRequest,
+  body: SubmitMilestoneRequest
 ): Promise<SubmitMilestoneResponse> {
   log.info(
     { module: 'api-client', operation: 'submitMilestone', milestoneId },
-    'Submitting milestone',
+    'Submitting milestone'
   );
-  return request<SubmitMilestoneResponse>('POST', `/api/v1/milestones/${milestoneId}/submit`, jwt, body);
+  return request<SubmitMilestoneResponse>(
+    'POST',
+    `/api/v1/milestones/${milestoneId}/submit`,
+    jwt,
+    body
+  );
 }
 
 /**
@@ -340,13 +361,17 @@ export async function submitMilestone(
  */
 export async function approveMilestone(
   jwt: string,
-  milestoneId: string,
+  milestoneId: string
 ): Promise<ApproveMilestoneResponse> {
   log.info(
     { module: 'api-client', operation: 'approveMilestone', milestoneId },
-    'Approving milestone',
+    'Approving milestone'
   );
-  return request<ApproveMilestoneResponse>('POST', `/api/v1/milestones/${milestoneId}/approve`, jwt);
+  return request<ApproveMilestoneResponse>(
+    'POST',
+    `/api/v1/milestones/${milestoneId}/approve`,
+    jwt
+  );
 }
 
 /**
@@ -362,17 +387,17 @@ export async function approveMilestone(
 export async function rejectMilestone(
   jwt: string,
   milestoneId: string,
-  body: RejectMilestoneRequest,
+  body: RejectMilestoneRequest
 ): Promise<RejectMilestoneResponse> {
   log.info(
     { module: 'api-client', operation: 'rejectMilestone', milestoneId },
-    'Rejecting milestone',
+    'Rejecting milestone'
   );
   return request<RejectMilestoneResponse>(
     'POST',
     `/api/v1/milestones/${milestoneId}/reject`,
     jwt,
-    body,
+    body
   );
 }
 
@@ -388,11 +413,11 @@ export async function rejectMilestone(
  */
 export async function getBotSession(
   telegramUserId: string,
-  botApiSecret: string,
+  botApiSecret: string
 ): Promise<BotSessionResponse | null> {
   log.info(
     { module: 'api-client', operation: 'getBotSession' },
-    'Requesting bot session for Telegram user',
+    'Requesting bot session for Telegram user'
   );
 
   const url = `${env.API_BASE_URL}/api/v1/telegram/bot-session`;
@@ -424,7 +449,7 @@ export async function getBotSession(
       throw new ApiClientError(
         response.status,
         apiErr,
-        `Bot-session API error ${response.status}: ${apiErr?.message ?? String(parsed)}`,
+        `Bot-session API error ${response.status}: ${apiErr?.message ?? String(parsed)}`
       );
     }
 
@@ -433,7 +458,7 @@ export async function getBotSession(
     clearTimeout(timeoutId);
     if (err instanceof ApiClientError) throw err;
     throw new Error(
-      `getBotSession network error: ${err instanceof Error ? err.message : String(err)}`,
+      `getBotSession network error: ${err instanceof Error ? err.message : String(err)}`
     );
   }
 }

@@ -24,7 +24,7 @@ import { Navbar } from '@/components/Navbar';
  * These connectors call setup() at module load time which crashes in Node.js.
  */
 const Web3Provider = dynamic(
-  () => import('@/providers/Web3Provider').then(m => ({ default: m.Web3Provider })),
+  () => import('@/providers/Web3Provider').then((m) => ({ default: m.Web3Provider })),
   { ssr: false }
 );
 
@@ -47,11 +47,7 @@ export const metadata: Metadata = {
  * @param props - Object containing children (the current page content)
  * @returns The HTML document shell with providers and navbar
  */
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">

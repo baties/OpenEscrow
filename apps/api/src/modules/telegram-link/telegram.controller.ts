@@ -26,15 +26,18 @@ const log = logger.child({ module: 'telegram.controller' });
  */
 export async function generateCodeHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const userId = request.user.userId;
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'generateCodeHandler',
-    userId,
-  }, 'Handling generate-code request');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'generateCodeHandler',
+      userId,
+    },
+    'Handling generate-code request'
+  );
 
   const result = await telegramService.generateLinkCode(userId);
   await reply.status(200).send({
@@ -55,7 +58,7 @@ export async function generateCodeHandler(
  */
 export async function linkTelegramHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const parsed = LinkTelegramSchema.safeParse(request.body);
   if (!parsed.success) {
@@ -69,11 +72,14 @@ export async function linkTelegramHandler(
 
   const userId = request.user.userId;
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'linkTelegramHandler',
-    userId,
-  }, 'Handling link-telegram request');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'linkTelegramHandler',
+      userId,
+    },
+    'Handling link-telegram request'
+  );
 
   await telegramService.linkTelegram(userId, parsed.data);
   await reply.status(200).send({ success: true, message: 'Telegram account linked successfully' });
@@ -90,18 +96,23 @@ export async function linkTelegramHandler(
  */
 export async function unlinkTelegramHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const userId = request.user.userId;
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'unlinkTelegramHandler',
-    userId,
-  }, 'Handling unlink-telegram request');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'unlinkTelegramHandler',
+      userId,
+    },
+    'Handling unlink-telegram request'
+  );
 
   await telegramService.unlinkTelegram(userId);
-  await reply.status(200).send({ success: true, message: 'Telegram account unlinked successfully' });
+  await reply
+    .status(200)
+    .send({ success: true, message: 'Telegram account unlinked successfully' });
 }
 
 /**
@@ -115,15 +126,18 @@ export async function unlinkTelegramHandler(
  */
 export async function getStatusHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const userId = request.user.userId;
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'getStatusHandler',
-    userId,
-  }, 'Handling get-status request');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'getStatusHandler',
+      userId,
+    },
+    'Handling get-status request'
+  );
 
   const status = await telegramService.getTelegramStatus(userId);
   await reply.status(200).send(status);
@@ -143,15 +157,18 @@ export async function getStatusHandler(
  */
 export async function getBotSessionHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   // Authenticate via shared bot secret header.
   const botSecret = (request.headers as Record<string, string | undefined>)['x-bot-secret'];
   if (!botSecret || botSecret !== env.BOT_API_SECRET) {
-    log.warn({
-      module: 'telegram.controller',
-      operation: 'getBotSessionHandler',
-    }, 'Rejected bot-session request: invalid or missing X-Bot-Secret');
+    log.warn(
+      {
+        module: 'telegram.controller',
+        operation: 'getBotSessionHandler',
+      },
+      'Rejected bot-session request: invalid or missing X-Bot-Secret'
+    );
     await reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Invalid bot secret' });
     return;
   }
@@ -165,10 +182,13 @@ export async function getBotSessionHandler(
     return;
   }
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'getBotSessionHandler',
-  }, 'Handling bot-session request');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'getBotSessionHandler',
+    },
+    'Handling bot-session request'
+  );
 
   const user = await telegramService.getUserByTelegramId(body.telegramUserId);
   if (!user) {
@@ -185,11 +205,14 @@ export async function getBotSessionHandler(
     walletAddress: user.walletAddress,
   });
 
-  log.info({
-    module: 'telegram.controller',
-    operation: 'getBotSessionHandler',
-    userId: user.userId,
-  }, 'Bot session JWT issued');
+  log.info(
+    {
+      module: 'telegram.controller',
+      operation: 'getBotSessionHandler',
+      userId: user.userId,
+    },
+    'Bot session JWT issued'
+  );
 
   await reply.status(200).send({
     token,

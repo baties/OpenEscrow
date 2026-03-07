@@ -42,7 +42,7 @@ export async function requireLinked(ctx: Context): Promise<UserSession | null> {
   if (telegramUserId === undefined) {
     log.warn(
       { module: 'middleware.auth', operation: 'requireLinked' },
-      'ctx.from.id is undefined — ignoring update',
+      'ctx.from.id is undefined — ignoring update'
     );
     return null;
   }
@@ -54,7 +54,7 @@ export async function requireLinked(ctx: Context): Promise<UserSession | null> {
         operation: 'requireLinked',
         telegramUserId,
       },
-      'Unlinked user attempted command',
+      'Unlinked user attempted command'
     );
 
     try {
@@ -67,7 +67,7 @@ export async function requireLinked(ctx: Context): Promise<UserSession | null> {
           telegramUserId,
           error: replyErr instanceof Error ? replyErr.message : String(replyErr),
         },
-        'Failed to send link instructions',
+        'Failed to send link instructions'
       );
     }
 
@@ -84,7 +84,7 @@ export async function requireLinked(ctx: Context): Promise<UserSession | null> {
         operation: 'requireLinked',
         telegramUserId,
       },
-      'isLinked() returned true but getSession() returned undefined — session store inconsistency',
+      'isLinked() returned true but getSession() returned undefined — session store inconsistency'
     );
 
     try {
@@ -97,7 +97,7 @@ export async function requireLinked(ctx: Context): Promise<UserSession | null> {
           telegramUserId,
           error: replyErr instanceof Error ? replyErr.message : String(replyErr),
         },
-        'Failed to send link instructions after session inconsistency',
+        'Failed to send link instructions after session inconsistency'
       );
     }
 

@@ -74,10 +74,7 @@ export function isLinked(telegramUserId: number | string): boolean {
  * @param eventAt - ISO 8601 createdAt timestamp of the most recently seen deal event
  * @returns true if the session was found and updated, false if user is not linked
  */
-export function updateLastSeenEventAt(
-  telegramUserId: number | string,
-  eventAt: string,
-): boolean {
+export function updateLastSeenEventAt(telegramUserId: number | string, eventAt: string): boolean {
   const key = String(telegramUserId);
   const session = sessionStore.get(key);
   if (!session) return false;

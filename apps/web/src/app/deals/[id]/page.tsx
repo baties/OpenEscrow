@@ -41,7 +41,12 @@ export default function DealDetailPage() {
   const dealId = typeof params['id'] === 'string' ? params['id'] : null;
 
   const { isAuthenticated, walletAddress } = useAuth();
-  const { deal, isLoading: isDealLoading, error: dealError, refresh: refreshDeal } = useDeal(dealId);
+  const {
+    deal,
+    isLoading: isDealLoading,
+    error: dealError,
+    refresh: refreshDeal,
+  } = useDeal(dealId);
   const {
     events,
     isLoading: isTimelineLoading,
@@ -49,8 +54,14 @@ export default function DealDetailPage() {
     refresh: refreshTimeline,
   } = useDealTimeline(dealId);
   const { agreeDeal, cancelDeal, agreeState, cancelState } = useDealActions();
-  const { submitMilestone, approveMilestone, rejectMilestone, submitState, approveState, rejectState } =
-    useMilestoneActions();
+  const {
+    submitMilestone,
+    approveMilestone,
+    rejectMilestone,
+    submitState,
+    approveState,
+    rejectState,
+  } = useMilestoneActions();
 
   // Modal state
   const [submitModalMilestoneId, setSubmitModalMilestoneId] = useState<string | null>(null);
@@ -133,7 +144,9 @@ export default function DealDetailPage() {
   async function handleCancel() {
     const isDraft = deal!.status === 'DRAFT';
     const actionLabel = isDraft && isFreelancer ? 'decline' : 'cancel';
-    if (!window.confirm(`Are you sure you want to ${actionLabel} this deal? This cannot be undone.`)) {
+    if (
+      !window.confirm(`Are you sure you want to ${actionLabel} this deal? This cannot be undone.`)
+    ) {
       return;
     }
     setSuccessMessage(null);
@@ -256,7 +269,9 @@ export default function DealDetailPage() {
               <button
                 type="button"
                 disabled={agreeState.isLoading}
-                onClick={() => { void handleAgree(); }}
+                onClick={() => {
+                  void handleAgree();
+                }}
                 className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               >
                 {agreeState.isLoading && <LoadingSpinner size="sm" />}
@@ -267,7 +282,9 @@ export default function DealDetailPage() {
               <button
                 type="button"
                 disabled={cancelState.isLoading}
-                onClick={() => { void handleCancel(); }}
+                onClick={() => {
+                  void handleCancel();
+                }}
                 className="flex items-center gap-1.5 rounded-lg border border-orange-200 px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-60"
               >
                 {cancelState.isLoading && <LoadingSpinner size="sm" />}
@@ -286,7 +303,9 @@ export default function DealDetailPage() {
               <button
                 type="button"
                 disabled={cancelState.isLoading}
-                onClick={() => { void handleCancel(); }}
+                onClick={() => {
+                  void handleCancel();
+                }}
                 className="flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60"
               >
                 {cancelState.isLoading && <LoadingSpinner size="sm" />}
@@ -320,7 +339,9 @@ export default function DealDetailPage() {
                 isClient={isClient}
                 dealStatus={deal.status}
                 onSubmit={(mid) => setSubmitModalMilestoneId(mid)}
-                onApprove={(mid) => { void handleApprove(mid); }}
+                onApprove={(mid) => {
+                  void handleApprove(mid);
+                }}
                 onReject={(mid) => setRejectModalMilestoneId(mid)}
                 isActionsLoading={isMilestoneActionsLoading}
               />
@@ -332,11 +353,7 @@ export default function DealDetailPage() {
       <div>
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Activity Timeline</h2>
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <DealTimeline
-            events={events}
-            isLoading={isTimelineLoading}
-            error={timelineError}
-          />
+          <DealTimeline events={events} isLoading={isTimelineLoading} error={timelineError} />
         </div>
       </div>
 

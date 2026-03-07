@@ -61,8 +61,8 @@ export default function HomePage() {
           <span className="block mt-4 text-indigo-600">for Web3 projects</span>
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Lock USDC or USDT in a smart contract. Get paid on verified milestones.
-          No disputes, no trust required — just on-chain accountability.
+          Lock USDC or USDT in a smart contract. Get paid on verified milestones. No disputes, no
+          trust required — just on-chain accountability.
         </p>
       </div>
 
@@ -89,7 +89,9 @@ export default function HomePage() {
             key={title}
             className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm"
           >
-            <span className="text-2xl" aria-hidden="true">{icon}</span>
+            <span className="text-2xl" aria-hidden="true">
+              {icon}
+            </span>
             <h3 className="mt-2 font-semibold text-gray-900">{title}</h3>
             <p className="mt-1 text-sm text-gray-500">{desc}</p>
           </div>
@@ -135,7 +137,9 @@ export default function HomePage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => { void signIn(); }}
+                onClick={() => {
+                  void signIn();
+                }}
                 className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
               >
                 Try Again
@@ -167,14 +171,14 @@ export default function HomePage() {
             )}
             <button
               type="button"
-              onClick={() => { void signIn(); }}
+              onClick={() => {
+                void signIn();
+              }}
               className="rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
             >
               Sign in with Ethereum
             </button>
-            <p className="text-xs text-gray-400">
-              Sign a message to verify ownership (no gas fee)
-            </p>
+            <p className="text-xs text-gray-400">Sign a message to verify ownership (no gas fee)</p>
             <button
               type="button"
               onClick={signOut}

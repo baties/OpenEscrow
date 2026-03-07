@@ -68,6 +68,8 @@ export function useDeal(dealId: string | null | undefined): UseDealResult {
     deal,
     isLoading,
     error,
-    refresh: () => { void fetchDeal(); },
+    refresh: () => {
+      void fetchDeal();
+    },
   };
 }

@@ -142,9 +142,8 @@ export default function FundDealPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <h2 className="font-semibold text-gray-900">Step 1: Approve & Deposit</h2>
           <p className="text-sm text-gray-600">
-            You need to approve the OpenEscrow contract to spend your tokens, then call
-            the deposit function. Use your wallet or a tool like Etherscan to complete
-            these two transactions.
+            You need to approve the OpenEscrow contract to spend your tokens, then call the deposit
+            function. Use your wallet or a tool like Etherscan to complete these two transactions.
           </p>
 
           {/* Contract info */}
@@ -153,15 +152,15 @@ export default function FundDealPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Contract Address
               </p>
-              <p className="mt-0.5 font-mono text-gray-900 break-all">
-                {config.contractAddress}
-              </p>
+              <p className="mt-0.5 font-mono text-gray-900 break-all">{config.contractAddress}</p>
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Freelancer Address
               </p>
-              <p className="mt-0.5 font-mono text-gray-700">{truncateAddress(deal.freelancerId, 6, 6)}</p>
+              <p className="mt-0.5 font-mono text-gray-700">
+                {truncateAddress(deal.freelancerId, 6, 6)}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -182,8 +181,8 @@ export default function FundDealPage() {
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-            <strong>Testnet only.</strong> Ensure you are connected to Sepolia and using
-            the correct test token addresses.
+            <strong>Testnet only.</strong> Ensure you are connected to Sepolia and using the correct
+            test token addresses.
           </div>
 
           <button
@@ -198,11 +197,16 @@ export default function FundDealPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <h2 className="font-semibold text-gray-900">Step 2: Confirm Transaction</h2>
           <p className="text-sm text-gray-600">
-            Paste the transaction hash from your deposit transaction. The API will verify
-            and update the deal status to FUNDED.
+            Paste the transaction hash from your deposit transaction. The API will verify and update
+            the deal status to FUNDED.
           </p>
 
-          <form onSubmit={(e) => { void handleConfirm(e); }} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleConfirm(e);
+            }}
+            className="space-y-4"
+          >
             <div>
               <label htmlFor="txHash" className="block text-sm font-medium text-gray-700">
                 Transaction Hash <span className="text-red-500">*</span>

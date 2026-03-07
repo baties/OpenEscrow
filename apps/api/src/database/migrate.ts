@@ -69,7 +69,7 @@ export async function runMigrations(): Promise<void> {
 
       if (attempt < MAX_ATTEMPTS) {
         console.error(
-          `[migrate] Attempt ${attempt}/${MAX_ATTEMPTS} failed: ${message} — retrying in ${RETRY_DELAY_MS}ms`,
+          `[migrate] Attempt ${attempt}/${MAX_ATTEMPTS} failed: ${message} — retrying in ${RETRY_DELAY_MS}ms`
         );
         await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       } else {

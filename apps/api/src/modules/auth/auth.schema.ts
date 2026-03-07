@@ -25,9 +25,7 @@ export const VerifyInputSchema = z.object({
   /** The full SIWE message string as constructed by the frontend. */
   message: z.string().min(1, 'SIWE message is required'),
   /** Hex-encoded ECDSA signature (0x-prefixed). */
-  signature: z
-    .string()
-    .regex(/^0x[0-9a-fA-F]+$/, 'signature must be a hex string'),
+  signature: z.string().regex(/^0x[0-9a-fA-F]+$/, 'signature must be a hex string'),
 });
 
 export type GenerateNonceInput = z.infer<typeof GenerateNonceInputSchema>;

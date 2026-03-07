@@ -66,7 +66,7 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
         telegramUserId,
         userId: sessionData.userId,
       },
-      'Bot session created for newly linked user',
+      'Bot session created for newly linked user'
     );
 
     // Send welcome notification
@@ -80,7 +80,7 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
           `• Use /deals to list your active deals\n` +
           `• Use /status <dealId> to check deal details\n\n` +
           `_You're all set. Happy building!_`,
-        { parse_mode: 'Markdown' },
+        { parse_mode: 'Markdown' }
       );
     } catch (sendErr) {
       log.error(
@@ -90,7 +90,7 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
           telegramUserId,
           error: sendErr instanceof Error ? sendErr.message : String(sendErr),
         },
-        'Failed to send welcome message to newly linked user',
+        'Failed to send welcome message to newly linked user'
       );
       // Session was still created successfully — welcome message failure is non-fatal
     }
@@ -102,7 +102,7 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
         telegramUserId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Error checking pending link status',
+      'Error checking pending link status'
     );
   }
 }
@@ -118,16 +118,14 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
  * @param bot - The running Telegraf bot instance (used to send welcome messages)
  * @returns The setInterval handle (call clearInterval to stop)
  */
-export function startSessionCreatorPolling(
-  bot: Telegraf<Context>,
-): ReturnType<typeof setInterval> {
+export function startSessionCreatorPolling(bot: Telegraf<Context>): ReturnType<typeof setInterval> {
   log.info(
     {
       module: 'polling.session-creator',
       operation: 'startSessionCreatorPolling',
       pollIntervalMs: SESSION_POLL_INTERVAL_MS,
     },
-    'Starting session-creator polling loop',
+    'Starting session-creator polling loop'
   );
 
   const intervalHandle = setInterval(() => {
@@ -142,7 +140,7 @@ export function startSessionCreatorPolling(
             telegramUserId,
             error: unexpectedErr instanceof Error ? unexpectedErr.message : String(unexpectedErr),
           },
-          'Unhandled error escaped tryCreateSession',
+          'Unhandled error escaped tryCreateSession'
         );
       });
     }

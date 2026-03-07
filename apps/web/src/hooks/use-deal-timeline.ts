@@ -67,6 +67,8 @@ export function useDealTimeline(dealId: string | null | undefined): UseDealTimel
     events,
     isLoading,
     error,
-    refresh: () => { void fetchTimeline(); },
+    refresh: () => {
+      void fetchTimeline();
+    },
   };
 }

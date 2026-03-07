@@ -74,16 +74,13 @@ export function DealTimeline({ events, isLoading, error }: DealTimelineProps) {
   }
 
   if (!events || events.length === 0) {
-    return (
-      <p className="py-4 text-center text-sm text-gray-500">No events recorded yet.</p>
-    );
+    return <p className="py-4 text-center text-sm text-gray-500">No events recorded yet.</p>;
   }
 
   return (
     <ol className="relative border-l border-gray-200 pl-6">
       {events.map((event, index) => {
-        const iconClasses =
-          EVENT_ICON_CLASSES[event.eventType] ?? 'bg-gray-100 text-gray-500';
+        const iconClasses = EVENT_ICON_CLASSES[event.eventType] ?? 'bg-gray-100 text-gray-500';
         const label = EVENT_LABELS[event.eventType] ?? event.eventType;
 
         return (
@@ -100,15 +97,11 @@ export function DealTimeline({ events, isLoading, error }: DealTimelineProps) {
 
             <div>
               <p className="text-sm font-medium text-gray-900">{label}</p>
-              <time
-                dateTime={event.createdAt}
-                className="block text-xs text-gray-400"
-              >
+              <time dateTime={event.createdAt} className="block text-xs text-gray-400">
                 {formatDate(event.createdAt)}
               </time>
               <p className="mt-0.5 text-xs text-gray-500">
-                by{' '}
-                <span className="font-mono">{truncateAddress(event.actorId)}</span>
+                by <span className="font-mono">{truncateAddress(event.actorId)}</span>
               </p>
             </div>
           </li>

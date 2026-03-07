@@ -41,37 +41,65 @@ import {
  */
 export async function dealsRouter(fastify: FastifyInstance): Promise<void> {
   // GET /api/v1/deals — list deals for authenticated user
-  fastify.get('/deals', {
-    preHandler: [requireAuth],
-  }, listDealsHandler);
+  fastify.get(
+    '/deals',
+    {
+      preHandler: [requireAuth],
+    },
+    listDealsHandler
+  );
 
   // POST /api/v1/deals — create a new deal (client role)
-  fastify.post('/deals', {
-    preHandler: [requireAuth],
-  }, createDealHandler);
+  fastify.post(
+    '/deals',
+    {
+      preHandler: [requireAuth],
+    },
+    createDealHandler
+  );
 
   // GET /api/v1/deals/:id — get deal detail (any participant)
-  fastify.get<{ Params: { id: string } }>('/deals/:id', {
-    preHandler: [requireAuth],
-  }, getDealHandler);
+  fastify.get<{ Params: { id: string } }>(
+    '/deals/:id',
+    {
+      preHandler: [requireAuth],
+    },
+    getDealHandler
+  );
 
   // POST /api/v1/deals/:id/agree — freelancer agrees to deal
-  fastify.post<{ Params: { id: string } }>('/deals/:id/agree', {
-    preHandler: [requireAuth, requireRole('freelancer')],
-  }, agreeToDealHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/deals/:id/agree',
+    {
+      preHandler: [requireAuth, requireRole('freelancer')],
+    },
+    agreeToDealHandler
+  );
 
   // POST /api/v1/deals/:id/fund — client records on-chain funding
-  fastify.post<{ Params: { id: string } }>('/deals/:id/fund', {
-    preHandler: [requireAuth, requireRole('client')],
-  }, fundDealHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/deals/:id/fund',
+    {
+      preHandler: [requireAuth, requireRole('client')],
+    },
+    fundDealHandler
+  );
 
   // POST /api/v1/deals/:id/cancel — either party cancels the deal
-  fastify.post<{ Params: { id: string } }>('/deals/:id/cancel', {
-    preHandler: [requireAuth, requireRole('participant')],
-  }, cancelDealHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/deals/:id/cancel',
+    {
+      preHandler: [requireAuth, requireRole('participant')],
+    },
+    cancelDealHandler
+  );
 
   // GET /api/v1/deals/:id/timeline — deal audit trail
-  fastify.get<{ Params: { id: string } }>('/deals/:id/timeline', {
-    preHandler: [requireAuth],
-  }, getDealTimelineHandler);
+  fastify.get<{ Params: { id: string } }>(
+    '/deals/:id/timeline',
+    {
+      preHandler: [requireAuth],
+    },
+    getDealTimelineHandler
+  );
 }

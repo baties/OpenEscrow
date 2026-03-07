@@ -62,20 +62,20 @@ export function handleGenerateNonce(input: GenerateNonceInput): string {
  * @throws {AppError} INVALID_SIGNATURE if SIWE verification fails
  * @throws {AppError} USER_CREATE_FAILED if the database upsert fails
  */
-export async function handleVerify(
-  input: VerifyInput,
-  fastify: FastifyInstance,
-): Promise<string> {
+export async function handleVerify(input: VerifyInput, fastify: FastifyInstance): Promise<string> {
   let parsedMessage: SiweMessage;
 
   try {
     parsedMessage = new SiweMessage(input.message);
   } catch (err) {
-    log.warn({
-      module: 'modules.auth.verify',
-      operation: 'handleVerify',
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to parse SIWE message');
+    log.warn(
+      {
+        module: 'modules.auth.verify',
+        operation: 'handleVerify',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to parse SIWE message'
+    );
     throw new AppError('INVALID_SIGNATURE', 'Invalid SIWE message format');
   }
 
@@ -84,7 +84,10 @@ export async function handleVerify(
   // Retrieve and validate the nonce.
   const storedNonce = getNonce(walletAddress);
   if (!storedNonce) {
-    throw new AppError('NONCE_NOT_FOUND', 'No active nonce for this wallet address. Request a new nonce.');
+    throw new AppError(
+      'NONCE_NOT_FOUND',
+      'No active nonce for this wallet address. Request a new nonce.'
+    );
   }
 
   // Verify the SIWE message signature.
@@ -98,12 +101,15 @@ export async function handleVerify(
       throw new Error('SIWE verification returned false');
     }
   } catch (err) {
-    log.warn({
-      module: 'modules.auth.verify',
-      operation: 'handleVerify',
-      walletAddress,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'SIWE signature verification failed');
+    log.warn(
+      {
+        module: 'modules.auth.verify',
+        operation: 'handleVerify',
+        walletAddress,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'SIWE signature verification failed'
+    );
 
     // Consume nonce regardless to prevent brute-force attempts.
     consumeNonce(walletAddress);
@@ -137,32 +143,41 @@ export async function handleVerify(
       }
       userId = newUser.id;
 
-      log.info({
-        module: 'modules.auth.verify',
-        operation: 'handleVerify',
-        userId,
-        walletAddress,
-      }, 'New user created on first sign-in');
+      log.info(
+        {
+          module: 'modules.auth.verify',
+          operation: 'handleVerify',
+          userId,
+          walletAddress,
+        },
+        'New user created on first sign-in'
+      );
     }
   } catch (err) {
-    log.error({
-      module: 'modules.auth.verify',
-      operation: 'handleVerify',
-      walletAddress,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'User upsert failed');
+    log.error(
+      {
+        module: 'modules.auth.verify',
+        operation: 'handleVerify',
+        walletAddress,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'User upsert failed'
+    );
     throw new AppError('USER_CREATE_FAILED', 'Failed to create or retrieve user account');
   }
 
   // Issue JWT with userId and walletAddress in payload.
   const jwt = fastify.jwt.sign({ userId, walletAddress });
 
-  log.info({
-    module: 'modules.auth.verify',
-    operation: 'handleVerify',
-    userId,
-    walletAddress,
-  }, 'SIWE verified, JWT issued');
+  log.info(
+    {
+      module: 'modules.auth.verify',
+      operation: 'handleVerify',
+      userId,
+      walletAddress,
+    },
+    'SIWE verified, JWT issued'
+  );
 
   return jwt;
 }

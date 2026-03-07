@@ -128,7 +128,14 @@ describe('deals.service', () => {
         .mockReturnValueOnce(makeUsersMock());
 
       const result = await dealsService.listDeals('client-uuid-1');
-      expect(result).toMatchObject([{ id: deal.id, status: deal.status, clientAddress: '0xclient1', freelancerAddress: '0xfreelancer1' }]);
+      expect(result).toMatchObject([
+        {
+          id: deal.id,
+          status: deal.status,
+          clientAddress: '0xclient1',
+          freelancerAddress: '0xfreelancer1',
+        },
+      ]);
     });
 
     it('returns empty array when user has no deals', async () => {
@@ -211,12 +218,28 @@ describe('deals.service', () => {
       // Each getDeal = 3 selects: deal, milestones, users enrichment.
       mockDb.select
         // First getDeal (read current state)
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock())
         // Second getDeal (read updated state)
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([updatedDeal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([updatedDeal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
       mockDb.transaction.mockImplementation(async (fn: Function) => {
@@ -244,7 +267,9 @@ describe('deals.service', () => {
         limit: vi.fn().mockResolvedValue([]),
       });
 
-      await expect(dealsService.agreeToDeal('nonexistent', 'freelancer-uuid-1')).rejects.toMatchObject({
+      await expect(
+        dealsService.agreeToDeal('nonexistent', 'freelancer-uuid-1')
+      ).rejects.toMatchObject({
         code: 'DEAL_NOT_FOUND',
       });
     });
@@ -255,11 +280,21 @@ describe('deals.service', () => {
 
       // getDeal succeeds (3 selects), then assertValidTransition throws
       mockDb.select
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
-      await expect(dealsService.agreeToDeal('deal-uuid-1', 'freelancer-uuid-1')).rejects.toMatchObject({
+      await expect(
+        dealsService.agreeToDeal('deal-uuid-1', 'freelancer-uuid-1')
+      ).rejects.toMatchObject({
         code: 'INVALID_TRANSITION',
         details: { from: 'AGREED', to: 'AGREED' },
       });
@@ -276,11 +311,27 @@ describe('deals.service', () => {
 
       // Each getDeal = 3 selects (deal, milestones, users)
       mockDb.select
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock())
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([cancelledDeal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([cancelledDeal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
       mockDb.transaction.mockImplementation(async (fn: Function) => {
@@ -306,11 +357,27 @@ describe('deals.service', () => {
       const cancelledDeal = makeDeal({ status: 'CANCELLED' });
 
       mockDb.select
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock())
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([cancelledDeal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([cancelledDeal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
       mockDb.transaction.mockImplementation(async (fn: Function) => {
@@ -336,8 +403,16 @@ describe('deals.service', () => {
       const milestone = makeMilestone();
 
       mockDb.select
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
       await expect(dealsService.cancelDeal('deal-uuid-1', 'client-uuid-1')).rejects.toMatchObject({
@@ -350,8 +425,16 @@ describe('deals.service', () => {
       const milestone = makeMilestone({ status: 'APPROVED' });
 
       mockDb.select
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue([deal]) })
-        .mockReturnValueOnce({ from: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), orderBy: vi.fn().mockResolvedValue([milestone]) })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([deal]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          orderBy: vi.fn().mockResolvedValue([milestone]),
+        })
         .mockReturnValueOnce(makeUsersMock());
 
       await expect(dealsService.cancelDeal('deal-uuid-1', 'client-uuid-1')).rejects.toMatchObject({

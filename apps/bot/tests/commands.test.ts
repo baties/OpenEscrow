@@ -44,7 +44,11 @@ vi.mock('../src/api-client/index.js', () => ({
   ApiClientError: class MockApiClientError extends Error {
     statusCode: number;
     apiError: { error: string; message: string } | null;
-    constructor(statusCode: number, apiError: { error: string; message: string } | null, message: string) {
+    constructor(
+      statusCode: number,
+      apiError: { error: string; message: string } | null,
+      message: string
+    ) {
       super(message);
       this.name = 'ApiClientError';
       this.statusCode = statusCode;
@@ -75,11 +79,13 @@ vi.mock('../src/store/sessions.js', () => ({
 /**
  * Creates a minimal mock of a Telegraf Context for testing command handlers.
  */
-function makeMockCtx(overrides: {
-  fromId?: number;
-  chatId?: number;
-  messageText?: string;
-} = {}): {
+function makeMockCtx(
+  overrides: {
+    fromId?: number;
+    chatId?: number;
+    messageText?: string;
+  } = {}
+): {
   from: { id: number } | undefined;
   chat: { id: number } | undefined;
   message: { text: string } | undefined;
@@ -280,7 +286,7 @@ describe('/deals command', () => {
 
     const { ApiClientError } = await import('../src/api-client/index.js');
     mockListDeals.mockRejectedValueOnce(
-      new ApiClientError(401, { error: 'UNAUTHORIZED', message: 'Token expired' }, 'API error 401'),
+      new ApiClientError(401, { error: 'UNAUTHORIZED', message: 'Token expired' }, 'API error 401')
     );
 
     const ctx = makeMockCtx({ fromId: 999, messageText: '/deals' });
@@ -408,7 +414,7 @@ describe('/status command', () => {
 
     const { ApiClientError } = await import('../src/api-client/index.js');
     mockGetDeal.mockRejectedValueOnce(
-      new ApiClientError(404, { error: 'DEAL_NOT_FOUND', message: 'Not found' }, 'API error 404'),
+      new ApiClientError(404, { error: 'DEAL_NOT_FOUND', message: 'Not found' }, 'API error 404')
     );
 
     const ctx = makeMockCtx({

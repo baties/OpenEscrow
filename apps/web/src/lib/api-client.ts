@@ -24,12 +24,7 @@ import type {
 } from '@open-escrow/shared';
 import { config } from './config';
 import { getAuthToken, clearAuth } from './auth-storage';
-import {
-  ApiCallError,
-  AuthExpiredError,
-  NetworkError,
-  isApiErrorBody,
-} from './errors';
+import { ApiCallError, AuthExpiredError, NetworkError, isApiErrorBody } from './errors';
 
 // ─── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -43,7 +38,10 @@ import {
  * @param extraHeaders - Optional additional headers to merge in
  * @returns A Record of HTTP headers
  */
-function buildHeaders(hasBody: boolean, extraHeaders?: Record<string, string>): Record<string, string> {
+function buildHeaders(
+  hasBody: boolean,
+  extraHeaders?: Record<string, string>
+): Record<string, string> {
   const headers: Record<string, string> = {
     ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...extraHeaders,
@@ -112,7 +110,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     const response = await fetch(url, {
       ...options,
-      headers: buildHeaders(options.body !== undefined, options.headers as Record<string, string> | undefined),
+      headers: buildHeaders(
+        options.body !== undefined,
+        options.headers as Record<string, string> | undefined
+      ),
       signal: controller.signal,
     });
     return await parseResponse<T>(response);
@@ -505,4 +506,3 @@ export const miscApi = {
     return request<HealthResponse>('/api/v1/health');
   },
 };
-

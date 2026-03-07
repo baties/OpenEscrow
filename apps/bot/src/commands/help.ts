@@ -27,7 +27,7 @@ export async function helpCommandHandler(ctx: Context): Promise<void> {
 
   log.info(
     { module: 'commands.help', operation: 'helpCommandHandler', telegramUserId, chatId },
-    'Handling /help command',
+    'Handling /help command'
   );
 
   const helpText =
@@ -63,7 +63,7 @@ export async function helpCommandHandler(ctx: Context): Promise<void> {
 
     log.info(
       { module: 'commands.help', operation: 'helpCommandHandler', telegramUserId, chatId },
-      'Help message sent',
+      'Help message sent'
     );
   } catch (err) {
     log.error(
@@ -73,14 +73,14 @@ export async function helpCommandHandler(ctx: Context): Promise<void> {
         chatId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Failed to send /help message',
+      'Failed to send /help message'
     );
     try {
       await ctx.reply('Sorry, failed to send help message. Please try again.');
     } catch {
       log.error(
         { module: 'bot', operation: 'helpCommandHandler', chatId },
-        'Failed to send error reply for /help',
+        'Failed to send error reply for /help'
       );
     }
   }

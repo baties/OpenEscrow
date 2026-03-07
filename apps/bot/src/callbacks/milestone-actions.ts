@@ -50,30 +50,53 @@ export async function handleApprove(ctx: TelegrafContext, milestoneId: string): 
     const result = await approveMilestone(session.jwt, milestoneId);
 
     log.info(
-      { module: 'callbacks.milestone-actions', operation: 'handleApprove', telegramUserId, chatId, milestoneId, newStatus: result.status },
-      'Milestone approved successfully',
+      {
+        module: 'callbacks.milestone-actions',
+        operation: 'handleApprove',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        newStatus: result.status,
+      },
+      'Milestone approved successfully'
     );
 
     await ctx.replyWithMarkdown(
       `✅ *Milestone approved!*\n\n` +
         `Milestone \`${milestoneId.slice(0, 8)}...\` has been approved.\n` +
-        `_Use /status <dealId> to check if all milestones are now complete._`,
+        `_Use /status <dealId> to check if all milestones are now complete._`
     );
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(
-        { module: 'bot', operation: 'handleApprove', telegramUserId, chatId, milestoneId, statusCode: err.statusCode, error: err.message },
-        'API error approving milestone',
+        {
+          module: 'bot',
+          operation: 'handleApprove',
+          telegramUserId,
+          chatId,
+          milestoneId,
+          statusCode: err.statusCode,
+          error: err.message,
+        },
+        'API error approving milestone'
       );
-      const msg = err.statusCode === 400
-        ? `Cannot approve: ${err.apiError?.message ?? 'Invalid state transition.'}`
-        : 'Failed to approve milestone. Please try again.';
+      const msg =
+        err.statusCode === 400
+          ? `Cannot approve: ${err.apiError?.message ?? 'Invalid state transition.'}`
+          : 'Failed to approve milestone. Please try again.';
       await ctx.reply(msg);
       return;
     }
     log.error(
-      { module: 'bot', operation: 'handleApprove', telegramUserId, chatId, milestoneId, error: err instanceof Error ? err.message : String(err) },
-      'Unexpected error approving milestone',
+      {
+        module: 'bot',
+        operation: 'handleApprove',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Unexpected error approving milestone'
     );
     await ctx.reply('Something went wrong approving the milestone. Please try again.');
   }
@@ -112,12 +135,19 @@ export async function handleReject(ctx: TelegrafContext, milestoneId: string): P
           Markup.button.callback('✅ Confirm Reject', `confirm_reject:${milestoneId}`),
           Markup.button.callback('🚫 Cancel', `cancel_action:${milestoneId}`),
         ],
-      ]),
+      ])
     );
   } catch (err) {
     log.error(
-      { module: 'bot', operation: 'handleReject', telegramUserId, chatId, milestoneId, error: err instanceof Error ? err.message : String(err) },
-      'Error showing reject confirmation',
+      {
+        module: 'bot',
+        operation: 'handleReject',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Error showing reject confirmation'
     );
     await ctx.reply('Something went wrong. Please try again.');
   }
@@ -133,7 +163,10 @@ export async function handleReject(ctx: TelegrafContext, milestoneId: string): P
  * @param milestoneId - UUID of the milestone to reject
  * @returns Promise<void>
  */
-export async function handleConfirmReject(ctx: TelegrafContext, milestoneId: string): Promise<void> {
+export async function handleConfirmReject(
+  ctx: TelegrafContext,
+  milestoneId: string
+): Promise<void> {
   const telegramUserId = ctx.from?.id;
   const chatId = ctx.chat?.id;
 
@@ -151,30 +184,53 @@ export async function handleConfirmReject(ctx: TelegrafContext, milestoneId: str
     });
 
     log.info(
-      { module: 'callbacks.milestone-actions', operation: 'handleConfirmReject', telegramUserId, chatId, milestoneId, rejectionNoteId: result.id },
-      'Milestone rejected successfully',
+      {
+        module: 'callbacks.milestone-actions',
+        operation: 'handleConfirmReject',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        rejectionNoteId: result.id,
+      },
+      'Milestone rejected successfully'
     );
 
     await ctx.replyWithMarkdown(
       `❌ *Milestone rejected.*\n\n` +
         `Milestone \`${milestoneId.slice(0, 8)}...\` has been rejected and moved to revision.\n` +
-        `_The freelancer will be notified._`,
+        `_The freelancer will be notified._`
     );
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(
-        { module: 'bot', operation: 'handleConfirmReject', telegramUserId, chatId, milestoneId, statusCode: err.statusCode, error: err.message },
-        'API error rejecting milestone',
+        {
+          module: 'bot',
+          operation: 'handleConfirmReject',
+          telegramUserId,
+          chatId,
+          milestoneId,
+          statusCode: err.statusCode,
+          error: err.message,
+        },
+        'API error rejecting milestone'
       );
-      const msg = err.statusCode === 400
-        ? `Cannot reject: ${err.apiError?.message ?? 'Invalid state transition.'}`
-        : 'Failed to reject milestone. Please try again.';
+      const msg =
+        err.statusCode === 400
+          ? `Cannot reject: ${err.apiError?.message ?? 'Invalid state transition.'}`
+          : 'Failed to reject milestone. Please try again.';
       await ctx.reply(msg);
       return;
     }
     log.error(
-      { module: 'bot', operation: 'handleConfirmReject', telegramUserId, chatId, milestoneId, error: err instanceof Error ? err.message : String(err) },
-      'Unexpected error rejecting milestone',
+      {
+        module: 'bot',
+        operation: 'handleConfirmReject',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Unexpected error rejecting milestone'
     );
     await ctx.reply('Something went wrong rejecting the milestone. Please try again.');
   }
@@ -213,12 +269,19 @@ export async function handleSubmit(ctx: TelegrafContext, milestoneId: string): P
           Markup.button.callback('✅ Confirm Submit', `confirm_submit:${milestoneId}`),
           Markup.button.callback('🚫 Cancel', `cancel_action:${milestoneId}`),
         ],
-      ]),
+      ])
     );
   } catch (err) {
     log.error(
-      { module: 'bot', operation: 'handleSubmit', telegramUserId, chatId, milestoneId, error: err instanceof Error ? err.message : String(err) },
-      'Error showing submit confirmation',
+      {
+        module: 'bot',
+        operation: 'handleSubmit',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Error showing submit confirmation'
     );
     await ctx.reply('Something went wrong. Please try again.');
   }
@@ -234,7 +297,10 @@ export async function handleSubmit(ctx: TelegrafContext, milestoneId: string): P
  * @param milestoneId - UUID of the milestone to submit
  * @returns Promise<void>
  */
-export async function handleConfirmSubmit(ctx: TelegrafContext, milestoneId: string): Promise<void> {
+export async function handleConfirmSubmit(
+  ctx: TelegrafContext,
+  milestoneId: string
+): Promise<void> {
   const telegramUserId = ctx.from?.id;
   const chatId = ctx.chat?.id;
 
@@ -252,30 +318,52 @@ export async function handleConfirmSubmit(ctx: TelegrafContext, milestoneId: str
     });
 
     log.info(
-      { module: 'callbacks.milestone-actions', operation: 'handleConfirmSubmit', telegramUserId, chatId, milestoneId },
-      'Milestone submitted successfully',
+      {
+        module: 'callbacks.milestone-actions',
+        operation: 'handleConfirmSubmit',
+        telegramUserId,
+        chatId,
+        milestoneId,
+      },
+      'Milestone submitted successfully'
     );
 
     await ctx.replyWithMarkdown(
       `📤 *Milestone submitted!*\n\n` +
         `Milestone \`${milestoneId.slice(0, 8)}...\` has been submitted for review.\n` +
-        `_The client will be notified._`,
+        `_The client will be notified._`
     );
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(
-        { module: 'bot', operation: 'handleConfirmSubmit', telegramUserId, chatId, milestoneId, statusCode: err.statusCode, error: err.message },
-        'API error submitting milestone',
+        {
+          module: 'bot',
+          operation: 'handleConfirmSubmit',
+          telegramUserId,
+          chatId,
+          milestoneId,
+          statusCode: err.statusCode,
+          error: err.message,
+        },
+        'API error submitting milestone'
       );
-      const msg = err.statusCode === 400
-        ? `Cannot submit: ${err.apiError?.message ?? 'Invalid state transition.'}`
-        : 'Failed to submit milestone. Please try again.';
+      const msg =
+        err.statusCode === 400
+          ? `Cannot submit: ${err.apiError?.message ?? 'Invalid state transition.'}`
+          : 'Failed to submit milestone. Please try again.';
       await ctx.reply(msg);
       return;
     }
     log.error(
-      { module: 'bot', operation: 'handleConfirmSubmit', telegramUserId, chatId, milestoneId, error: err instanceof Error ? err.message : String(err) },
-      'Unexpected error submitting milestone',
+      {
+        module: 'bot',
+        operation: 'handleConfirmSubmit',
+        telegramUserId,
+        chatId,
+        milestoneId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Unexpected error submitting milestone'
     );
     await ctx.reply('Something went wrong submitting the milestone. Please try again.');
   }
@@ -336,7 +424,7 @@ export async function handleDealStatus(ctx: TelegrafContext, dealId: string): Pr
 
     if (isFreelancer && deal.status === 'FUNDED') {
       const actionableMilestones = (deal.milestones ?? []).filter(
-        (m) => m.status === 'PENDING' || m.status === 'REVISION',
+        (m) => m.status === 'PENDING' || m.status === 'REVISION'
       );
       for (const m of actionableMilestones) {
         const shortTitle = m.title.slice(0, 25);
@@ -352,15 +440,30 @@ export async function handleDealStatus(ctx: TelegrafContext, dealId: string): Pr
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(
-        { module: 'bot', operation: 'handleDealStatus', telegramUserId, chatId, dealId, statusCode: err.statusCode, error: err.message },
-        'API error in deal_status callback',
+        {
+          module: 'bot',
+          operation: 'handleDealStatus',
+          telegramUserId,
+          chatId,
+          dealId,
+          statusCode: err.statusCode,
+          error: err.message,
+        },
+        'API error in deal_status callback'
       );
       await ctx.reply('Failed to fetch deal. Please try /status <dealId>.');
       return;
     }
     log.error(
-      { module: 'bot', operation: 'handleDealStatus', telegramUserId, chatId, dealId, error: err instanceof Error ? err.message : String(err) },
-      'Unexpected error in deal_status callback',
+      {
+        module: 'bot',
+        operation: 'handleDealStatus',
+        telegramUserId,
+        chatId,
+        dealId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Unexpected error in deal_status callback'
     );
     await ctx.reply('Something went wrong. Please try /status <dealId>.');
   }
@@ -381,8 +484,13 @@ export async function handleCancelAction(ctx: TelegrafContext): Promise<void> {
     await ctx.reply('Action cancelled.');
   } catch (err) {
     log.error(
-      { module: 'bot', operation: 'handleCancelAction', chatId: ctx.chat?.id, error: err instanceof Error ? err.message : String(err) },
-      'Error handling cancel_action callback',
+      {
+        module: 'bot',
+        operation: 'handleCancelAction',
+        chatId: ctx.chat?.id,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Error handling cancel_action callback'
     );
   }
 }

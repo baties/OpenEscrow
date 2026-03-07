@@ -33,9 +33,7 @@ export const CreateDealSchema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/, 'freelancerAddress must be a valid EVM address'),
   /** Token contract address (must be USDC or USDT on the configured chain). */
-  tokenAddress: z
-    .string()
-    .regex(/^0x[0-9a-fA-F]{40}$/, 'tokenAddress must be a valid EVM address'),
+  tokenAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/, 'tokenAddress must be a valid EVM address'),
   /** Ordered list of milestones. Minimum 1, maximum 20. */
   milestones: z
     .array(CreateMilestoneSchema)
@@ -53,9 +51,7 @@ export const FundDealSchema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/, 'transactionHash must be a valid 32-byte hex hash'),
   /** On-chain deal ID returned by the contract's createDeal function. */
-  chainDealId: z
-    .string()
-    .regex(/^\d+$/, 'chainDealId must be a non-negative integer string'),
+  chainDealId: z.string().regex(/^\d+$/, 'chainDealId must be a non-negative integer string'),
 });
 
 /**

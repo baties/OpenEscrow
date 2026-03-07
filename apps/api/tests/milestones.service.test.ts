@@ -99,7 +99,10 @@ function makeSubmission(overrides: Record<string, unknown> = {}) {
 /**
  * Helper: sets up select mocks in sequence (first call returns milestone, second returns deal).
  */
-function mockMilestoneWithDeal(milestone: ReturnType<typeof makeMilestone>, deal: ReturnType<typeof makeDeal>) {
+function mockMilestoneWithDeal(
+  milestone: ReturnType<typeof makeMilestone>,
+  deal: ReturnType<typeof makeDeal>
+) {
   mockDb.select
     .mockReturnValueOnce({
       from: vi.fn().mockReturnThis(),
@@ -151,7 +154,7 @@ describe('milestones.service', () => {
       const result = await milestonesService.submitMilestone(
         'milestone-uuid-1',
         'freelancer-uuid-1',
-        { summary: 'Done', links: ['https://github.com/pr/1'] },
+        { summary: 'Done', links: ['https://github.com/pr/1'] }
       );
 
       expect(result.id).toBe('submission-uuid-1');
@@ -181,7 +184,7 @@ describe('milestones.service', () => {
       const result = await milestonesService.submitMilestone(
         'milestone-uuid-1',
         'freelancer-uuid-1',
-        { summary: 'Revised', links: [] },
+        { summary: 'Revised', links: [] }
       );
 
       expect(result.id).toBe('submission-uuid-1');
@@ -197,7 +200,7 @@ describe('milestones.service', () => {
         milestonesService.submitMilestone('milestone-uuid-1', 'freelancer-uuid-1', {
           summary: 'Done',
           links: [],
-        }),
+        })
       ).rejects.toMatchObject({ code: 'INVALID_TRANSITION' });
     });
 
@@ -212,7 +215,7 @@ describe('milestones.service', () => {
         milestonesService.submitMilestone('nonexistent', 'freelancer-uuid-1', {
           summary: 'Done',
           links: [],
-        }),
+        })
       ).rejects.toMatchObject({ code: 'MILESTONE_NOT_FOUND' });
     });
   });
@@ -242,19 +245,17 @@ describe('milestones.service', () => {
 
       // areAllMilestonesApproved is called INSIDE the transaction via db.select() (not tx.select()).
       // It uses db.select().from().where() with NO .limit(), so where() must resolve to an array.
-      mockDb.select
-        .mockReturnValueOnce({
-          from: vi.fn().mockReturnThis(),
-          where: vi.fn().mockResolvedValue([{ status: 'APPROVED' }]),
-        });
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockResolvedValue([{ status: 'APPROVED' }]),
+      });
 
       // After transaction: select updated milestone record
-      mockDb.select
-        .mockReturnValueOnce({
-          from: vi.fn().mockReturnThis(),
-          where: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockResolvedValue([approvedMilestone]),
-        });
+      mockDb.select.mockReturnValueOnce({
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue([approvedMilestone]),
+      });
 
       const result = await milestonesService.approveMilestone('milestone-uuid-1', 'client-uuid-1');
       expect(result.status).toBe('APPROVED');
@@ -267,7 +268,7 @@ describe('milestones.service', () => {
       mockMilestoneWithDeal(milestone, deal);
 
       await expect(
-        milestonesService.approveMilestone('milestone-uuid-1', 'client-uuid-1'),
+        milestonesService.approveMilestone('milestone-uuid-1', 'client-uuid-1')
       ).rejects.toMatchObject({ code: 'INVALID_TRANSITION' });
     });
   });
@@ -312,11 +313,10 @@ describe('milestones.service', () => {
         return await fn(txMock);
       });
 
-      const result = await milestonesService.rejectMilestone(
-        'milestone-uuid-1',
-        'client-uuid-1',
-        { reasonCodes: ['INCOMPLETE'], freeText: 'Not finished yet' },
-      );
+      const result = await milestonesService.rejectMilestone('milestone-uuid-1', 'client-uuid-1', {
+        reasonCodes: ['INCOMPLETE'],
+        freeText: 'Not finished yet',
+      });
 
       expect(result.id).toBe('rejection-note-uuid-1');
     });
@@ -331,7 +331,7 @@ describe('milestones.service', () => {
         milestonesService.rejectMilestone('milestone-uuid-1', 'client-uuid-1', {
           reasonCodes: ['INCOMPLETE'],
           freeText: 'Not done',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'INVALID_TRANSITION' });
     });
 
@@ -353,7 +353,7 @@ describe('milestones.service', () => {
         milestonesService.rejectMilestone('milestone-uuid-1', 'client-uuid-1', {
           reasonCodes: ['INCOMPLETE'],
           freeText: 'Not done',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'MILESTONE_NO_SUBMISSION' });
     });
   });

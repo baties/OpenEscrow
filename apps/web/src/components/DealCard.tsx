@@ -55,7 +55,8 @@ export function DealCard({ deal, currentUserAddress }: DealCardProps) {
           <span className="font-semibold text-gray-900">
             {formatTokenAmount(deal.totalAmount)} USDC/T
           </span>{' '}
-          across {deal.milestones?.length ?? 0} milestone{(deal.milestones?.length ?? 0) !== 1 ? 's' : ''}
+          across {deal.milestones?.length ?? 0} milestone
+          {(deal.milestones?.length ?? 0) !== 1 ? 's' : ''}
         </span>
         <span className="text-xs text-gray-400">{formatDate(deal.createdAt)}</span>
       </div>

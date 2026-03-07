@@ -18,11 +18,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useDealActions } from '@/hooks/use-deal-actions';
-import {
-  createDealSchema,
-  type CreateDealFormValues,
-  type MilestoneInput,
-} from '@/lib/schemas';
+import { createDealSchema, type CreateDealFormValues, type MilestoneInput } from '@/lib/schemas';
 import { parseTokenAmount } from '@/lib/format';
 import { config } from '@/lib/config';
 import { ErrorAlert } from '@/components/ErrorAlert';
@@ -152,7 +148,12 @@ export default function NewDealPage() {
         </p>
       </div>
 
-      <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-6">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+        className="space-y-6"
+      >
         {/* Deal details */}
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-gray-900">Deal Details</h2>
@@ -225,9 +226,7 @@ export default function NewDealPage() {
                 className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">
-                    Milestone {index + 1}
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Milestone {index + 1}</span>
                   {milestones.length > 1 && (
                     <button
                       type="button"
@@ -287,9 +286,7 @@ export default function NewDealPage() {
                   </label>
                   <textarea
                     value={milestone.acceptanceCriteria}
-                    onChange={(e) =>
-                      updateMilestone(index, 'acceptanceCriteria', e.target.value)
-                    }
+                    onChange={(e) => updateMilestone(index, 'acceptanceCriteria', e.target.value)}
                     rows={2}
                     placeholder="Specific, measurable criteria for approval..."
                     className="mt-0.5 block w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"

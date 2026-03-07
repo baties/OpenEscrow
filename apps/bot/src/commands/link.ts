@@ -113,14 +113,14 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
 
   log.info(
     { module: 'commands.link', operation: 'linkCommandHandler', telegramUserId, chatId },
-    'Handling /link command',
+    'Handling /link command'
   );
 
   try {
     if (telegramUserId === undefined) {
       log.warn(
         { module: 'bot', operation: 'linkCommandHandler', chatId },
-        'Received /link without ctx.from.id',
+        'Received /link without ctx.from.id'
       );
       await ctx.reply('Unable to determine your Telegram user ID. Please try again.');
       return;
@@ -136,7 +136,7 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         '❌ *Missing link code.*\n\n' +
           'Usage: `/link <code>`\n\n' +
           'Get your code from the web dashboard:\n' +
-          'Settings → Telegram → Generate Link Code',
+          'Settings → Telegram → Generate Link Code'
       );
       return;
     }
@@ -152,12 +152,12 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
           chatId,
           validationError: parseResult.error.issues[0]?.message,
         },
-        'Invalid link code format',
+        'Invalid link code format'
       );
       await ctx.replyWithMarkdown(
         '❌ *Invalid code format.*\n\n' +
           'The link code should be a hex string (e.g. `a1b2c3d4`).\n\n' +
-          'Please copy the code exactly from the web dashboard.',
+          'Please copy the code exactly from the web dashboard.'
       );
       return;
     }
@@ -172,7 +172,7 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         `• *OTP code:* \`${parseResult.data}\`\n` +
         `• *Your Telegram ID:* \`${telegramUserId}\`\n\n` +
         `After submitting on the web dashboard, your account will be linked.\n` +
-        `_You'll receive a confirmation message here once linked._`,
+        `_You'll receive a confirmation message here once linked._`
     );
 
     // Track this user so the session-creator poller can confirm when they're linked.
@@ -185,7 +185,7 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         telegramUserId,
         chatId,
       },
-      'Link code received — instructed user to complete on web dashboard, added to pending links',
+      'Link code received — instructed user to complete on web dashboard, added to pending links'
     );
   } catch (err) {
     log.error(
@@ -195,14 +195,14 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
         chatId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Failed to handle /link command',
+      'Failed to handle /link command'
     );
     try {
       await ctx.reply('Sorry, something went wrong processing your link code. Please try again.');
     } catch {
       log.error(
         { module: 'bot', operation: 'linkCommandHandler', chatId },
-        'Failed to send error reply for /link',
+        'Failed to send error reply for /link'
       );
     }
   }

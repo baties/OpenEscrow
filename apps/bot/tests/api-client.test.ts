@@ -108,7 +108,7 @@ describe('api-client', () => {
 
     it('throws ApiClientError on 401', async () => {
       mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(401, { error: 'UNAUTHORIZED', message: 'Valid JWT token required' }),
+        mockJsonResponse(401, { error: 'UNAUTHORIZED', message: 'Valid JWT token required' })
       );
 
       const { listDeals } = await import('../src/api-client/index.js');
@@ -117,7 +117,7 @@ describe('api-client', () => {
 
     it('ApiClientError has correct statusCode and apiError on 401', async () => {
       mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(401, { error: 'UNAUTHORIZED', message: 'Valid JWT token required' }),
+        mockJsonResponse(401, { error: 'UNAUTHORIZED', message: 'Valid JWT token required' })
       );
 
       const { listDeals } = await import('../src/api-client/index.js');
@@ -135,7 +135,7 @@ describe('api-client', () => {
 
     it('does not retry on 4xx errors', async () => {
       mockFetch.mockResolvedValue(
-        mockJsonResponse(404, { error: 'NOT_FOUND', message: 'Not found' }),
+        mockJsonResponse(404, { error: 'NOT_FOUND', message: 'Not found' })
       );
 
       const { listDeals } = await import('../src/api-client/index.js');
@@ -168,7 +168,7 @@ describe('api-client', () => {
 
     it('throws ApiClientError with 404 status when deal not found', async () => {
       mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(404, { error: 'DEAL_NOT_FOUND', message: 'Deal not found' }),
+        mockJsonResponse(404, { error: 'DEAL_NOT_FOUND', message: 'Deal not found' })
       );
 
       const { getDeal } = await import('../src/api-client/index.js');
@@ -186,7 +186,7 @@ describe('api-client', () => {
   describe('approveMilestone', () => {
     it('posts to correct endpoint', async () => {
       mockFetch.mockResolvedValueOnce(
-        mockJsonResponse(200, { id: 'ms-001', dealId: 'deal-001', status: 'APPROVED' }),
+        mockJsonResponse(200, { id: 'ms-001', dealId: 'deal-001', status: 'APPROVED' })
       );
 
       const { approveMilestone } = await import('../src/api-client/index.js');
@@ -203,7 +203,7 @@ describe('api-client', () => {
         mockJsonResponse(400, {
           error: 'INVALID_TRANSITION',
           message: 'Cannot transition from PENDING to APPROVED',
-        }),
+        })
       );
 
       const { approveMilestone } = await import('../src/api-client/index.js');
@@ -228,7 +228,7 @@ describe('api-client', () => {
           reasonCodes: ['INCOMPLETE'],
           freeText: 'Not done',
           createdAt: new Date().toISOString(),
-        }),
+        })
       );
 
       const { rejectMilestone } = await import('../src/api-client/index.js');
@@ -243,7 +243,10 @@ describe('api-client', () => {
       expect(url).toContain('/api/v1/milestones/ms-003/reject');
       expect(options.method).toBe('POST');
 
-      const body = JSON.parse(options.body as string) as { reasonCodes: string[]; freeText: string };
+      const body = JSON.parse(options.body as string) as {
+        reasonCodes: string[];
+        freeText: string;
+      };
       expect(body.reasonCodes).toContain('INCOMPLETE');
       expect(body.freeText).toBe('Not done');
     });
@@ -259,7 +262,7 @@ describe('api-client', () => {
           summary: 'Done',
           links: [],
           createdAt: new Date().toISOString(),
-        }),
+        })
       );
 
       const { submitMilestone } = await import('../src/api-client/index.js');
@@ -280,7 +283,7 @@ describe('api-client', () => {
           freelancerId: 'f1',
           totalAmount: '1000',
           milestones: [],
-        }),
+        })
       );
 
       const { agreeToDeal } = await import('../src/api-client/index.js');
@@ -303,7 +306,7 @@ describe('api-client', () => {
           freelancerId: 'f1',
           totalAmount: '1000',
           milestones: [],
-        }),
+        })
       );
 
       const { cancelDeal } = await import('../src/api-client/index.js');

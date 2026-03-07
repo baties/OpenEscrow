@@ -38,11 +38,14 @@ export function generateNonce(walletAddress: string): string {
   const expiresAt = Date.now() + NONCE_TTL_MS;
   nonceStore.set(walletAddress.toLowerCase(), { nonce, expiresAt });
 
-  log.info({
-    module: 'modules.auth.nonce',
-    operation: 'generateNonce',
-    walletAddress: walletAddress.toLowerCase(),
-  }, 'Nonce generated');
+  log.info(
+    {
+      module: 'modules.auth.nonce',
+      operation: 'generateNonce',
+      walletAddress: walletAddress.toLowerCase(),
+    },
+    'Nonce generated'
+  );
 
   return nonce;
 }
@@ -65,11 +68,14 @@ export function getNonce(walletAddress: string): string | null {
 
   if (Date.now() > entry.expiresAt) {
     nonceStore.delete(key);
-    log.warn({
-      module: 'modules.auth.nonce',
-      operation: 'getNonce',
-      walletAddress: key,
-    }, 'Nonce expired');
+    log.warn(
+      {
+        module: 'modules.auth.nonce',
+        operation: 'getNonce',
+        walletAddress: key,
+      },
+      'Nonce expired'
+    );
     return null;
   }
 

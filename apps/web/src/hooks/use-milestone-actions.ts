@@ -12,7 +12,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { milestonesApi, type SubmitMilestoneInput, type RejectMilestoneInput } from '@/lib/api-client';
+import {
+  milestonesApi,
+  type SubmitMilestoneInput,
+  type RejectMilestoneInput,
+} from '@/lib/api-client';
 import type { Milestone, RejectionNote, Submission } from '@open-escrow/shared';
 import { getErrorMessage } from '@/lib/errors';
 

@@ -25,7 +25,7 @@ const log = logger.child({ module: 'deals.controller' });
  */
 export async function createDealHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const parsed = CreateDealSchema.safeParse(request.body);
   if (!parsed.success) {
@@ -39,11 +39,14 @@ export async function createDealHandler(
 
   const clientId = request.user.userId;
 
-  log.info({
-    module: 'deals.controller',
-    operation: 'createDealHandler',
-    clientId,
-  }, 'Handling create deal request');
+  log.info(
+    {
+      module: 'deals.controller',
+      operation: 'createDealHandler',
+      clientId,
+    },
+    'Handling create deal request'
+  );
 
   const deal = await dealsService.createDeal(clientId, parsed.data);
   await reply.status(201).send(deal);
@@ -59,7 +62,7 @@ export async function createDealHandler(
  */
 export async function listDealsHandler(
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const userId = request.user.userId;
 
@@ -78,7 +81,7 @@ export async function listDealsHandler(
  */
 export async function getDealHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const dealId = request.params.id;
   const userId = request.user.userId;
@@ -114,7 +117,7 @@ export async function getDealHandler(
  */
 export async function agreeToDealHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const dealId = request.params.id;
   const freelancerId = request.user.userId;
@@ -133,7 +136,7 @@ export async function agreeToDealHandler(
  */
 export async function fundDealHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const parsed = FundDealSchema.safeParse(request.body);
   if (!parsed.success) {
@@ -162,7 +165,7 @@ export async function fundDealHandler(
  */
 export async function cancelDealHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const dealId = request.params.id;
   const actorId = request.user.userId;
@@ -181,7 +184,7 @@ export async function cancelDealHandler(
  */
 export async function getDealTimelineHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const dealId = request.params.id;
   const userId = request.user.userId;
