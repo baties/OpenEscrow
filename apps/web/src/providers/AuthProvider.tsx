@@ -3,20 +3,27 @@
  *
  * React context provider for SIWE authentication state.
  * Handles: SIWE sign-in flow (nonce → sign → verify), sign-out, JWT persistence,
- *          auto-sign-in when wallet connects, listening for 'auth:expired' events.
+ *          listening for 'auth:expired' events from the API client.
  * Does NOT: manage wallet connection (that's RainbowKit/wagmi),
  *            make direct API calls (delegates to api-client.ts),
  *            render any UI beyond the context tree.
  *
  * Auth token is stored in localStorage — see auth-storage.ts for rationale.
  *
- * Auto sign-in: SIWE is triggered automatically when the wallet connects so the
- * user only needs one action (connecting the wallet). If the user rejects the
- * signature, `signInError` is set and they can retry manually via signIn().
+ * Sign-in trigger: SIWE is triggered via useAccountEffect.onConnect ONLY when the
+ * user explicitly clicks "Connect Wallet" (isReconnected === false). Page-load
+ * auto-reconnects (isReconnected === true) do NOT trigger SIWE — the stored JWT
+ * is restored from localStorage instead. This prevents unwanted signature popups
+ * on page refresh or after sign-out.
  *
- * Reconnect safety: wagmi briefly sets isConnected=false while reconnecting on
- * page load. We guard against that with isReconnecting/isConnecting so a page
- * refresh never clears auth unnecessarily.
+ * Stale-closure guard: useAccountEffect.onConnect fires before wagmi re-renders,
+ * so address/chainId from useAccount() are still the old (undefined) values at that
+ * moment. The internal performSiwe() helper takes explicit addr/chain params from
+ * the onConnect event to avoid reading stale hook state.
+ *
+ * Session persistence: JWT lives in localStorage with a 24h expiry (configurable
+ * via JWT_EXPIRY env var). On page reload the stored JWT is restored without any
+ * additional user action, as long as the same wallet is still connected.
  */
 
 'use client';
@@ -28,7 +35,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
+import { useAccount, useAccountEffect, useSignMessage, useDisconnect } from 'wagmi';
 import { authApi } from '@/lib/api-client';
 import { saveAuth, getAuthToken, getStoredWalletAddress, clearAuth } from '@/lib/auth-storage';
 import { buildSiweMessage } from '@/lib/siwe';
@@ -84,7 +91,7 @@ interface AuthProviderProps {
  * @returns JSX.Element — the context provider wrapping children
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { address, chainId, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, chainId, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
 
@@ -93,7 +100,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   const [signInError, setSignInError] = useState<string | null>(null);
 
-  // On mount: restore auth state from localStorage if wallet matches stored address
+  // On mount: restore auth from localStorage so authenticated users skip sign-in
+  // on page reload without any additional action.
   useEffect(() => {
     const storedToken = getAuthToken();
     const storedAddress = getStoredWalletAddress();
@@ -103,15 +111,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // When wallet connects/disconnects: validate stored auth matches connected wallet.
-  // Guard: skip during transient reconnecting states (wagmi briefly shows
-  // isConnected=false on page load before restoring the connection — clearing auth
-  // here would force a re-sign on every page refresh).
+  // When wallet address changes (e.g. user switches accounts in MetaMask):
+  // validate the stored JWT still belongs to the connected wallet.
+  // A clean disconnect (address === undefined) also clears auth here.
   useEffect(() => {
-    if (isConnecting || isReconnecting) return;
-
     if (!isConnected || !address) {
-      // True wallet disconnect (user explicitly disconnected, not just page load)
       clearAuth();
       setIsAuthenticated(false);
       setWalletAddress(null);
@@ -122,18 +126,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const storedToken = getAuthToken();
 
     if (storedToken && storedAddress?.toLowerCase() === address.toLowerCase()) {
-      // Valid JWT exists for this wallet — restore session without re-signing
+      // Valid JWT for the connected wallet — keep the session alive
       setIsAuthenticated(true);
       setWalletAddress(storedAddress);
     } else {
-      // Different wallet connected, or no stored token — clear stale auth
+      // Different wallet — clear stale token and wait for explicit sign-in
       clearAuth();
       setIsAuthenticated(false);
       setWalletAddress(null);
     }
-  }, [isConnected, isConnecting, isReconnecting, address]);
+  }, [isConnected, address]);
 
-  // Listen for 'auth:expired' events dispatched by the API client on 401 responses
+  // Listen for 'auth:expired' custom events dispatched by the API client on 401
   useEffect(() => {
     const handleAuthExpired = () => {
       clearAuth();
@@ -151,67 +155,67 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const signIn = useCallback(async (): Promise<void> => {
-    if (!address || !isConnected) {
-      setSignInError('Connect your wallet first.');
-      return;
-    }
-    if (isAuthenticated) {
-      return; // Already authenticated
-    }
+  /**
+   * Core SIWE flow — accepts explicit addr/chainId to avoid stale React hook values.
+   * Called by both onConnect (with event params) and the manual signIn (with hook values).
+   *
+   * @param addr - Wallet address to authenticate
+   * @param chain - Chain ID to include in the SIWE message
+   * @returns void
+   */
+  const performSiwe = useCallback(async (addr: string, chain: number): Promise<void> => {
+    if (isAuthenticated) return;
 
     setIsSigningIn(true);
     setSignInError(null);
 
     try {
-      // Step 1: Get nonce from API
-      const { nonce } = await authApi.getNonce(address);
+      const { nonce } = await authApi.getNonce(addr);
 
-      // Step 2: Build SIWE message
-      const message = buildSiweMessage({
-        address,
-        chainId: chainId ?? config.chainId,
-        nonce,
-      });
-
-      // Step 3: Ask wallet to sign the message
+      const message = buildSiweMessage({ address: addr, chainId: chain, nonce });
       const signature = await signMessageAsync({ message });
-
-      // Step 4: Send message + signature to API, get JWT
       const { token } = await authApi.verify(message, signature);
 
-      // Step 5: Persist and update state
-      // Use `address` directly — the API verified it, and we already have it from useAccount().
-      saveAuth(token, address);
+      saveAuth(token, addr);
       setIsAuthenticated(true);
-      setWalletAddress(address.toLowerCase());
+      setWalletAddress(addr.toLowerCase());
     } catch (err) {
-      const message = getErrorMessage(err);
-      console.error('[AuthProvider] signIn failed:', { error: message });
-      setSignInError(message);
+      const msg = getErrorMessage(err);
+      console.error('[AuthProvider] signIn failed:', { error: msg });
+      setSignInError(msg);
     } finally {
       setIsSigningIn(false);
     }
-  }, [address, chainId, isConnected, isAuthenticated, signMessageAsync]);
+  }, [isAuthenticated, signMessageAsync]);
 
-  // Auto sign-in: trigger SIWE immediately when a wallet connects and no valid
-  // session exists for it. This removes the need for a manual "Sign in" button.
-  // Skip if: already authenticated, already signing in, or the user previously
-  // rejected the signature (signInError set) — they must retry manually.
-  // NOTE: must be declared AFTER signIn useCallback to avoid TDZ reference error.
-  useEffect(() => {
-    if (
-      isConnected &&
-      !isConnecting &&
-      !isReconnecting &&
-      address &&
-      !isAuthenticated &&
-      !isSigningIn &&
-      !signInError
-    ) {
-      void signIn();
+  /**
+   * Public sign-in for manual trigger (e.g. "Sign in with Ethereum" button).
+   * Reads address/chainId from wagmi hook state — only call after wallet is connected.
+   *
+   * @returns void
+   */
+  const signIn = useCallback(async (): Promise<void> => {
+    if (!address || !isConnected) {
+      setSignInError('Connect your wallet first.');
+      return;
     }
-  }, [isConnected, isConnecting, isReconnecting, address, isAuthenticated, isSigningIn, signInError, signIn]);
+    await performSiwe(address, chainId ?? config.chainId);
+  }, [address, chainId, isConnected, performSiwe]);
+
+  // Trigger SIWE ONLY when the user explicitly connects a wallet.
+  // isReconnected === true means wagmi restored a previous connection on page load
+  // — we must NOT prompt the user in that case (the stored JWT covers the session).
+  //
+  // IMPORTANT: we use connectedAddress/connectedChainId from the event params, NOT
+  // the address/chainId from useAccount(). onConnect fires before wagmi re-renders,
+  // so hook state is still the old (undefined) values at this point in time.
+  useAccountEffect({
+    onConnect({ address: connectedAddress, chainId: connectedChainId, isReconnected }) {
+      if (!isReconnected) {
+        void performSiwe(connectedAddress, connectedChainId ?? config.chainId);
+      }
+    },
+  });
 
   const signOut = useCallback((): void => {
     clearAuth();

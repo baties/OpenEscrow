@@ -68,7 +68,7 @@ OpenEscrow addresses this with:
 - **Auto-transition** to revision state after rejection — freelancer revises and resubmits
 - **Audit trail** — full timeline of every action per deal (who did what, when)
 - **Telegram bot** — receive deal notifications, approve/reject from inline keyboards
-- **SIWE authentication** — wallet sign-in (Sign-In With Ethereum), no passwords or email
+- **SIWE authentication** — one-click wallet sign-in (Sign-In With Ethereum); SIWE fires automatically on wallet connect, JWT session persists 24 hours
 
 ---
 
@@ -178,6 +178,21 @@ pnpm build
 docker compose logs -f api
 docker compose logs -f bot
 ```
+
+### pgAdmin (Optional — Database Browser)
+
+A developer-only compose file adds pgAdmin for browsing the PostgreSQL database. **Never deploy this to production.**
+
+```bash
+# Start full stack + pgAdmin
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Or start only postgres + pgAdmin (run API/Web/Bot locally via pnpm dev)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres pgadmin
+```
+
+pgAdmin opens at **http://localhost:5050** — login: `admin@openescrow.dev` / `admin`.
+The local PostgreSQL server is pre-configured — no manual setup needed.
 
 ### Smart Contract Development
 

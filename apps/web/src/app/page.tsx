@@ -2,12 +2,15 @@
  * page.tsx — OpenEscrow Web Dashboard (Home / Landing)
  *
  * Home page displayed to unauthenticated and authenticated users.
- * Handles: wallet connect prompt, auto-SIWE status display, redirect to /deals when authed.
+ * Handles: wallet connect prompt, SIWE status display, redirect to /deals when authed.
  * Does NOT: fetch any data, manage auth state (reads via useAuth hook),
  *            or contain any business logic.
  *
- * Auth UX: user connects wallet once — SIWE is triggered automatically by AuthProvider.
- * If the user rejects the signature, an error + "Try again" button is shown.
+ * Auth UX:
+ *   - User clicks "Connect Wallet" → SIWE signature is requested automatically.
+ *   - Page-load reconnect (wagmi restoring previous connection) → existing JWT is used;
+ *     if no JWT exists, a manual "Sign in with Ethereum" button is shown.
+ *   - Signature rejected → error + "Try Again" button.
  */
 
 'use client';
@@ -21,6 +24,16 @@ import { ErrorAlert } from '@/components/ErrorAlert';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 /**
+ * Truncates a wallet address to the form 0x1234…abcd for compact display.
+ *
+ * @param addr - Full hex wallet address
+ * @returns Truncated address string
+ */
+function truncateAddress(addr: string): string {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+/**
  * Home page component.
  * Redirects authenticated users to /deals.
  * Shows wallet connect + SIWE sign-in flow for unauthenticated users.
@@ -29,8 +42,8 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
  */
 export default function HomePage() {
   const router = useRouter();
-  const { isConnected } = useAccount();
-  const { isAuthenticated, isSigningIn, signInError, signIn } = useAuth();
+  const { isConnected, address } = useAccount();
+  const { isAuthenticated, isSigningIn, signInError, signIn, signOut } = useAuth();
 
   // Redirect to deals list if already authenticated
   useEffect(() => {
@@ -86,39 +99,89 @@ export default function HomePage() {
       {/* Auth flow */}
       <div className="flex flex-col items-center gap-4">
         {!isConnected ? (
-          <>
+          /* Step 1 — wallet not connected */
+          <div className="flex flex-col items-center gap-3">
             <p className="text-sm text-gray-500">Connect your wallet to get started</p>
             <ConnectButton label="Connect Wallet" />
-          </>
+            <p className="text-xs text-gray-400">
+              Supports MetaMask, Coinbase Wallet, WalletConnect
+            </p>
+          </div>
         ) : isSigningIn ? (
-          /* Auto-SIWE in progress — wallet signature request is open */
+          /* Step 2 — wallet connected, SIWE signature request pending */
           <div className="flex flex-col items-center gap-3">
             <LoadingSpinner size="lg" />
-            <p className="text-sm font-medium text-gray-700">Verifying wallet identity…</p>
+            <p className="text-sm font-medium text-gray-700">Waiting for signature…</p>
+            {address && (
+              <p className="text-xs text-gray-500 font-mono">{truncateAddress(address)}</p>
+            )}
             <p className="text-xs text-gray-400">
-              Check your wallet — a signature request is waiting (no gas fee)
+              Check your wallet — sign the message to continue (no gas fee)
             </p>
           </div>
         ) : signInError ? (
-          /* User rejected the signature or an error occurred */
+          /* Step 2 error — signature rejected or API error */
+          <div className="flex flex-col items-center gap-4">
+            <ErrorAlert
+              message={
+                signInError.toLowerCase().includes('rejected') ||
+                signInError.toLowerCase().includes('denied') ||
+                signInError.toLowerCase().includes('user rejected')
+                  ? 'Signature cancelled. Click "Try Again" to sign in.'
+                  : signInError
+              }
+              className="max-w-sm"
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { void signIn(); }}
+                className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+              >
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+              >
+                Disconnect
+              </button>
+            </div>
+            {address && (
+              <p className="text-xs text-gray-400">
+                Connected: <span className="font-mono">{truncateAddress(address)}</span>
+              </p>
+            )}
+          </div>
+        ) : (
+          /* Wallet connected but no JWT — happens on page-load reconnect without a stored
+             session. useAccountEffect won't fire SIWE here (isReconnected=true), so the
+             user needs to sign in manually. */
           <div className="flex flex-col items-center gap-3">
-            <ErrorAlert message={signInError} className="max-w-sm" />
+            {address && (
+              <p className="text-xs text-gray-500">
+                Wallet connected:{' '}
+                <span className="font-mono font-medium">{truncateAddress(address)}</span>
+              </p>
+            )}
             <button
               type="button"
               onClick={() => { void signIn(); }}
               className="rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
             >
-              Try Again
+              Sign in with Ethereum
             </button>
             <p className="text-xs text-gray-400">
-              Sign the message in your wallet to continue (no gas fee)
+              Sign a message to verify ownership (no gas fee)
             </p>
-          </div>
-        ) : (
-          /* Wallet connected, auto-sign-in about to trigger */
-          <div className="flex flex-col items-center gap-3">
-            <LoadingSpinner size="lg" />
-            <p className="text-sm text-gray-500">Preparing sign-in…</p>
+            <button
+              type="button"
+              onClick={signOut}
+              className="text-xs text-gray-400 underline hover:text-gray-600"
+            >
+              Use a different wallet
+            </button>
           </div>
         )}
       </div>

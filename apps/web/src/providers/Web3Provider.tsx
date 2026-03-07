@@ -29,21 +29,33 @@ import { sepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   RainbowKitProvider,
-  getDefaultWallets,
   connectorsForWallets,
   darkTheme,
   lightTheme,
 } from '@rainbow-me/rainbowkit';
+import {
+  metaMaskWallet,
+  coinbaseWallet,
+  walletConnectWallet,
+  rainbowWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { config as appConfig } from '@/lib/config';
 
 // ─── wagmi + RainbowKit configuration ────────────────────────────────────────
-
-const { wallets } = getDefaultWallets();
-
-const connectors = connectorsForWallets(wallets, {
-  appName: 'OpenEscrow',
-  projectId: appConfig.walletConnectProjectId,
-});
+// Limit to 4 common wallets so the compact modal stays genuinely compact.
+// getDefaultWallets() returns ~8 wallets which makes the dialog appear large.
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Popular',
+      wallets: [metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet],
+    },
+  ],
+  {
+    appName: 'OpenEscrow',
+    projectId: appConfig.walletConnectProjectId,
+  }
+);
 
 /**
  * wagmi client config — Sepolia testnet only for MVP.
