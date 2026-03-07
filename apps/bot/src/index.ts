@@ -21,6 +21,7 @@ import { startCommandHandler } from './commands/start.js';
 import { linkCommandHandler } from './commands/link.js';
 import { dealsCommandHandler } from './commands/deals.js';
 import { statusCommandHandler } from './commands/status.js';
+import { helpCommandHandler } from './commands/help.js';
 import { milestoneCallbackHandler } from './callbacks/milestone.js';
 import { startNotificationPolling } from './polling/notifier.js';
 import { startSessionCreatorPolling } from './polling/session-creator.js';
@@ -47,6 +48,7 @@ bot.command('start', startCommandHandler);
 bot.command('link', linkCommandHandler);
 bot.command('deals', dealsCommandHandler);
 bot.command('status', statusCommandHandler);
+bot.command('help', helpCommandHandler);
 
 // ─── Callback query handler ───────────────────────────────────────────────────
 

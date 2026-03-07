@@ -65,7 +65,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
           `💰 *Deal Funded!*\n\n` +
           `Deal \`${shortDealId}...\` has been funded.\n` +
           `You can now submit your first milestone.\n\n` +
-          `_Use /status ${dealId} to see milestones._`
+          `_Use /deals to see your deals and submit milestones._`
         );
       }
       return null;
@@ -78,7 +78,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
         return (
           `📤 *Milestone${seqLabel} Submitted!*\n\n` +
           `A milestone has been submitted for review on deal \`${shortDealId}...\`\n\n` +
-          `_Use /status ${dealId} to review and approve or reject._`
+          `_Use /deals to review and approve or reject._`
         );
       }
       return null;
@@ -93,7 +93,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
           `✅ *Milestone${seqLabel} Approved!*\n\n` +
           `Your milestone has been approved on deal \`${shortDealId}...\`\n` +
           `Funds have been released to your wallet.\n\n` +
-          `_Use /status ${dealId} to see remaining milestones._`
+          `_Use /deals to see remaining milestones._`
         );
       }
       return null;
@@ -111,7 +111,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
           `❌ *Milestone${seqLabel} Rejected*\n\n` +
           `Your milestone on deal \`${shortDealId}...\` was rejected.\n` +
           `Reasons: ${reasons}\n\n` +
-          `_Use /status ${dealId} to resubmit after revision._`
+          `_Use /deals to resubmit after revision._`
         );
       }
       return null;
@@ -140,7 +140,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
         return (
           `🔄 *Milestone${seqLabel} Ready for Revision*\n\n` +
           `Please revise and resubmit milestone on deal \`${shortDealId}...\`\n\n` +
-          `_Use /status ${dealId} to resubmit._`
+          `_Use /deals to resubmit._`
         );
       }
       return null;

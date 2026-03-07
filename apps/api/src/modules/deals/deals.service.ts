@@ -12,7 +12,7 @@
  * All invalid transitions return AppError with code INVALID_TRANSITION.
  */
 
-import { eq, or, desc } from 'drizzle-orm';
+import { eq, or, desc, inArray } from 'drizzle-orm';
 import { db } from '../../database/index.js';
 import {
   deals,
@@ -28,6 +28,42 @@ import { logger } from '../../lib/logger.js';
 import type { CreateDealInput, FundDealInput } from './deals.schema.js';
 
 const log = logger.child({ module: 'deals.service' });
+
+// ─── Address enrichment ────────────────────────────────────────────────────────
+
+/**
+ * Enriches one or more deals with the wallet addresses of client and freelancer.
+ * Performs a single batch users lookup to avoid N+1 queries.
+ *
+ * @param dealRows - Array of raw deal DB rows
+ * @returns Deals augmented with clientAddress and freelancerAddress fields
+ * @throws Never — missing users fall back to empty string so callers don't crash
+ */
+async function enrichDealsWithAddresses<T extends Deal>(
+  dealRows: T[],
+): Promise<(T & { clientAddress: string; freelancerAddress: string })[]> {
+  if (dealRows.length === 0) return [];
+
+  const uniqueUserIds = [
+    ...new Set([
+      ...dealRows.map((d) => d.clientId),
+      ...dealRows.map((d) => d.freelancerId),
+    ]),
+  ];
+
+  const userRows = await db
+    .select({ id: users.id, walletAddress: users.walletAddress })
+    .from(users)
+    .where(inArray(users.id, uniqueUserIds));
+
+  const userMap = new Map(userRows.map((u) => [u.id, u.walletAddress]));
+
+  return dealRows.map((d) => ({
+    ...d,
+    clientAddress: userMap.get(d.clientId) ?? '',
+    freelancerAddress: userMap.get(d.freelancerId) ?? '',
+  }));
+}
 
 // ─── Valid state transitions ───────────────────────────────────────────────────
 
@@ -213,7 +249,7 @@ export async function createDeal(
  * @returns Array of deals (without milestones — use getDeal for detail)
  * @throws {AppError} DEAL_LIST_FAILED on database error
  */
-export async function listDeals(userId: string): Promise<Deal[]> {
+export async function listDeals(userId: string): Promise<(Deal & { clientAddress: string; freelancerAddress: string })[]> {
   try {
     const result = await db
       .select()
@@ -221,7 +257,7 @@ export async function listDeals(userId: string): Promise<Deal[]> {
       .where(or(eq(deals.clientId, userId), eq(deals.freelancerId, userId)))
       .orderBy(desc(deals.createdAt));
 
-    return result;
+    return enrichDealsWithAddresses(result);
   } catch (err) {
     log.error({
       module: 'deals.service',
@@ -241,7 +277,7 @@ export async function listDeals(userId: string): Promise<Deal[]> {
  * @returns Deal with milestones array, or null if not found
  * @throws {AppError} DEAL_GET_FAILED on database error
  */
-export async function getDeal(dealId: string): Promise<(Deal & { milestones: Milestone[] }) | null> {
+export async function getDeal(dealId: string): Promise<(Deal & { milestones: Milestone[]; clientAddress: string; freelancerAddress: string }) | null> {
   try {
     const [deal] = await db
       .select()
@@ -257,7 +293,8 @@ export async function getDeal(dealId: string): Promise<(Deal & { milestones: Mil
       .where(eq(milestones.dealId, dealId))
       .orderBy(milestones.sequence);
 
-    return { ...deal, milestones: milestoneRows };
+    const [enriched] = await enrichDealsWithAddresses([deal]);
+    return { ...enriched!, milestones: milestoneRows };
   } catch (err) {
     log.error({
       module: 'deals.service',

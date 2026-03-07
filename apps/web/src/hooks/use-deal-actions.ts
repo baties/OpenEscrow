@@ -99,7 +99,8 @@ export function useDealActions(): UseDealActionsResult {
   const agreeDeal = useCallback(async (dealId: string): Promise<Deal | null> => {
     setAgreeState({ isLoading: true, error: null });
     try {
-      const { deal } = await dealsApi.agree(dealId);
+      // API returns the updated Deal directly (not wrapped in { deal: ... })
+      const deal = await dealsApi.agree(dealId);
       setAgreeState({ isLoading: false, error: null });
       return deal;
     } catch (err) {
@@ -113,7 +114,8 @@ export function useDealActions(): UseDealActionsResult {
   const fundDeal = useCallback(async (dealId: string, txHash: string): Promise<Deal | null> => {
     setFundState({ isLoading: true, error: null });
     try {
-      const { deal } = await dealsApi.fund(dealId, txHash);
+      // API returns the updated Deal directly
+      const deal = await dealsApi.fund(dealId, txHash);
       setFundState({ isLoading: false, error: null });
       return deal;
     } catch (err) {
@@ -127,7 +129,8 @@ export function useDealActions(): UseDealActionsResult {
   const cancelDeal = useCallback(async (dealId: string): Promise<Deal | null> => {
     setCancelState({ isLoading: true, error: null });
     try {
-      const { deal } = await dealsApi.cancel(dealId);
+      // API returns the updated Deal directly
+      const deal = await dealsApi.cancel(dealId);
       setCancelState({ isLoading: false, error: null });
       return deal;
     } catch (err) {

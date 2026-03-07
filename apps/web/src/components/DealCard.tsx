@@ -30,8 +30,8 @@ interface DealCardProps {
  * @returns A card element linking to /deals/[id]
  */
 export function DealCard({ deal, currentUserAddress }: DealCardProps) {
-  const isClient = deal.clientId.toLowerCase() === currentUserAddress.toLowerCase();
-  const counterparty = isClient ? deal.freelancerId : deal.clientId;
+  const isClient = deal.clientAddress.toLowerCase() === currentUserAddress.toLowerCase();
+  const counterparty = isClient ? deal.freelancerAddress : deal.clientAddress;
   const role = isClient ? 'Client' : 'Freelancer';
 
   return (

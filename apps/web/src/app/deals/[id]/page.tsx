@@ -55,6 +55,8 @@ export default function DealDetailPage() {
   // Modal state
   const [submitModalMilestoneId, setSubmitModalMilestoneId] = useState<string | null>(null);
   const [rejectModalMilestoneId, setRejectModalMilestoneId] = useState<string | null>(null);
+  // Success banner shown after agree/cancel actions
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -65,7 +67,9 @@ export default function DealDetailPage() {
 
   if (!isAuthenticated || !walletAddress) return null;
 
-  if (isDealLoading) {
+  // Only show full-page spinner on first load (deal is null).
+  // During refresh the existing deal is kept visible so the page doesn't flash.
+  if (isDealLoading && !deal) {
     return (
       <div className="flex items-center justify-center py-16">
         <LoadingSpinner size="lg" label="Loading deal..." />
@@ -86,17 +90,20 @@ export default function DealDetailPage() {
 
   if (!deal) return null;
 
-  const isClient = deal.clientId.toLowerCase() === walletAddress.toLowerCase();
-  const isFreelancer = deal.freelancerId.toLowerCase() === walletAddress.toLowerCase();
+  const isClient = deal.clientAddress.toLowerCase() === walletAddress.toLowerCase();
+  const isFreelancer = deal.freelancerAddress.toLowerCase() === walletAddress.toLowerCase();
 
-  // Determine available deal-level actions
-  const canAgree =
-    isFreelancer && deal.status === 'DRAFT';
-  const canFund =
-    isClient && deal.status === 'AGREED';
+  // Determine available deal-level actions.
+  const canAgree = isFreelancer && deal.status === 'DRAFT';
+  // Freelancer declining a DRAFT deal = cancel before funding (no refund needed).
+  const canDecline = isFreelancer && deal.status === 'DRAFT';
+  const canFund = isClient && deal.status === 'AGREED';
+  // Client can cancel in DRAFT, AGREED, or FUNDED.
+  // Freelancer can only cancel in AGREED (before client funds) — DRAFT is handled by "Decline".
+  // After FUNDED, only the client can cancel.
   const canCancel =
-    (isClient || isFreelancer) &&
-    ['DRAFT', 'AGREED', 'FUNDED'].includes(deal.status);
+    (isClient && ['DRAFT', 'AGREED', 'FUNDED'].includes(deal.status)) ||
+    (isFreelancer && deal.status === 'AGREED');
 
   const isMilestoneActionsLoading =
     submitState.isLoading || approveState.isLoading || rejectState.isLoading;
@@ -107,25 +114,32 @@ export default function DealDetailPage() {
 
   /**
    * Handles freelancer agreeing to the deal.
+   * Shows a success banner immediately and refreshes deal state in the background.
    */
   async function handleAgree() {
-    // deal is non-null here: guarded by `if (!deal) return null` above
+    setSuccessMessage(null);
     const updated = await agreeDeal(deal!.id);
     if (updated) {
+      setSuccessMessage('Deal agreed! The client can now fund the deal.');
       refreshDeal();
       refreshTimeline();
     }
   }
 
   /**
-   * Handles cancelling the deal.
+   * Handles cancelling (or declining) the deal.
+   * Shows a success banner after cancellation and refreshes deal state.
    */
   async function handleCancel() {
-    if (!window.confirm('Are you sure you want to cancel this deal? This cannot be undone.')) {
+    const isDraft = deal!.status === 'DRAFT';
+    const actionLabel = isDraft && isFreelancer ? 'decline' : 'cancel';
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this deal? This cannot be undone.`)) {
       return;
     }
+    setSuccessMessage(null);
     const updated = await cancelDeal(deal!.id);
     if (updated) {
+      setSuccessMessage(isDraft && isFreelancer ? 'Deal declined.' : 'Deal cancelled.');
       refreshDeal();
       refreshTimeline();
     }
@@ -187,6 +201,21 @@ export default function DealDetailPage() {
         ← Back to My Deals
       </Link>
 
+      {/* Success banner */}
+      {successMessage && (
+        <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="ml-4 text-emerald-600 hover:text-emerald-800"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Deal header */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
@@ -198,13 +227,13 @@ export default function DealDetailPage() {
             <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Client</p>
-                <p className="font-mono text-gray-700">{truncateAddress(deal.clientId)}</p>
+                <p className="font-mono text-gray-700">{truncateAddress(deal.clientAddress)}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Freelancer
                 </p>
-                <p className="font-mono text-gray-700">{truncateAddress(deal.freelancerId)}</p>
+                <p className="font-mono text-gray-700">{truncateAddress(deal.freelancerAddress)}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -232,6 +261,17 @@ export default function DealDetailPage() {
               >
                 {agreeState.isLoading && <LoadingSpinner size="sm" />}
                 Agree to Deal
+              </button>
+            )}
+            {canDecline && (
+              <button
+                type="button"
+                disabled={cancelState.isLoading}
+                onClick={() => { void handleCancel(); }}
+                className="flex items-center gap-1.5 rounded-lg border border-orange-200 px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-60"
+              >
+                {cancelState.isLoading && <LoadingSpinner size="sm" />}
+                Decline Deal
               </button>
             )}
             {canFund && (

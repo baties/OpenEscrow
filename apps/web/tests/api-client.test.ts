@@ -292,16 +292,16 @@ describe('telegramApi.generateCode', () => {
 });
 
 describe('telegramApi.link', () => {
-  it('makes a POST to /api/v1/telegram/link with the code', async () => {
+  it('makes a POST to /api/v1/telegram/link with oneTimeCode and telegramUserId', async () => {
     mockFetch.mockResolvedValueOnce(
-      mockResponse(200, { linked: true, telegramUserId: '12345' })
+      mockResponse(200, { success: true, message: 'Linked' })
     );
 
-    await telegramApi.link('LINK-CODE');
+    await telegramApi.link('LINK-CODE', '123456789');
 
     const [url, opts] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('http://localhost:3001/api/v1/telegram/link');
-    expect(JSON.parse(opts.body as string)).toEqual({ code: 'LINK-CODE' });
+    expect(JSON.parse(opts.body as string)).toEqual({ oneTimeCode: 'LINK-CODE', telegramUserId: '123456789' });
   });
 });
 

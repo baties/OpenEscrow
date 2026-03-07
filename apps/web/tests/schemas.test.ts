@@ -190,17 +190,19 @@ describe('rejectMilestoneSchema', () => {
 // ─── telegramLinkSchema ────────────────────────────────────────────────────────
 
 describe('telegramLinkSchema', () => {
-  it('accepts a valid alphanumeric code', () => {
-    expect(() => telegramLinkSchema.parse({ code: 'ABC123def' })).not.toThrow();
+  const validPayload = { code: 'ABC123def', telegramUserId: '123456789' };
+
+  it('accepts a valid alphanumeric code with numeric telegramUserId', () => {
+    expect(() => telegramLinkSchema.parse(validPayload)).not.toThrow();
   });
 
   it('rejects a code that is too short', () => {
-    const result = telegramLinkSchema.safeParse({ code: 'abc' });
+    const result = telegramLinkSchema.safeParse({ ...validPayload, code: 'abc' });
     expect(result.success).toBe(false);
   });
 
   it('rejects a code with special characters', () => {
-    const result = telegramLinkSchema.safeParse({ code: 'abc-123' });
+    const result = telegramLinkSchema.safeParse({ ...validPayload, code: 'abc-123' });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0]?.message).toContain('alphanumeric');
@@ -208,7 +210,12 @@ describe('telegramLinkSchema', () => {
   });
 
   it('trims whitespace before validation', () => {
-    expect(() => telegramLinkSchema.parse({ code: '  ABC123def  ' })).not.toThrow();
+    expect(() => telegramLinkSchema.parse({ code: '  ABC123def  ', telegramUserId: '123456789' })).not.toThrow();
+  });
+
+  it('rejects non-numeric telegramUserId', () => {
+    const result = telegramLinkSchema.safeParse({ code: 'ABC123def', telegramUserId: 'notanumber' });
+    expect(result.success).toBe(false);
   });
 });
 

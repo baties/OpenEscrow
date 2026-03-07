@@ -116,8 +116,8 @@ function buildActionKeyboard(
     }
   }
 
-  if (isFreelancer) {
-    // Freelancer can submit PENDING or REVISION milestones
+  if (isFreelancer && deal.status === 'FUNDED') {
+    // Freelancer can submit PENDING or REVISION milestones only when the deal is FUNDED
     const actionableMilestones = (deal.milestones ?? []).filter(
       (m) => m.status === 'PENDING' || m.status === 'REVISION',
     );

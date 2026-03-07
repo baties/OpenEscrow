@@ -306,17 +306,49 @@ export async function handleDealStatus(ctx: TelegrafContext, dealId: string): Pr
     const deal = await getDeal(session.jwt, dealId);
 
     const shortId = deal.id.slice(0, 8);
+    const isClient = deal.clientId === session.userId;
+    const isFreelancer = deal.freelancerId === session.userId;
+
     const milestoneLines = (deal.milestones ?? [])
       .map((m) => `  ${m.sequence}. ${m.title}: ${m.status}`)
       .join('\n');
 
-    await ctx.replyWithMarkdown(
+    const message =
       `*Deal \`${shortId}...\`*\n\n` +
-        `Status: ${deal.status}\n` +
-        `Amount: ${deal.totalAmount} tokens\n\n` +
-        `*Milestones:*\n${milestoneLines.length > 0 ? milestoneLines : '_None_'}\n\n` +
-        `_Use /status ${deal.id} for full details and actions._`,
-    );
+      `Status: ${deal.status}\n` +
+      `Amount: ${deal.totalAmount} tokens\n\n` +
+      `*Milestones:*\n${milestoneLines.length > 0 ? milestoneLines : '_None_'}\n\n` +
+      `_Use the web dashboard for detailed submissions and feedback._`;
+
+    // Build action buttons so the user doesn't need to type /status <UUID>
+    const buttons: ReturnType<typeof Markup.button.callback>[][] = [];
+
+    if (isClient) {
+      const submittedMilestones = (deal.milestones ?? []).filter((m) => m.status === 'SUBMITTED');
+      for (const m of submittedMilestones) {
+        const shortTitle = m.title.slice(0, 20);
+        buttons.push([
+          Markup.button.callback(`✅ Approve: ${shortTitle}`, `approve:${m.id}`),
+          Markup.button.callback(`❌ Reject: ${shortTitle}`, `reject:${m.id}`),
+        ]);
+      }
+    }
+
+    if (isFreelancer && deal.status === 'FUNDED') {
+      const actionableMilestones = (deal.milestones ?? []).filter(
+        (m) => m.status === 'PENDING' || m.status === 'REVISION',
+      );
+      for (const m of actionableMilestones) {
+        const shortTitle = m.title.slice(0, 25);
+        buttons.push([Markup.button.callback(`📤 Submit: ${shortTitle}`, `submit:${m.id}`)]);
+      }
+    }
+
+    if (buttons.length > 0) {
+      await ctx.replyWithMarkdown(message, Markup.inlineKeyboard(buttons));
+    } else {
+      await ctx.replyWithMarkdown(message);
+    }
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(

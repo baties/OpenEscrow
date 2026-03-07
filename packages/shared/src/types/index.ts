@@ -54,11 +54,17 @@ export interface User {
 
 /**
  * A deal as returned by the API.
+ * clientAddress and freelancerAddress are the wallet addresses corresponding to
+ * clientId and freelancerId (internal UUIDs). Use these for display and role detection.
  */
 export interface Deal {
   id: string;
   clientId: string;
   freelancerId: string;
+  /** Ethereum wallet address of the client (lowercase). Use for display and role detection. */
+  clientAddress: string;
+  /** Ethereum wallet address of the freelancer (lowercase). Use for display and role detection. */
+  freelancerAddress: string;
   tokenAddress: string;
   totalAmount: string; // BigInt as string to avoid precision loss
   status: DealStatus;

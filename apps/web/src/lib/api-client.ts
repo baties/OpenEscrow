@@ -163,20 +163,21 @@ export interface TelegramStatusResponse {
   linkedAt: string | null;
 }
 
-/** Response from POST /deals/:id/agree */
-export interface AgreeResponse {
-  deal: Deal;
-}
+/**
+ * Response from POST /deals/:id/agree — API returns the updated Deal directly.
+ * The controller calls reply.send(deal), not reply.send({ deal }).
+ */
+export type AgreeResponse = Deal;
 
-/** Response from POST /deals/:id/fund */
-export interface FundResponse {
-  deal: Deal;
-}
+/**
+ * Response from POST /deals/:id/fund — API returns the updated Deal directly.
+ */
+export type FundResponse = Deal;
 
-/** Response from POST /deals/:id/cancel */
-export interface CancelResponse {
-  deal: Deal;
-}
+/**
+ * Response from POST /deals/:id/cancel — API returns the updated Deal directly.
+ */
+export type CancelResponse = Deal;
 
 /** Response from POST /milestones/:id/submit */
 export interface SubmitMilestoneResponse {
