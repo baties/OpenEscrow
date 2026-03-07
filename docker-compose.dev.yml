@@ -31,10 +31,10 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@openescrow.dev}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
       # Disable the pgAdmin login splash for a faster dev workflow.
-      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
       PGADMIN_CONFIG_LOGIN_BANNER: "'OpenEscrow Dev — local only'"
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - '${PGADMIN_PORT:-5050}:80'
     volumes:
       # Persist pgAdmin server definitions across container restarts.
       - pgadmin_data:/var/lib/pgadmin

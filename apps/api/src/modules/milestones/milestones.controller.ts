@@ -24,7 +24,7 @@ const log = logger.child({ module: 'milestones.controller' });
  */
 export async function submitMilestoneHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const parsed = SubmitMilestoneSchema.safeParse(request.body);
   if (!parsed.success) {
@@ -39,14 +39,21 @@ export async function submitMilestoneHandler(
   const milestoneId = request.params.id;
   const freelancerId = request.user.userId;
 
-  log.info({
-    module: 'milestones.controller',
-    operation: 'submitMilestoneHandler',
+  log.info(
+    {
+      module: 'milestones.controller',
+      operation: 'submitMilestoneHandler',
+      milestoneId,
+      freelancerId,
+    },
+    'Handling milestone submit request'
+  );
+
+  const submission = await milestonesService.submitMilestone(
     milestoneId,
     freelancerId,
-  }, 'Handling milestone submit request');
-
-  const submission = await milestonesService.submitMilestone(milestoneId, freelancerId, parsed.data);
+    parsed.data
+  );
   await reply.status(200).send(submission);
 }
 
@@ -61,17 +68,20 @@ export async function submitMilestoneHandler(
  */
 export async function approveMilestoneHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const milestoneId = request.params.id;
   const clientId = request.user.userId;
 
-  log.info({
-    module: 'milestones.controller',
-    operation: 'approveMilestoneHandler',
-    milestoneId,
-    clientId,
-  }, 'Handling milestone approve request');
+  log.info(
+    {
+      module: 'milestones.controller',
+      operation: 'approveMilestoneHandler',
+      milestoneId,
+      clientId,
+    },
+    'Handling milestone approve request'
+  );
 
   const milestone = await milestonesService.approveMilestone(milestoneId, clientId);
   await reply.status(200).send(milestone);
@@ -88,7 +98,7 @@ export async function approveMilestoneHandler(
  */
 export async function rejectMilestoneHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   const parsed = RejectMilestoneSchema.safeParse(request.body);
   if (!parsed.success) {
@@ -103,12 +113,15 @@ export async function rejectMilestoneHandler(
   const milestoneId = request.params.id;
   const clientId = request.user.userId;
 
-  log.info({
-    module: 'milestones.controller',
-    operation: 'rejectMilestoneHandler',
-    milestoneId,
-    clientId,
-  }, 'Handling milestone reject request');
+  log.info(
+    {
+      module: 'milestones.controller',
+      operation: 'rejectMilestoneHandler',
+      milestoneId,
+      clientId,
+    },
+    'Handling milestone reject request'
+  );
 
   const rejectionNote = await milestonesService.rejectMilestone(milestoneId, clientId, parsed.data);
   await reply.status(200).send(rejectionNote);

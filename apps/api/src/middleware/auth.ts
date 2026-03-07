@@ -32,19 +32,19 @@ export interface JwtPayload {
  * @param reply - Fastify reply object (used to send 401 on failure)
  * @returns Promise<void> — resolves if auth passes, sends reply on failure
  */
-export async function requireAuth(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     await request.jwtVerify<JwtPayload>();
   } catch (err) {
-    log.warn({
-      module: 'middleware.auth',
-      operation: 'requireAuth',
-      path: request.url,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'JWT verification failed');
+    log.warn(
+      {
+        module: 'middleware.auth',
+        operation: 'requireAuth',
+        path: request.url,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'JWT verification failed'
+    );
 
     await reply.status(401).send({
       error: 'UNAUTHORIZED',

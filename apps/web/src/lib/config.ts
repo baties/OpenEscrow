@@ -91,10 +91,16 @@ function requireNumberEnv(key: string, value: string | undefined, defaultValue?:
  * Throws immediately if any required env var is missing.
  */
 export const config: AppConfig = {
-  apiUrl:                requireEnv('NEXT_PUBLIC_API_URL',                    process.env.NEXT_PUBLIC_API_URL),
-  chainId:               requireNumberEnv('NEXT_PUBLIC_CHAIN_ID',             process.env.NEXT_PUBLIC_CHAIN_ID, 11155111),
-  contractAddress:       requireAddressEnv('NEXT_PUBLIC_CONTRACT_ADDRESS',    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS),
-  usdcAddress:           requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS',        process.env.NEXT_PUBLIC_USDC_ADDRESS),
-  usdtAddress:           requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS',        process.env.NEXT_PUBLIC_USDT_ADDRESS),
-  walletConnectProjectId: requireEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
+  apiUrl: requireEnv('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL),
+  chainId: requireNumberEnv('NEXT_PUBLIC_CHAIN_ID', process.env.NEXT_PUBLIC_CHAIN_ID, 11155111),
+  contractAddress: requireAddressEnv(
+    'NEXT_PUBLIC_CONTRACT_ADDRESS',
+    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
+  ),
+  usdcAddress: requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS', process.env.NEXT_PUBLIC_USDC_ADDRESS),
+  usdtAddress: requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS', process.env.NEXT_PUBLIC_USDT_ADDRESS),
+  walletConnectProjectId: requireEnv(
+    'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',
+    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+  ),
 } as const;

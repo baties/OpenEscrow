@@ -147,7 +147,7 @@ describe('telegram.service', () => {
         telegramService.linkTelegram('user-uuid-1', {
           oneTimeCode: 'abcd1234',
           telegramUserId: '123456789',
-        }),
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -162,7 +162,7 @@ describe('telegram.service', () => {
         telegramService.linkTelegram('user-uuid-1', {
           oneTimeCode: 'invalid',
           telegramUserId: '123456789',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'TELEGRAM_CODE_INVALID' });
     });
 
@@ -179,7 +179,7 @@ describe('telegram.service', () => {
         telegramService.linkTelegram('user-uuid-1', {
           oneTimeCode: 'abcd1234',
           telegramUserId: '123456789',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'TELEGRAM_CODE_USED' });
     });
 
@@ -199,7 +199,7 @@ describe('telegram.service', () => {
         telegramService.linkTelegram('user-uuid-1', {
           oneTimeCode: 'abcd1234',
           telegramUserId: '123456789',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'TELEGRAM_CODE_EXPIRED' });
     });
 
@@ -223,7 +223,7 @@ describe('telegram.service', () => {
         telegramService.linkTelegram('user-uuid-1', {
           oneTimeCode: 'abcd1234',
           telegramUserId: '999999999',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'TELEGRAM_ALREADY_LINKED' });
     });
   });

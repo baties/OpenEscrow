@@ -80,7 +80,6 @@ function Step(props: StepProps) {
 export default function HelpPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-10 py-4">
-
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Help &amp; Documentation</h1>
@@ -121,44 +120,92 @@ export default function HelpPage() {
       {/* Client Guide */}
       <section className="rounded-xl border border-blue-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden="true">🧑‍💼</span>
+          <span className="text-2xl" aria-hidden="true">
+            🧑‍💼
+          </span>
           <h2 className="text-xl font-semibold text-gray-900">Client Guide</h2>
         </div>
         <p className="mt-2 text-sm text-gray-500">
           You are the <strong>client</strong> if you are hiring a freelancer and paying for work.
         </p>
         <div className="mt-5 space-y-3">
-          <Step n={1} text="Connect your wallet (MetaMask or any EVM wallet) and sign in with Ethereum." />
-          <Step n={2} text="Click New Deal and fill in the freelancer's wallet address, the payment token (USDC or USDT), and define milestones — each with a title, description, acceptance criteria, and amount." />
-          <Step n={3} text="The freelancer receives a notification and reviews the deal. They must click Agree before work can start." />
-          <Step n={4} text="Once the freelancer agrees, go to the deal page and click Fund Deal. Approve the token transfer in your wallet. Funds are now locked in the smart contract." />
-          <Step n={5} text="The freelancer works and submits each milestone with a summary and delivery links." />
-          <Step n={6} text="Review the submission. If it meets the acceptance criteria, click Approve — funds release automatically to the freelancer. If not, click Reject and choose structured reasons plus optional feedback." />
-          <Step n={7} text="After all milestones are approved, the deal is automatically marked Complete." />
+          <Step
+            n={1}
+            text="Connect your wallet (MetaMask or any EVM wallet) and sign in with Ethereum."
+          />
+          <Step
+            n={2}
+            text="Click New Deal and fill in the freelancer's wallet address, the payment token (USDC or USDT), and define milestones — each with a title, description, acceptance criteria, and amount."
+          />
+          <Step
+            n={3}
+            text="The freelancer receives a notification and reviews the deal. They must click Agree before work can start."
+          />
+          <Step
+            n={4}
+            text="Once the freelancer agrees, go to the deal page and click Fund Deal. Approve the token transfer in your wallet. Funds are now locked in the smart contract."
+          />
+          <Step
+            n={5}
+            text="The freelancer works and submits each milestone with a summary and delivery links."
+          />
+          <Step
+            n={6}
+            text="Review the submission. If it meets the acceptance criteria, click Approve — funds release automatically to the freelancer. If not, click Reject and choose structured reasons plus optional feedback."
+          />
+          <Step
+            n={7}
+            text="After all milestones are approved, the deal is automatically marked Complete."
+          />
         </div>
         <div className="mt-5 rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
           <strong>Tip:</strong> Define acceptance criteria clearly before funding. Vague criteria
-          lead to revision loops. The criteria you set are binding — the freelancer can rely on them.
+          lead to revision loops. The criteria you set are binding — the freelancer can rely on
+          them.
         </div>
       </section>
 
       {/* Freelancer Guide */}
       <section className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden="true">👩‍💻</span>
+          <span className="text-2xl" aria-hidden="true">
+            👩‍💻
+          </span>
           <h2 className="text-xl font-semibold text-gray-900">Freelancer Guide</h2>
         </div>
         <p className="mt-2 text-sm text-gray-500">
-          You are the <strong>freelancer</strong> if a client created a deal with your wallet address.
+          You are the <strong>freelancer</strong> if a client created a deal with your wallet
+          address.
         </p>
         <div className="mt-5 space-y-3">
-          <Step n={1} text="Connect the wallet address that the client used when creating the deal. Sign in with Ethereum." />
-          <Step n={2} text="Go to My Deals. You will see the deal in DRAFT status. Review the milestones and acceptance criteria carefully." />
-          <Step n={3} text="If you agree to the terms, click Agree to Deal. This confirms the scope and allows the client to fund." />
-          <Step n={4} text="Wait for the client to fund the deal. You will see the status change to FUNDED. This means the money is locked and will be released when you complete milestones." />
-          <Step n={5} text="For each milestone, complete the work then click Submit Milestone. Add a summary of what you delivered and relevant links (GitHub, Figma, etc.)." />
-          <Step n={6} text="The client reviews your submission. If approved, the funds for that milestone are released to your wallet. If rejected, you receive structured feedback and the milestone moves to REVISION status." />
-          <Step n={7} text="After revision, resubmit the milestone. There is no limit on revision rounds — but the client must have legitimate grounds for rejection per the agreed criteria." />
+          <Step
+            n={1}
+            text="Connect the wallet address that the client used when creating the deal. Sign in with Ethereum."
+          />
+          <Step
+            n={2}
+            text="Go to My Deals. You will see the deal in DRAFT status. Review the milestones and acceptance criteria carefully."
+          />
+          <Step
+            n={3}
+            text="If you agree to the terms, click Agree to Deal. This confirms the scope and allows the client to fund."
+          />
+          <Step
+            n={4}
+            text="Wait for the client to fund the deal. You will see the status change to FUNDED. This means the money is locked and will be released when you complete milestones."
+          />
+          <Step
+            n={5}
+            text="For each milestone, complete the work then click Submit Milestone. Add a summary of what you delivered and relevant links (GitHub, Figma, etc.)."
+          />
+          <Step
+            n={6}
+            text="The client reviews your submission. If approved, the funds for that milestone are released to your wallet. If rejected, you receive structured feedback and the milestone moves to REVISION status."
+          />
+          <Step
+            n={7}
+            text="After revision, resubmit the milestone. There is no limit on revision rounds — but the client must have legitimate grounds for rejection per the agreed criteria."
+          />
         </div>
         <div className="mt-5 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">
           <strong>Tip:</strong> Connect the Telegram bot (Settings → Telegram) to get instant
@@ -180,27 +227,53 @@ export default function HelpPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               <tr>
-                <td className="py-2 pr-4"><span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">PENDING</span></td>
-                <td className="py-2 pr-4 text-gray-600">Waiting for freelancer to submit deliverables</td>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    PENDING
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Waiting for freelancer to submit deliverables
+                </td>
                 <td className="py-2 text-gray-500">Freelancer</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4"><span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">SUBMITTED</span></td>
-                <td className="py-2 pr-4 text-gray-600">Freelancer submitted — awaiting client review</td>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    SUBMITTED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Freelancer submitted — awaiting client review
+                </td>
                 <td className="py-2 text-gray-500">Client</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4"><span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">APPROVED</span></td>
-                <td className="py-2 pr-4 text-gray-600">Client approved — funds released on-chain</td>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    APPROVED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Client approved — funds released on-chain
+                </td>
                 <td className="py-2 text-gray-500">—</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4"><span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">REJECTED</span></td>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    REJECTED
+                  </span>
+                </td>
                 <td className="py-2 pr-4 text-gray-600">Client rejected with reasons</td>
                 <td className="py-2 text-gray-500">System (auto → REVISION)</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4"><span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">REVISION</span></td>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    REVISION
+                  </span>
+                </td>
                 <td className="py-2 pr-4 text-gray-600">Freelancer revising after rejection</td>
                 <td className="py-2 text-gray-500">Freelancer</td>
               </tr>
@@ -212,7 +285,9 @@ export default function HelpPage() {
       {/* Telegram Bot */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden="true">📱</span>
+          <span className="text-2xl" aria-hidden="true">
+            📱
+          </span>
           <h2 className="text-xl font-semibold text-gray-900">Telegram Bot</h2>
         </div>
         <p className="mt-3 text-sm text-gray-600">
@@ -224,7 +299,10 @@ export default function HelpPage() {
           <ol className="mt-2 list-decimal list-inside space-y-1.5">
             <li>
               Go to{' '}
-              <Link href="/settings/telegram" className="text-indigo-600 underline hover:text-indigo-700">
+              <Link
+                href="/settings/telegram"
+                className="text-indigo-600 underline hover:text-indigo-700"
+              >
                 Settings → Telegram
               </Link>{' '}
               and click <strong>Generate Code</strong>.
@@ -243,19 +321,27 @@ export default function HelpPage() {
           <p className="font-medium text-gray-800">Bot commands:</p>
           <div className="mt-2 space-y-1.5 font-mono text-xs">
             <div className="flex gap-3">
-              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">/start</span>
+              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">
+                /start
+              </span>
               <span className="font-sans text-gray-600">Introduction and link instructions</span>
             </div>
             <div className="flex gap-3">
-              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">/link &lt;code&gt;</span>
+              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">
+                /link &lt;code&gt;
+              </span>
               <span className="font-sans text-gray-600">Begin account linking flow</span>
             </div>
             <div className="flex gap-3">
-              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">/deals</span>
+              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">
+                /deals
+              </span>
               <span className="font-sans text-gray-600">List your active deals</span>
             </div>
             <div className="flex gap-3">
-              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">/status &lt;dealId&gt;</span>
+              <span className="w-36 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-indigo-700">
+                /status &lt;dealId&gt;
+              </span>
               <span className="font-sans text-gray-600">Check deal details and milestones</span>
             </div>
           </div>
@@ -265,7 +351,7 @@ export default function HelpPage() {
       {/* FAQ */}
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
-        {FAQ_ITEMS.map(function(item) {
+        {FAQ_ITEMS.map(function (item) {
           return (
             <details
               key={item.question}
@@ -299,7 +385,6 @@ export default function HelpPage() {
           .
         </p>
       </div>
-
     </div>
   );
 }

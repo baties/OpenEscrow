@@ -124,7 +124,10 @@ export default function TelegramSettingsPage() {
     setLinkError(null);
     setLinkSuccess(null);
 
-    const result = telegramLinkSchema.safeParse({ code: linkCode, telegramUserId: linkTelegramUserId });
+    const result = telegramLinkSchema.safeParse({
+      code: linkCode,
+      telegramUserId: linkTelegramUserId,
+    });
     if (!result.success) {
       setFieldError(result.error.issues[0]?.message ?? 'Invalid input');
       return;
@@ -155,7 +158,7 @@ export default function TelegramSettingsPage() {
   async function handleUnlink() {
     if (
       !window.confirm(
-        'Are you sure? This will immediately revoke the bot\'s access to your account.'
+        "Are you sure? This will immediately revoke the bot's access to your account."
       )
     ) {
       return;
@@ -218,7 +221,9 @@ export default function TelegramSettingsPage() {
           <ErrorAlert message={unlinkError} onDismiss={() => setUnlinkError(null)} />
           <button
             type="button"
-            onClick={() => { void handleUnlink(); }}
+            onClick={() => {
+              void handleUnlink();
+            }}
             disabled={isUnlinking}
             className="flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
           >
@@ -240,12 +245,18 @@ export default function TelegramSettingsPage() {
             <div>
               <h2 className="font-semibold text-gray-900">Link via Bot Code</h2>
               <p className="mt-1 text-sm text-gray-500">
-                Start the OpenEscrow bot on Telegram, send <code className="bg-gray-100 px-1 rounded">/link</code>,
-                and paste the code you receive below along with your Telegram ID.
+                Start the OpenEscrow bot on Telegram, send{' '}
+                <code className="bg-gray-100 px-1 rounded">/link</code>, and paste the code you
+                receive below along with your Telegram ID.
               </p>
             </div>
 
-            <form onSubmit={(e) => { void handleLinkCode(e); }} className="space-y-3">
+            <form
+              onSubmit={(e) => {
+                void handleLinkCode(e);
+              }}
+              className="space-y-3"
+            >
               <div>
                 <label htmlFor="linkCode" className="block text-sm font-medium text-gray-700">
                   Code from Bot
@@ -262,7 +273,10 @@ export default function TelegramSettingsPage() {
               </div>
 
               <div>
-                <label htmlFor="linkTelegramUserId" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="linkTelegramUserId"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Your Telegram ID
                 </label>
                 <input
@@ -297,8 +311,8 @@ export default function TelegramSettingsPage() {
               <h2 className="font-semibold text-gray-900">Generate Code for Bot</h2>
               <p className="mt-1 text-sm text-gray-500">
                 Generate a code here and send it to the bot using{' '}
-                <code className="bg-gray-100 px-1 rounded">/link &lt;code&gt;</code>.
-                Codes expire after 15 minutes.
+                <code className="bg-gray-100 px-1 rounded">/link &lt;code&gt;</code>. Codes expire
+                after 15 minutes.
               </p>
             </div>
 
@@ -312,9 +326,7 @@ export default function TelegramSettingsPage() {
                 <p className="font-mono text-xl font-bold tracking-widest text-indigo-700">
                   {generatedCode}
                 </p>
-                <p className="text-xs text-indigo-500">
-                  Expires at: {formatDate(codeExpiresAt)}
-                </p>
+                <p className="text-xs text-indigo-500">Expires at: {formatDate(codeExpiresAt)}</p>
                 <p className="text-xs text-indigo-600">
                   Send this to the bot:{' '}
                   <code className="bg-indigo-100 px-1 rounded">/link {generatedCode}</code>
@@ -324,7 +336,9 @@ export default function TelegramSettingsPage() {
 
             <button
               type="button"
-              onClick={() => { void handleGenerateCode(); }}
+              onClick={() => {
+                void handleGenerateCode();
+              }}
               disabled={isGenerating}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-60"
             >

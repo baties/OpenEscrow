@@ -21,7 +21,7 @@ const WELCOME_UNLINKED =
   '1. Sign in with your wallet at the web dashboard\n' +
   '2. Go to Settings → Telegram\n' +
   '3. Generate a link code and send it here: `/link <code>`\n\n' +
-  '_Once linked, you\'ll receive deal notifications and can approve/submit milestones from here._';
+  "_Once linked, you'll receive deal notifications and can approve/submit milestones from here._";
 
 /** Welcome message for users who are already linked. */
 const welcomeLinked = (walletAddress: string): string =>
@@ -47,7 +47,7 @@ export async function startCommandHandler(ctx: Context): Promise<void> {
 
   log.info(
     { module: 'commands.start', operation: 'startCommandHandler', telegramUserId, chatId },
-    'Handling /start command',
+    'Handling /start command'
   );
 
   try {
@@ -66,7 +66,7 @@ export async function startCommandHandler(ctx: Context): Promise<void> {
         chatId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Failed to handle /start command',
+      'Failed to handle /start command'
     );
     try {
       await ctx.reply('Sorry, something went wrong. Please try again.');
@@ -74,7 +74,7 @@ export async function startCommandHandler(ctx: Context): Promise<void> {
       // If even the error reply fails, log and move on — do not throw
       log.error(
         { module: 'bot', operation: 'startCommandHandler', chatId },
-        'Failed to send error reply for /start',
+        'Failed to send error reply for /start'
       );
     }
   }

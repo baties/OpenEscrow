@@ -45,11 +45,11 @@
 
 Freelance projects — especially in Web3 — frequently break down over:
 
-| Problem | Impact |
-|---------|--------|
-| **Vague scope** and unclear acceptance criteria | Disputes over "done" vs. "not done" |
+| Problem                                                | Impact                               |
+| ------------------------------------------------------ | ------------------------------------ |
+| **Vague scope** and unclear acceptance criteria        | Disputes over "done" vs. "not done"  |
 | **Payment trust gap** (upfront risk vs. delivery risk) | Freelancers ghost, clients don't pay |
-| **No structured dispute loop** | Projects stall, relationships break |
+| **No structured dispute loop**                         | Projects stall, relationships break  |
 
 OpenEscrow addresses this with:
 
@@ -100,30 +100,30 @@ graph TD
 
 ### Monorepo Structure
 
-| Package | Description |
-|---------|-------------|
-| `apps/api` | Fastify backend — SIWE auth, deal lifecycle, milestones, chain indexer |
-| `apps/web` | Next.js 14 dashboard — wallet connect, client + freelancer flows |
-| `apps/bot` | Telegraf Telegram bot — deal status, approve/reject, notification polling |
-| `contracts` | OpenEscrow.sol + Hardhat tests + Sepolia deploy scripts |
-| `packages/shared` | TypeScript types, constants, and contract ABIs shared across all apps |
+| Package           | Description                                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| `apps/api`        | Fastify backend — SIWE auth, deal lifecycle, milestones, chain indexer    |
+| `apps/web`        | Next.js 14 dashboard — wallet connect, client + freelancer flows          |
+| `apps/bot`        | Telegraf Telegram bot — deal status, approve/reject, notification polling |
+| `contracts`       | OpenEscrow.sol + Hardhat tests + Sepolia deploy scripts                   |
+| `packages/shared` | TypeScript types, constants, and contract ABIs shared across all apps     |
 
 ---
 
 ## 🧰 Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer               | Technology                                                                     |
+| ------------------- | ------------------------------------------------------------------------------ |
 | **Smart Contracts** | Solidity 0.8.24 · Hardhat · OpenZeppelin (ReentrancyGuard, SafeERC20, Ownable) |
-| **Backend API** | TypeScript · Fastify · Drizzle ORM · PostgreSQL |
-| **Auth** | SIWE (Sign-In With Ethereum) · JWT session tokens |
-| **Frontend** | Next.js 14 (App Router) · React · Tailwind CSS · wagmi · viem · RainbowKit |
-| **Telegram Bot** | TypeScript · Telegraf |
-| **Validation** | Zod — every API input and env config validated at startup |
-| **Logging** | pino — structured JSON logs throughout |
-| **Testing** | Vitest (API + bot + web) · Hardhat (contracts) |
-| **Deployment** | Docker · Docker Compose (single-server self-hosted) |
-| **Target Chain** | Ethereum Sepolia testnet (mainnet only after audit) |
+| **Backend API**     | TypeScript · Fastify · Drizzle ORM · PostgreSQL                                |
+| **Auth**            | SIWE (Sign-In With Ethereum) · JWT session tokens                              |
+| **Frontend**        | Next.js 14 (App Router) · React · Tailwind CSS · wagmi · viem · RainbowKit     |
+| **Telegram Bot**    | TypeScript · Telegraf                                                          |
+| **Validation**      | Zod — every API input and env config validated at startup                      |
+| **Logging**         | pino — structured JSON logs throughout                                         |
+| **Testing**         | Vitest (API + bot + web) · Hardhat (contracts)                                 |
+| **Deployment**      | Docker · Docker Compose (single-server self-hosted)                            |
+| **Target Chain**    | Ethereum Sepolia testnet (mainnet only after audit)                            |
 
 ---
 
@@ -131,11 +131,11 @@ graph TD
 
 ### Prerequisites
 
-| Tool | Version |
-|------|---------|
-| [Node.js](https://nodejs.org/) | 22+ |
-| [pnpm](https://pnpm.io/) | 9+ (`npm install -g pnpm`) |
-| [Docker + Docker Compose](https://docs.docker.com/compose/) | v2+ |
+| Tool                                                        | Version                    |
+| ----------------------------------------------------------- | -------------------------- |
+| [Node.js](https://nodejs.org/)                              | 22+                        |
+| [pnpm](https://pnpm.io/)                                    | 9+ (`npm install -g pnpm`) |
+| [Docker + Docker Compose](https://docs.docker.com/compose/) | v2+                        |
 
 ### Setup
 
@@ -225,16 +225,16 @@ All variables are validated at startup via Zod — the process exits immediately
 <details>
 <summary>Key variables that require real values</summary>
 
-| Variable | How to get it |
-|----------|---------------|
-| `JWT_SECRET` | `openssl rand -hex 64` |
-| `BOT_API_SECRET` | `openssl rand -hex 32` |
-| `POSTGRES_PASSWORD` | Any strong password |
-| `TELEGRAM_BOT_TOKEN` | [@BotFather](https://t.me/BotFather) on Telegram |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | [cloud.walletconnect.com](https://cloud.walletconnect.com) |
-| `RPC_URL` | Sepolia RPC from Alchemy / Infura / QuickNode |
-| `CONTRACT_ADDRESS` | Output of `pnpm --filter @open-escrow/contracts deploy:sepolia` |
-| `USDC_ADDRESS` / `USDT_ADDRESS` | Sepolia token addresses (examples in `.env.example`) |
+| Variable                               | How to get it                                                   |
+| -------------------------------------- | --------------------------------------------------------------- |
+| `JWT_SECRET`                           | `openssl rand -hex 64`                                          |
+| `BOT_API_SECRET`                       | `openssl rand -hex 32`                                          |
+| `POSTGRES_PASSWORD`                    | Any strong password                                             |
+| `TELEGRAM_BOT_TOKEN`                   | [@BotFather](https://t.me/BotFather) on Telegram                |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | [cloud.walletconnect.com](https://cloud.walletconnect.com)      |
+| `RPC_URL`                              | Sepolia RPC from Alchemy / Infura / QuickNode                   |
+| `CONTRACT_ADDRESS`                     | Output of `pnpm --filter @open-escrow/contracts deploy:sepolia` |
+| `USDC_ADDRESS` / `USDT_ADDRESS`        | Sepolia token addresses (examples in `.env.example`)            |
 
 </details>
 
@@ -259,17 +259,17 @@ graph TD
 
 ### Deal State Machine
 
-| State | Description |
-|-------|-------------|
-| `DRAFT` | Deal created by client, awaiting freelancer agreement |
-| `AGREED` | Freelancer confirmed milestones and acceptance criteria |
-| `FUNDED` | Client deposited funds to smart contract |
-| `SUBMITTED` | Freelancer submitted milestone deliverables |
-| `APPROVED` | Client approved — funds released on-chain |
-| `REJECTED` | Client rejected with structured reasons |
-| `REVISION` | Freelancer revising after rejection (auto-set) |
-| `COMPLETED` | All milestones approved, deal finished (auto-set) |
-| `CANCELLED` | Deal cancelled — unreleased funds returned to client |
+| State       | Description                                             |
+| ----------- | ------------------------------------------------------- |
+| `DRAFT`     | Deal created by client, awaiting freelancer agreement   |
+| `AGREED`    | Freelancer confirmed milestones and acceptance criteria |
+| `FUNDED`    | Client deposited funds to smart contract                |
+| `SUBMITTED` | Freelancer submitted milestone deliverables             |
+| `APPROVED`  | Client approved — funds released on-chain               |
+| `REJECTED`  | Client rejected with structured reasons                 |
+| `REVISION`  | Freelancer revising after rejection (auto-set)          |
+| `COMPLETED` | All milestones approved, deal finished (auto-set)       |
+| `CANCELLED` | Deal cancelled — unreleased funds returned to client    |
 
 ---
 
@@ -301,25 +301,25 @@ Unlink anytime from the web dashboard — revokes bot access immediately.
 
 These are explicitly **out of scope** for the initial release:
 
-- Arbitration, dispute councils, or voting mechanisms *(no arbitration — only approve/reject/revise loop)*
-- Native token or non-stablecoin support *(USDC and USDT only)*
-- Multi-chain deployment *(Sepolia testnet only — mainnet after audit)*
-- Email or magic-link authentication *(wallet sign-in only)*
-- AI-assisted milestone drafting or submission summaries *(Phase 5, post-MVP)*
+- Arbitration, dispute councils, or voting mechanisms _(no arbitration — only approve/reject/revise loop)_
+- Native token or non-stablecoin support _(USDC and USDT only)_
+- Multi-chain deployment _(Sepolia testnet only — mainnet after audit)_
+- Email or magic-link authentication _(wallet sign-in only)_
+- AI-assisted milestone drafting or submission summaries _(Phase 5, post-MVP)_
 
 ---
 
 ## 🗺 Roadmap
 
-| Phase | Milestone | Status |
-|-------|-----------|--------|
-| 0 | **Repo Bootstrap** — monorepo, Docker, CI, shared types | ✅ Done |
-| 1 | **Smart Contracts** — escrow, milestones, cancel/refund, events | ✅ Done |
-| 2 | **Backend API** — auth, deal lifecycle, chain indexer, Telegram linking | ✅ Done |
-| 3 | **Web Dashboard** — wallet connect, client + freelancer flows, timeline | ✅ Done |
-| 4 | **Telegram Bot** — commands, inline keyboards, notification polling | ✅ Done |
-| 5 | **AI Clarity Layer** — milestone drafts, submission summaries, revision notes via OpenAI | ⏳ Post-MVP |
-| 6 | **Hardening** — rate limits, circuit breakers, observability, mainnet deployment after audit | ⏳ Post-MVP |
+| Phase | Milestone                                                                                    | Status      |
+| ----- | -------------------------------------------------------------------------------------------- | ----------- |
+| 0     | **Repo Bootstrap** — monorepo, Docker, CI, shared types                                      | ✅ Done     |
+| 1     | **Smart Contracts** — escrow, milestones, cancel/refund, events                              | ✅ Done     |
+| 2     | **Backend API** — auth, deal lifecycle, chain indexer, Telegram linking                      | ✅ Done     |
+| 3     | **Web Dashboard** — wallet connect, client + freelancer flows, timeline                      | ✅ Done     |
+| 4     | **Telegram Bot** — commands, inline keyboards, notification polling                          | ✅ Done     |
+| 5     | **AI Clarity Layer** — milestone drafts, submission summaries, revision notes via OpenAI     | ⏳ Post-MVP |
+| 6     | **Hardening** — rate limits, circuit breakers, observability, mainnet deployment after audit | ⏳ Post-MVP |
 
 ---
 
@@ -337,15 +337,15 @@ Contributions are welcome and greatly appreciated.
 
 ### Contribution Ideas
 
-| Area | Ideas |
-|------|-------|
+| Area                | Ideas                                                                       |
+| ------------------- | --------------------------------------------------------------------------- |
 | **Smart Contracts** | Gas optimizations, additional token support (post-MVP), formal verification |
-| **Multi-chain** | Deployment templates for Polygon, Arbitrum, Base |
-| **Web Dashboard** | UX improvements, mobile responsiveness, dark mode |
-| **Telegram Bot** | Richer inline keyboards, media support |
-| **AI Layer** | Prompt templates, evaluation harness, local LLM support (Phase 5) |
-| **Security** | Audit findings, fuzzing, static analysis integrations |
-| **Docs** | Tutorials, translations, self-hosting guides |
+| **Multi-chain**     | Deployment templates for Polygon, Arbitrum, Base                            |
+| **Web Dashboard**   | UX improvements, mobile responsiveness, dark mode                           |
+| **Telegram Bot**    | Richer inline keyboards, media support                                      |
+| **AI Layer**        | Prompt templates, evaluation harness, local LLM support (Phase 5)           |
+| **Security**        | Audit findings, fuzzing, static analysis integrations                       |
+| **Docs**            | Tutorials, translations, self-hosting guides                                |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 

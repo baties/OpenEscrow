@@ -101,7 +101,10 @@ describe('authApi.verify', () => {
     expect(mockFetch).toHaveBeenCalledOnce();
     const [, opts] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(opts.method).toBe('POST');
-    expect(JSON.parse(opts.body as string)).toEqual({ message: 'siwe message', signature: '0xsig' });
+    expect(JSON.parse(opts.body as string)).toEqual({
+      message: 'siwe message',
+      signature: '0xsig',
+    });
     expect(result.token).toBe('jwt.token.here');
   });
 });
@@ -137,7 +140,9 @@ describe('API client auth headers', () => {
 describe('401 auth expiry handling', () => {
   it('clears auth and throws AuthExpiredError on 401 response', async () => {
     vi.mocked(authStorage.getAuthToken).mockReturnValue('expired-token');
-    mockFetch.mockResolvedValueOnce(mockResponse(401, { error: 'UNAUTHORIZED', message: 'Token expired' }));
+    mockFetch.mockResolvedValueOnce(
+      mockResponse(401, { error: 'UNAUTHORIZED', message: 'Token expired' })
+    );
 
     // Mock window.dispatchEvent
     const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(() => true);
@@ -293,15 +298,16 @@ describe('telegramApi.generateCode', () => {
 
 describe('telegramApi.link', () => {
   it('makes a POST to /api/v1/telegram/link with oneTimeCode and telegramUserId', async () => {
-    mockFetch.mockResolvedValueOnce(
-      mockResponse(200, { success: true, message: 'Linked' })
-    );
+    mockFetch.mockResolvedValueOnce(mockResponse(200, { success: true, message: 'Linked' }));
 
     await telegramApi.link('LINK-CODE', '123456789');
 
     const [url, opts] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('http://localhost:3001/api/v1/telegram/link');
-    expect(JSON.parse(opts.body as string)).toEqual({ oneTimeCode: 'LINK-CODE', telegramUserId: '123456789' });
+    expect(JSON.parse(opts.body as string)).toEqual({
+      oneTimeCode: 'LINK-CODE',
+      telegramUserId: '123456789',
+    });
   });
 });
 

@@ -210,11 +210,16 @@ describe('telegramLinkSchema', () => {
   });
 
   it('trims whitespace before validation', () => {
-    expect(() => telegramLinkSchema.parse({ code: '  ABC123def  ', telegramUserId: '123456789' })).not.toThrow();
+    expect(() =>
+      telegramLinkSchema.parse({ code: '  ABC123def  ', telegramUserId: '123456789' })
+    ).not.toThrow();
   });
 
   it('rejects non-numeric telegramUserId', () => {
-    const result = telegramLinkSchema.safeParse({ code: 'ABC123def', telegramUserId: 'notanumber' });
+    const result = telegramLinkSchema.safeParse({
+      code: 'ABC123def',
+      telegramUserId: 'notanumber',
+    });
     expect(result.success).toBe(false);
   });
 });

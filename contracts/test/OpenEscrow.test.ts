@@ -44,7 +44,8 @@ const MilestoneState = { PENDING: 0n, SUBMITTED: 1n, APPROVED: 2n, REJECTED: 3n 
  * Returns all deployed contracts and key signers.
  */
 async function deployFixture() {
-  const [owner, client, freelancer, attacker, other] = await ethers.getSigners() as SignerWithAddress[];
+  const [owner, client, freelancer, attacker, other] =
+    (await ethers.getSigners()) as SignerWithAddress[];
 
   // Deploy mock ERC-20 tokens representing USDC and USDT.
   const ERC20Mock = await ethers.getContractFactory('ERC20Mock');
@@ -53,17 +54,26 @@ async function deployFixture() {
 
   // Deploy the main contract.
   const OpenEscrowFactory = await ethers.getContractFactory('OpenEscrow');
-  const escrow = await OpenEscrowFactory.deploy(
+  const escrow = (await OpenEscrowFactory.deploy(
     await usdc.getAddress(),
-    await usdt.getAddress(),
-  ) as OpenEscrow;
+    await usdt.getAddress()
+  )) as OpenEscrow;
 
   // Mint tokens to the client for testing.
   const mintAmount = parseToken('10000');
   await usdc.mint(client!.address, mintAmount);
   await usdt.mint(client!.address, mintAmount);
 
-  return { escrow, usdc, usdt, owner: owner!, client: client!, freelancer: freelancer!, attacker: attacker!, other: other! };
+  return {
+    escrow,
+    usdc,
+    usdt,
+    owner: owner!,
+    client: client!,
+    freelancer: freelancer!,
+    attacker: attacker!,
+    other: other!,
+  };
 }
 
 /**
@@ -75,11 +85,9 @@ async function draftDealFixture() {
   const { escrow, usdc, client, freelancer } = base;
 
   const milestoneAmounts = [parseToken('100'), parseToken('200'), parseToken('300')];
-  const tx = await escrow.connect(client).createDeal(
-    freelancer.address,
-    await usdc.getAddress(),
-    milestoneAmounts,
-  );
+  const tx = await escrow
+    .connect(client)
+    .createDeal(freelancer.address, await usdc.getAddress(), milestoneAmounts);
   const receipt = await tx.wait();
 
   // Extract dealId from DealCreated event.
@@ -92,7 +100,9 @@ async function draftDealFixture() {
         dealId = parsed.args['dealId'] as bigint;
         break;
       }
-    } catch { /* skip non-matching logs */ }
+    } catch {
+      /* skip non-matching logs */
+    }
   }
 
   return { ...base, dealId, milestoneAmounts, totalAmount: parseToken('600') };
@@ -132,7 +142,6 @@ async function fundedDealFixture() {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('OpenEscrow', function () {
-
   // ── 1. Deployment ─────────────────────────────────────────────────────────
 
   describe('Deployment', function () {
@@ -155,15 +164,29 @@ describe('OpenEscrow', function () {
     it('should revert if USDC address is zero', async function () {
       const { usdt } = await loadFixture(deployFixture);
       const Factory = await ethers.getContractFactory('OpenEscrow');
-      await expect(Factory.deploy(ethers.ZeroAddress, await usdt.getAddress()))
-        .to.be.revertedWithCustomError({ interface: (await Factory.deploy(await usdt.getAddress(), await usdt.getAddress())).interface }, 'UnsupportedToken');
+      await expect(
+        Factory.deploy(ethers.ZeroAddress, await usdt.getAddress())
+      ).to.be.revertedWithCustomError(
+        {
+          interface: (await Factory.deploy(await usdt.getAddress(), await usdt.getAddress()))
+            .interface,
+        },
+        'UnsupportedToken'
+      );
     });
 
     it('should revert if USDT address is zero', async function () {
       const { usdc } = await loadFixture(deployFixture);
       const Factory = await ethers.getContractFactory('OpenEscrow');
-      await expect(Factory.deploy(await usdc.getAddress(), ethers.ZeroAddress))
-        .to.be.revertedWithCustomError({ interface: (await Factory.deploy(await usdc.getAddress(), await usdc.getAddress())).interface }, 'UnsupportedToken');
+      await expect(
+        Factory.deploy(await usdc.getAddress(), ethers.ZeroAddress)
+      ).to.be.revertedWithCustomError(
+        {
+          interface: (await Factory.deploy(await usdc.getAddress(), await usdc.getAddress()))
+            .interface,
+        },
+        'UnsupportedToken'
+      );
     });
   });
 
@@ -174,30 +197,45 @@ describe('OpenEscrow', function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
       const milestones = [parseToken('100'), parseToken('200')];
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), milestones),
+        escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), milestones)
       )
         .to.emit(escrow, 'DealCreated')
-        .withArgs(1n, client.address, freelancer.address, await usdc.getAddress(), parseToken('300'), 2n);
+        .withArgs(
+          1n,
+          client.address,
+          freelancer.address,
+          await usdc.getAddress(),
+          parseToken('300'),
+          2n
+        );
     });
 
     it('should increment dealCounter', async function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
-      await escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [parseToken('50')]);
+      await escrow
+        .connect(client)
+        .createDeal(freelancer.address, await usdc.getAddress(), [parseToken('50')]);
       expect(await escrow.dealCounter()).to.equal(1n);
-      await escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [parseToken('50')]);
+      await escrow
+        .connect(client)
+        .createDeal(freelancer.address, await usdc.getAddress(), [parseToken('50')]);
       expect(await escrow.dealCounter()).to.equal(2n);
     });
 
     it('should store deal in DRAFT state', async function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
-      await escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100')]);
+      await escrow
+        .connect(client)
+        .createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100')]);
       const deal = await escrow.getDeal(1n);
       expect(deal.state).to.equal(DealState.DRAFT);
     });
 
     it('should store client and freelancer addresses', async function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
-      await escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100')]);
+      await escrow
+        .connect(client)
+        .createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100')]);
       const deal = await escrow.getDeal(1n);
       expect(deal.client).to.equal(client.address);
       expect(deal.freelancer).to.equal(freelancer.address);
@@ -218,7 +256,9 @@ describe('OpenEscrow', function () {
     it('should revert with UnsupportedToken for non-USDC/USDT token', async function () {
       const { escrow, client, freelancer } = await loadFixture(deployFixture);
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, ethers.ZeroAddress, [parseToken('100')]),
+        escrow
+          .connect(client)
+          .createDeal(freelancer.address, ethers.ZeroAddress, [parseToken('100')])
       ).to.be.revertedWithCustomError(escrow, 'UnsupportedToken');
     });
 
@@ -226,35 +266,41 @@ describe('OpenEscrow', function () {
       const { escrow, client, freelancer } = await loadFixture(deployFixture);
       const randomAddr = ethers.Wallet.createRandom().address;
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, randomAddr, [parseToken('100')]),
+        escrow.connect(client).createDeal(freelancer.address, randomAddr, [parseToken('100')])
       ).to.be.revertedWithCustomError(escrow, 'UnsupportedToken');
     });
 
     it('should revert with InvalidMilestones if milestones array is empty', async function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), []),
+        escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [])
       ).to.be.revertedWithCustomError(escrow, 'InvalidMilestones');
     });
 
     it('should revert with InvalidMilestones if any milestone amount is 0', async function () {
       const { escrow, usdc, client, freelancer } = await loadFixture(deployFixture);
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100'), 0n]),
+        escrow
+          .connect(client)
+          .createDeal(freelancer.address, await usdc.getAddress(), [parseToken('100'), 0n])
       ).to.be.revertedWithCustomError(escrow, 'InvalidMilestones');
     });
 
     it('should revert with Unauthorized if freelancer is zero address', async function () {
       const { escrow, usdc, client } = await loadFixture(deployFixture);
       await expect(
-        escrow.connect(client).createDeal(ethers.ZeroAddress, await usdc.getAddress(), [parseToken('100')]),
+        escrow
+          .connect(client)
+          .createDeal(ethers.ZeroAddress, await usdc.getAddress(), [parseToken('100')])
       ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('should allow creating deal with USDT', async function () {
       const { escrow, usdt, client, freelancer } = await loadFixture(deployFixture);
       await expect(
-        escrow.connect(client).createDeal(freelancer.address, await usdt.getAddress(), [parseToken('100')]),
+        escrow
+          .connect(client)
+          .createDeal(freelancer.address, await usdt.getAddress(), [parseToken('100')])
       ).to.emit(escrow, 'DealCreated');
     });
   });
@@ -273,20 +319,26 @@ describe('OpenEscrow', function () {
 
     it('should revert if caller is not the freelancer', async function () {
       const { escrow, client, dealId } = await loadFixture(draftDealFixture);
-      await expect(escrow.connect(client).agreeToDeal(dealId))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(escrow.connect(client).agreeToDeal(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'Unauthorized'
+      );
     });
 
     it('should revert if deal is not in DRAFT state', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(agreedDealFixture);
-      await expect(escrow.connect(freelancer).agreeToDeal(dealId))
-        .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+      await expect(escrow.connect(freelancer).agreeToDeal(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'InvalidDealState'
+      );
     });
 
     it('should revert for non-existent deal', async function () {
       const { escrow, freelancer } = await loadFixture(deployFixture);
-      await expect(escrow.connect(freelancer).agreeToDeal(999n))
-        .to.be.revertedWithCustomError(escrow, 'DealNotFound');
+      await expect(escrow.connect(freelancer).agreeToDeal(999n)).to.be.revertedWithCustomError(
+        escrow,
+        'DealNotFound'
+      );
     });
   });
 
@@ -318,22 +370,25 @@ describe('OpenEscrow', function () {
 
     it('should revert if caller is not the client', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(agreedDealFixture);
-      await expect(escrow.connect(freelancer).deposit(dealId))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(escrow.connect(freelancer).deposit(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'Unauthorized'
+      );
     });
 
     it('should revert if deal is not in AGREED state (DRAFT)', async function () {
       const { escrow, usdc, client, dealId, totalAmount } = await loadFixture(draftDealFixture);
       await usdc.connect(client).approve(await escrow.getAddress(), totalAmount);
-      await expect(escrow.connect(client).deposit(dealId))
-        .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+      await expect(escrow.connect(client).deposit(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'InvalidDealState'
+      );
     });
 
     it('should revert if client has not approved sufficient allowance', async function () {
       const { escrow, client, dealId } = await loadFixture(agreedDealFixture);
       // No approval made → ERC-20 transfer should fail.
-      await expect(escrow.connect(client).deposit(dealId))
-        .to.be.reverted; // ERC20 reverts with ERC20InsufficientAllowance
+      await expect(escrow.connect(client).deposit(dealId)).to.be.reverted; // ERC20 reverts with ERC20InsufficientAllowance
     });
   });
 
@@ -351,41 +406,48 @@ describe('OpenEscrow', function () {
 
     it('should revert if caller is not the freelancer', async function () {
       const { escrow, client, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(client).submitMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(client).submitMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('should revert if deal is not in FUNDED state', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(agreedDealFixture);
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+      await expect(
+        escrow.connect(freelancer).submitMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidDealState');
     });
 
     it('should revert for out-of-bounds milestone index', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 99n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneIndex');
+      await expect(
+        escrow.connect(freelancer).submitMilestone(dealId, 99n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneIndex');
     });
 
     it('should enforce sequential submission — cannot submit index 1 before 0 is approved', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 1n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
+      await expect(
+        escrow.connect(freelancer).submitMilestone(dealId, 1n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
     });
 
     it('should revert if milestone is already SUBMITTED', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
+      await expect(
+        escrow.connect(freelancer).submitMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
     });
 
     it('should allow submitting milestone 1 after milestone 0 is approved', async function () {
       const { escrow, client, freelancer, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
       await escrow.connect(client).approveMilestone(dealId, 0n);
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 1n))
-        .to.emit(escrow, 'MilestoneSubmitted');
+      await expect(escrow.connect(freelancer).submitMilestone(dealId, 1n)).to.emit(
+        escrow,
+        'MilestoneSubmitted'
+      );
     });
   });
 
@@ -393,14 +455,17 @@ describe('OpenEscrow', function () {
 
   describe('approveMilestone', function () {
     it('should approve, release funds, and emit MilestoneApproved + FundsReleased', async function () {
-      const { escrow, usdc, client, freelancer, dealId, milestoneAmounts } = await loadFixture(fundedDealFixture);
+      const { escrow, usdc, client, freelancer, dealId, milestoneAmounts } =
+        await loadFixture(fundedDealFixture);
 
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
 
       const freelancerBalBefore = await usdc.balanceOf(freelancer.address);
       await expect(escrow.connect(client).approveMilestone(dealId, 0n))
-        .to.emit(escrow, 'MilestoneApproved').withArgs(dealId, 0n, client.address)
-        .and.to.emit(escrow, 'FundsReleased').withArgs(dealId, 0n, freelancer.address, await usdc.getAddress(), milestoneAmounts[0]);
+        .to.emit(escrow, 'MilestoneApproved')
+        .withArgs(dealId, 0n, client.address)
+        .and.to.emit(escrow, 'FundsReleased')
+        .withArgs(dealId, 0n, freelancer.address, await usdc.getAddress(), milestoneAmounts[0]);
 
       const freelancerBalAfter = await usdc.balanceOf(freelancer.address);
       expect(freelancerBalAfter - freelancerBalBefore).to.equal(milestoneAmounts[0]);
@@ -429,7 +494,8 @@ describe('OpenEscrow', function () {
     });
 
     it('should release correct amounts for all milestones', async function () {
-      const { escrow, usdc, client, freelancer, dealId, totalAmount } = await loadFixture(fundedDealFixture);
+      const { escrow, usdc, client, freelancer, dealId, totalAmount } =
+        await loadFixture(fundedDealFixture);
       const freelancerBalBefore = await usdc.balanceOf(freelancer.address);
 
       for (let i = 0n; i < 3n; i++) {
@@ -444,20 +510,23 @@ describe('OpenEscrow', function () {
     it('should revert if caller is not the client', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
-      await expect(escrow.connect(freelancer).approveMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(freelancer).approveMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('should revert if milestone is not SUBMITTED', async function () {
       const { escrow, client, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(client).approveMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
+      await expect(
+        escrow.connect(client).approveMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
     });
 
     it('should revert for out-of-bounds milestone index', async function () {
       const { escrow, client, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(client).approveMilestone(dealId, 99n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneIndex');
+      await expect(
+        escrow.connect(client).approveMilestone(dealId, 99n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneIndex');
     });
 
     it('should revert if deal is not FUNDED (e.g., COMPLETED)', async function () {
@@ -468,8 +537,9 @@ describe('OpenEscrow', function () {
         await escrow.connect(client).approveMilestone(dealId, i);
       }
       // Now deal is COMPLETED — cannot approve more milestones.
-      await expect(escrow.connect(client).approveMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+      await expect(
+        escrow.connect(client).approveMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidDealState');
     });
   });
 
@@ -491,21 +561,25 @@ describe('OpenEscrow', function () {
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
       await escrow.connect(client).rejectMilestone(dealId, 0n);
       // Should succeed — milestone is back to PENDING.
-      await expect(escrow.connect(freelancer).submitMilestone(dealId, 0n))
-        .to.emit(escrow, 'MilestoneSubmitted');
+      await expect(escrow.connect(freelancer).submitMilestone(dealId, 0n)).to.emit(
+        escrow,
+        'MilestoneSubmitted'
+      );
     });
 
     it('should revert if caller is not the client', async function () {
       const { escrow, freelancer, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
-      await expect(escrow.connect(freelancer).rejectMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(freelancer).rejectMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('should revert if milestone is not SUBMITTED', async function () {
       const { escrow, client, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(client).rejectMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
+      await expect(
+        escrow.connect(client).rejectMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'InvalidMilestoneState');
     });
 
     it('should not release funds on rejection', async function () {
@@ -521,7 +595,6 @@ describe('OpenEscrow', function () {
   // ── 8. cancelDeal ─────────────────────────────────────────────────────────
 
   describe('cancelDeal', function () {
-
     describe('cancel from DRAFT', function () {
       it('should cancel and emit DealCancelled with refundAmount=0', async function () {
         const { escrow, client, dealId } = await loadFixture(draftDealFixture);
@@ -534,8 +607,10 @@ describe('OpenEscrow', function () {
 
       it('should allow freelancer to cancel from DRAFT', async function () {
         const { escrow, freelancer, dealId } = await loadFixture(draftDealFixture);
-        await expect(escrow.connect(freelancer).cancelDeal(dealId))
-          .to.emit(escrow, 'DealCancelled');
+        await expect(escrow.connect(freelancer).cancelDeal(dealId)).to.emit(
+          escrow,
+          'DealCancelled'
+        );
       });
 
       it('should not transfer any tokens (no deposit yet)', async function () {
@@ -619,8 +694,10 @@ describe('OpenEscrow', function () {
           await escrow.connect(freelancer).submitMilestone(dealId, i);
           await escrow.connect(client).approveMilestone(dealId, i);
         }
-        await expect(escrow.connect(client).cancelDeal(dealId))
-          .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+        await expect(escrow.connect(client).cancelDeal(dealId)).to.be.revertedWithCustomError(
+          escrow,
+          'InvalidDealState'
+        );
       });
     });
 
@@ -628,8 +705,10 @@ describe('OpenEscrow', function () {
       it('should revert with InvalidDealState (already cancelled)', async function () {
         const { escrow, client, dealId } = await loadFixture(draftDealFixture);
         await escrow.connect(client).cancelDeal(dealId);
-        await expect(escrow.connect(client).cancelDeal(dealId))
-          .to.be.revertedWithCustomError(escrow, 'InvalidDealState');
+        await expect(escrow.connect(client).cancelDeal(dealId)).to.be.revertedWithCustomError(
+          escrow,
+          'InvalidDealState'
+        );
       });
     });
   });
@@ -639,48 +718,60 @@ describe('OpenEscrow', function () {
   describe('Unauthorized callers', function () {
     it('agreeToDeal: random address cannot agree', async function () {
       const { escrow, attacker, dealId } = await loadFixture(draftDealFixture);
-      await expect(escrow.connect(attacker).agreeToDeal(dealId))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(escrow.connect(attacker).agreeToDeal(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'Unauthorized'
+      );
     });
 
     it('deposit: random address cannot deposit', async function () {
       const { escrow, usdc, attacker, dealId, totalAmount } = await loadFixture(agreedDealFixture);
       await usdc.mint(attacker.address, totalAmount);
       await usdc.connect(attacker).approve(await escrow.getAddress(), totalAmount);
-      await expect(escrow.connect(attacker).deposit(dealId))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(escrow.connect(attacker).deposit(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'Unauthorized'
+      );
     });
 
     it('submitMilestone: random address cannot submit', async function () {
       const { escrow, attacker, dealId } = await loadFixture(fundedDealFixture);
-      await expect(escrow.connect(attacker).submitMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(attacker).submitMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('approveMilestone: random address cannot approve', async function () {
       const { escrow, freelancer, attacker, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
-      await expect(escrow.connect(attacker).approveMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(attacker).approveMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('rejectMilestone: random address cannot reject', async function () {
       const { escrow, freelancer, attacker, dealId } = await loadFixture(fundedDealFixture);
       await escrow.connect(freelancer).submitMilestone(dealId, 0n);
-      await expect(escrow.connect(attacker).rejectMilestone(dealId, 0n))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(
+        escrow.connect(attacker).rejectMilestone(dealId, 0n)
+      ).to.be.revertedWithCustomError(escrow, 'Unauthorized');
     });
 
     it('cancelDeal: random address cannot cancel', async function () {
       const { escrow, attacker, dealId } = await loadFixture(draftDealFixture);
-      await expect(escrow.connect(attacker).cancelDeal(dealId))
-        .to.be.revertedWithCustomError(escrow, 'Unauthorized');
+      await expect(escrow.connect(attacker).cancelDeal(dealId)).to.be.revertedWithCustomError(
+        escrow,
+        'Unauthorized'
+      );
     });
 
     it('getDeal/getMilestone: non-existent deal reverts with DealNotFound', async function () {
       const { escrow } = await loadFixture(deployFixture);
       await expect(escrow.getDeal(999n)).to.be.revertedWithCustomError(escrow, 'DealNotFound');
-      await expect(escrow.getMilestone(999n, 0n)).to.be.revertedWithCustomError(escrow, 'DealNotFound');
+      await expect(escrow.getMilestone(999n, 0n)).to.be.revertedWithCustomError(
+        escrow,
+        'DealNotFound'
+      );
     });
   });
 
@@ -712,18 +803,21 @@ describe('OpenEscrow', function () {
       const totalAmount = parseToken('600');
 
       // Create deal.
-      const tx = await escrow.connect(client).createDeal(
-        freelancer.address,
-        await usdc.getAddress(),
-        milestoneAmounts,
-      );
+      const tx = await escrow
+        .connect(client)
+        .createDeal(freelancer.address, await usdc.getAddress(), milestoneAmounts);
       const receipt = await tx.wait();
       let dealId = 1n;
       for (const log of receipt!.logs) {
         try {
           const parsed = escrow.interface.parseLog({ topics: [...log.topics], data: log.data });
-          if (parsed?.name === 'DealCreated') { dealId = parsed.args['dealId'] as bigint; break; }
-        } catch { /* skip */ }
+          if (parsed?.name === 'DealCreated') {
+            dealId = parsed.args['dealId'] as bigint;
+            break;
+          }
+        } catch {
+          /* skip */
+        }
       }
 
       // Agree.

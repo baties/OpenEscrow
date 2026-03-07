@@ -30,7 +30,7 @@ const log = logger.child({ module: 'middleware.error-handler' });
 export async function globalErrorHandler(
   error: FastifyError | AppError | Error,
   request: FastifyRequest,
-  reply: FastifyReply,
+  reply: FastifyReply
 ): Promise<void> {
   // AppError: typed application error with known code and status mapping.
   if (error instanceof AppError) {
@@ -38,23 +38,29 @@ export async function globalErrorHandler(
 
     // Only log 5xx as errors; 4xx are expected client errors, logged at warn level.
     if (status >= 500) {
-      log.error({
-        module: 'middleware.error-handler',
-        operation: 'globalErrorHandler',
-        errorCode: error.code,
-        path: request.url,
-        method: request.method,
-        error: error.message,
-        details: error.details,
-      }, 'Application error (5xx)');
+      log.error(
+        {
+          module: 'middleware.error-handler',
+          operation: 'globalErrorHandler',
+          errorCode: error.code,
+          path: request.url,
+          method: request.method,
+          error: error.message,
+          details: error.details,
+        },
+        'Application error (5xx)'
+      );
     } else {
-      log.warn({
-        module: 'middleware.error-handler',
-        operation: 'globalErrorHandler',
-        errorCode: error.code,
-        path: request.url,
-        error: error.message,
-      }, 'Application error (4xx)');
+      log.warn(
+        {
+          module: 'middleware.error-handler',
+          operation: 'globalErrorHandler',
+          errorCode: error.code,
+          path: request.url,
+          error: error.message,
+        },
+        'Application error (4xx)'
+      );
     }
 
     await reply.status(status).send({
@@ -68,12 +74,15 @@ export async function globalErrorHandler(
   // Fastify / Zod validation errors (statusCode is set by Fastify).
   const fastifyError = error as FastifyError;
   if (fastifyError.statusCode === 400 || fastifyError.validation) {
-    log.warn({
-      module: 'middleware.error-handler',
-      operation: 'globalErrorHandler',
-      path: request.url,
-      error: fastifyError.message,
-    }, 'Validation error');
+    log.warn(
+      {
+        module: 'middleware.error-handler',
+        operation: 'globalErrorHandler',
+        path: request.url,
+        error: fastifyError.message,
+      },
+      'Validation error'
+    );
 
     await reply.status(400).send({
       error: 'VALIDATION_ERROR',
@@ -93,14 +102,17 @@ export async function globalErrorHandler(
   }
 
   // All other unexpected errors.
-  log.error({
-    module: 'middleware.error-handler',
-    operation: 'globalErrorHandler',
-    path: request.url,
-    method: request.method,
-    error: error.message,
-    stack: error.stack,
-  }, 'Unhandled error');
+  log.error(
+    {
+      module: 'middleware.error-handler',
+      operation: 'globalErrorHandler',
+      path: request.url,
+      method: request.method,
+      error: error.message,
+      stack: error.stack,
+    },
+    'Unhandled error'
+  );
 
   await reply.status(500).send({
     error: 'INTERNAL_ERROR',

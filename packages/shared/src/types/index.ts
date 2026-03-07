@@ -27,12 +27,7 @@ export type DealStatus =
 /**
  * All possible states for an individual milestone.
  */
-export type MilestoneStatus =
-  | 'PENDING'
-  | 'SUBMITTED'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'REVISION';
+export type MilestoneStatus = 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REVISION';
 
 /**
  * Supported stablecoin token addresses (USDC and USDT on Sepolia testnet).
@@ -214,7 +209,8 @@ export const OnChainMilestoneState = {
   APPROVED: 2,
   REJECTED: 3,
 } as const;
-export type OnChainMilestoneState = (typeof OnChainMilestoneState)[keyof typeof OnChainMilestoneState];
+export type OnChainMilestoneState =
+  (typeof OnChainMilestoneState)[keyof typeof OnChainMilestoneState];
 
 // ─── Contract Event Argument Types ───────────────────────────────────────────
 // Used by the chain indexer (apps/api/src/chain/) to type-safely parse events.

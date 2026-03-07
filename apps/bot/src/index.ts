@@ -72,7 +72,7 @@ bot.catch((err, ctx) => {
       telegramUserId: ctx.from?.id,
       error: err instanceof Error ? err.message : String(err),
     },
-    'Uncaught error in Telegraf update handler',
+    'Uncaught error in Telegraf update handler'
   );
 });
 
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
       apiBaseUrl: env.API_BASE_URL,
       pollIntervalMs: env.POLL_INTERVAL_MS,
     },
-    'Starting OpenEscrow Telegram Bot',
+    'Starting OpenEscrow Telegram Bot'
   );
 
   // Start notification polling loop (deal events for linked users)
@@ -106,10 +106,7 @@ async function main(): Promise<void> {
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string): Promise<void> => {
-    log.info(
-      { module: 'index', operation: 'shutdown', signal },
-      'Shutting down bot gracefully',
-    );
+    log.info({ module: 'index', operation: 'shutdown', signal }, 'Shutting down bot gracefully');
     clearInterval(pollingInterval);
     clearInterval(sessionCreatorInterval);
     bot.stop(signal);
@@ -124,7 +121,7 @@ async function main(): Promise<void> {
           operation: 'shutdown',
           error: err instanceof Error ? err.message : String(err),
         },
-        'Error during graceful shutdown',
+        'Error during graceful shutdown'
       );
       process.exit(1);
     });
@@ -138,7 +135,7 @@ async function main(): Promise<void> {
           operation: 'shutdown',
           error: err instanceof Error ? err.message : String(err),
         },
-        'Error during graceful shutdown',
+        'Error during graceful shutdown'
       );
       process.exit(1);
     });
@@ -147,10 +144,7 @@ async function main(): Promise<void> {
   // Launch bot (long-polling)
   try {
     await bot.launch();
-    log.info(
-      { module: 'index', operation: 'main' },
-      'Bot launched and listening for updates',
-    );
+    log.info({ module: 'index', operation: 'main' }, 'Bot launched and listening for updates');
   } catch (err) {
     log.error(
       {
@@ -158,7 +152,7 @@ async function main(): Promise<void> {
         operation: 'main',
         error: err instanceof Error ? err.message : String(err),
       },
-      'Fatal error starting bot — exiting',
+      'Fatal error starting bot — exiting'
     );
     clearInterval(pollingInterval);
     clearInterval(sessionCreatorInterval);

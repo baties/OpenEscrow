@@ -79,7 +79,7 @@ function formatMilestones(milestones: Milestone[]): string {
       (m) =>
         `*${m.sequence}. ${m.title}*\n` +
         `   Status: ${formatMilestoneStatus(m.status)}\n` +
-        `   Amount: ${m.amount} tokens`,
+        `   Amount: ${m.amount} tokens`
     )
     .join('\n\n');
 }
@@ -95,7 +95,7 @@ function formatMilestones(milestones: Milestone[]): string {
  */
 function buildActionKeyboard(
   deal: Deal,
-  userId: string,
+  userId: string
 ): ReturnType<typeof Markup.inlineKeyboard> | undefined {
   const isClient = deal.clientId === userId;
   const isFreelancer = deal.freelancerId === userId;
@@ -104,9 +104,7 @@ function buildActionKeyboard(
 
   if (isClient) {
     // Client can approve or reject SUBMITTED milestones
-    const submittedMilestones = (deal.milestones ?? []).filter(
-      (m) => m.status === 'SUBMITTED',
-    );
+    const submittedMilestones = (deal.milestones ?? []).filter((m) => m.status === 'SUBMITTED');
     for (const m of submittedMilestones) {
       const shortTitle = m.title.slice(0, 20);
       buttons.push([
@@ -119,13 +117,11 @@ function buildActionKeyboard(
   if (isFreelancer && deal.status === 'FUNDED') {
     // Freelancer can submit PENDING or REVISION milestones only when the deal is FUNDED
     const actionableMilestones = (deal.milestones ?? []).filter(
-      (m) => m.status === 'PENDING' || m.status === 'REVISION',
+      (m) => m.status === 'PENDING' || m.status === 'REVISION'
     );
     for (const m of actionableMilestones) {
       const shortTitle = m.title.slice(0, 25);
-      buttons.push([
-        Markup.button.callback(`📤 Submit: ${shortTitle}`, `submit:${m.id}`),
-      ]);
+      buttons.push([Markup.button.callback(`📤 Submit: ${shortTitle}`, `submit:${m.id}`)]);
     }
   }
 
@@ -147,7 +143,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
 
   log.info(
     { module: 'commands.status', operation: 'statusCommandHandler', telegramUserId, chatId },
-    'Handling /status command',
+    'Handling /status command'
   );
 
   // Auth check — MUST be first, return immediately if not linked
@@ -163,7 +159,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
     await ctx.replyWithMarkdown(
       '❌ *Missing deal ID.*\n\n' +
         'Usage: `/status <dealId>`\n\n' +
-        'Use `/deals` to see your deal IDs.',
+        'Use `/deals` to see your deal IDs.'
     );
     return;
   }
@@ -180,12 +176,12 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
         rawDealId,
         validationError: parseResult.error.issues[0]?.message,
       },
-      'Invalid deal ID format in /status',
+      'Invalid deal ID format in /status'
     );
     await ctx.replyWithMarkdown(
       '❌ *Invalid deal ID format.*\n\n' +
         'Deal IDs are UUIDs (e.g. `550e8400-e29b-41d4-a716-446655440000`).\n\n' +
-        'Use `/deals` to see your deal IDs.',
+        'Use `/deals` to see your deal IDs.'
     );
     return;
   }
@@ -230,7 +226,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
         chatId,
         dealId,
       },
-      'Deal status displayed successfully',
+      'Deal status displayed successfully'
     );
   } catch (err) {
     if (err instanceof ApiClientError) {
@@ -244,7 +240,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
           statusCode: err.statusCode,
           error: err.message,
         },
-        'API error fetching deal status',
+        'API error fetching deal status'
       );
 
       if (err.statusCode === 404) {
@@ -259,7 +255,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
 
       if (err.statusCode === 401) {
         await ctx.replyWithMarkdown(
-          '🔒 *Session expired.* Please re-link your account via the web dashboard.',
+          '🔒 *Session expired.* Please re-link your account via the web dashboard.'
         );
         return;
       }
@@ -277,14 +273,14 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
         dealId,
         error: err instanceof Error ? err.message : String(err),
       },
-      'Unexpected error in /status handler',
+      'Unexpected error in /status handler'
     );
     try {
       await ctx.reply('Something went wrong. Please try again.');
     } catch {
       log.error(
         { module: 'bot', operation: 'statusCommandHandler', chatId },
-        'Failed to send error reply for /status',
+        'Failed to send error reply for /status'
       );
     }
   }

@@ -36,12 +36,17 @@ const OTP_TTL_MS = 15 * 60 * 1000;
  * @returns Object containing the generated one-time code and its expiry timestamp
  * @throws {AppError} TELEGRAM_GENERATE_FAILED on database error
  */
-export async function generateLinkCode(userId: string): Promise<{ oneTimeCode: string; expiresAt: Date }> {
-  log.info({
-    module: 'telegram.service',
-    operation: 'generateLinkCode',
-    userId,
-  }, 'Generating Telegram link code');
+export async function generateLinkCode(
+  userId: string
+): Promise<{ oneTimeCode: string; expiresAt: Date }> {
+  log.info(
+    {
+      module: 'telegram.service',
+      operation: 'generateLinkCode',
+      userId,
+    },
+    'Generating Telegram link code'
+  );
 
   const oneTimeCode = randomBytes(4).toString('hex'); // 8 hex chars
   const expiresAt = new Date(Date.now() + OTP_TTL_MS);
@@ -60,21 +65,27 @@ export async function generateLinkCode(userId: string): Promise<{ oneTimeCode: s
       });
     });
 
-    log.info({
-      module: 'telegram.service',
-      operation: 'generateLinkCode',
-      userId,
-      expiresAt: expiresAt.toISOString(),
-    }, 'Telegram link code generated');
+    log.info(
+      {
+        module: 'telegram.service',
+        operation: 'generateLinkCode',
+        userId,
+        expiresAt: expiresAt.toISOString(),
+      },
+      'Telegram link code generated'
+    );
 
     return { oneTimeCode, expiresAt };
   } catch (err) {
-    log.error({
-      module: 'telegram.service',
-      operation: 'generateLinkCode',
-      userId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to generate Telegram link code');
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'generateLinkCode',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to generate Telegram link code'
+    );
     throw new AppError('TELEGRAM_GENERATE_FAILED', 'Failed to generate Telegram link code');
   }
 }
@@ -94,22 +105,20 @@ export async function generateLinkCode(userId: string): Promise<{ oneTimeCode: s
  * @throws {AppError} TELEGRAM_LINK_FAILED on database error
  */
 export async function linkTelegram(userId: string, input: LinkTelegramInput): Promise<void> {
-  log.info({
-    module: 'telegram.service',
-    operation: 'linkTelegram',
-    userId,
-  }, 'Attempting Telegram account link');
+  log.info(
+    {
+      module: 'telegram.service',
+      operation: 'linkTelegram',
+      userId,
+    },
+    'Attempting Telegram account link'
+  );
 
   // Retrieve the OTP record (match by code AND user to prevent code-stealing).
   const [otpRecord] = await db
     .select()
     .from(telegramLinks)
-    .where(
-      and(
-        eq(telegramLinks.oneTimeCode, input.oneTimeCode),
-        eq(telegramLinks.userId, userId),
-      ),
-    )
+    .where(and(eq(telegramLinks.oneTimeCode, input.oneTimeCode), eq(telegramLinks.userId, userId)))
     .limit(1);
 
   if (!otpRecord) {
@@ -123,7 +132,10 @@ export async function linkTelegram(userId: string, input: LinkTelegramInput): Pr
 
   // Enforce expiry: exactly 15 minutes from generation.
   if (new Date() > otpRecord.expiresAt) {
-    throw new AppError('TELEGRAM_CODE_EXPIRED', 'This code has expired. Please generate a new code.');
+    throw new AppError(
+      'TELEGRAM_CODE_EXPIRED',
+      'This code has expired. Please generate a new code.'
+    );
   }
 
   // Check that this Telegram ID is not already linked to a different wallet.
@@ -136,7 +148,7 @@ export async function linkTelegram(userId: string, input: LinkTelegramInput): Pr
   if (existingLink && existingLink.id !== userId) {
     throw new AppError(
       'TELEGRAM_ALREADY_LINKED',
-      'This Telegram account is already linked to a different wallet',
+      'This Telegram account is already linked to a different wallet'
     );
   }
 
@@ -155,18 +167,24 @@ export async function linkTelegram(userId: string, input: LinkTelegramInput): Pr
         .where(eq(users.id, userId));
     });
 
-    log.info({
-      module: 'telegram.service',
-      operation: 'linkTelegram',
-      userId,
-    }, 'Telegram account linked successfully');
+    log.info(
+      {
+        module: 'telegram.service',
+        operation: 'linkTelegram',
+        userId,
+      },
+      'Telegram account linked successfully'
+    );
   } catch (err) {
-    log.error({
-      module: 'telegram.service',
-      operation: 'linkTelegram',
-      userId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to link Telegram account');
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'linkTelegram',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to link Telegram account'
+    );
     throw new AppError('TELEGRAM_LINK_FAILED', 'Failed to link Telegram account');
   }
 }
@@ -181,11 +199,14 @@ export async function linkTelegram(userId: string, input: LinkTelegramInput): Pr
  * @throws {AppError} TELEGRAM_UNLINK_FAILED on database error
  */
 export async function unlinkTelegram(userId: string): Promise<void> {
-  log.info({
-    module: 'telegram.service',
-    operation: 'unlinkTelegram',
-    userId,
-  }, 'Unlinking Telegram account');
+  log.info(
+    {
+      module: 'telegram.service',
+      operation: 'unlinkTelegram',
+      userId,
+    },
+    'Unlinking Telegram account'
+  );
 
   // Verify there is actually a link to remove.
   const [user] = await db
@@ -199,23 +220,26 @@ export async function unlinkTelegram(userId: string): Promise<void> {
   }
 
   try {
-    await db
-      .update(users)
-      .set({ telegramUserId: null })
-      .where(eq(users.id, userId));
+    await db.update(users).set({ telegramUserId: null }).where(eq(users.id, userId));
 
-    log.info({
-      module: 'telegram.service',
-      operation: 'unlinkTelegram',
-      userId,
-    }, 'Telegram account unlinked successfully');
+    log.info(
+      {
+        module: 'telegram.service',
+        operation: 'unlinkTelegram',
+        userId,
+      },
+      'Telegram account unlinked successfully'
+    );
   } catch (err) {
-    log.error({
-      module: 'telegram.service',
-      operation: 'unlinkTelegram',
-      userId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to unlink Telegram account');
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'unlinkTelegram',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to unlink Telegram account'
+    );
     throw new AppError('TELEGRAM_UNLINK_FAILED', 'Failed to unlink Telegram account');
   }
 }
@@ -258,12 +282,15 @@ export async function getTelegramStatus(userId: string): Promise<{
       linkedAt: lastLink?.usedAt?.toISOString() ?? null,
     };
   } catch (err) {
-    log.error({
-      module: 'telegram.service',
-      operation: 'getTelegramStatus',
-      userId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to fetch Telegram status');
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'getTelegramStatus',
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to fetch Telegram status'
+    );
     throw new AppError('TELEGRAM_STATUS_FAILED', 'Failed to fetch Telegram link status');
   }
 }
@@ -277,7 +304,7 @@ export async function getTelegramStatus(userId: string): Promise<{
  * @throws {AppError} TELEGRAM_STATUS_FAILED on database error
  */
 export async function getUserByTelegramId(
-  telegramUserId: string,
+  telegramUserId: string
 ): Promise<{ userId: string; walletAddress: string } | null> {
   try {
     const [user] = await db
@@ -289,11 +316,14 @@ export async function getUserByTelegramId(
     if (!user) return null;
     return { userId: user.id, walletAddress: user.walletAddress };
   } catch (err) {
-    log.error({
-      module: 'telegram.service',
-      operation: 'getUserByTelegramId',
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to look up user by Telegram ID');
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'getUserByTelegramId',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to look up user by Telegram ID'
+    );
     throw new AppError('TELEGRAM_STATUS_FAILED', 'Failed to look up Telegram user');
   }
 }

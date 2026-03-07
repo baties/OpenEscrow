@@ -119,7 +119,12 @@ export function RejectMilestoneModal({
         </h2>
         <p className="mt-1 text-sm text-gray-500">{milestoneTitle}</p>
 
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-4 space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="mt-4 space-y-4"
+        >
           {/* Reason codes */}
           <fieldset>
             <legend className="text-sm font-medium text-gray-700">

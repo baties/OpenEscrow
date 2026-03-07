@@ -24,9 +24,7 @@ export const LinkTelegramSchema = z.object({
    * The Telegram user ID of the account to link.
    * This is provided by the bot when the user runs /link.
    */
-  telegramUserId: z
-    .string()
-    .min(1, 'Telegram user ID is required'),
+  telegramUserId: z.string().min(1, 'Telegram user ID is required'),
 });
 
 export type LinkTelegramInput = z.infer<typeof LinkTelegramSchema>;

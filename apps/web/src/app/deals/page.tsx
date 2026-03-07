@@ -60,10 +60,7 @@ export default function DealsPage() {
       </div>
 
       {/* Error state */}
-      <ErrorAlert
-        message={error}
-        onDismiss={refresh}
-      />
+      <ErrorAlert message={error} onDismiss={refresh} />
 
       {/* Loading state */}
       {isLoading && (
@@ -92,11 +89,7 @@ export default function DealsPage() {
       {!isLoading && deals !== null && deals.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {deals.map((deal) => (
-            <DealCard
-              key={deal.id}
-              deal={deal}
-              currentUserAddress={walletAddress}
-            />
+            <DealCard key={deal.id} deal={deal} currentUserAddress={walletAddress} />
           ))}
         </div>
       )}

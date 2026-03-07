@@ -32,24 +32,40 @@ import {
  */
 export async function telegramRouter(fastify: FastifyInstance): Promise<void> {
   // POST /api/v1/telegram/generate-code — generate OTP for linking
-  fastify.post('/telegram/generate-code', {
-    preHandler: [requireAuth],
-  }, generateCodeHandler);
+  fastify.post(
+    '/telegram/generate-code',
+    {
+      preHandler: [requireAuth],
+    },
+    generateCodeHandler
+  );
 
   // POST /api/v1/telegram/link — submit OTP to link Telegram account
-  fastify.post('/telegram/link', {
-    preHandler: [requireAuth],
-  }, linkTelegramHandler);
+  fastify.post(
+    '/telegram/link',
+    {
+      preHandler: [requireAuth],
+    },
+    linkTelegramHandler
+  );
 
   // DELETE /api/v1/telegram/unlink — revoke Telegram access
-  fastify.delete('/telegram/unlink', {
-    preHandler: [requireAuth],
-  }, unlinkTelegramHandler);
+  fastify.delete(
+    '/telegram/unlink',
+    {
+      preHandler: [requireAuth],
+    },
+    unlinkTelegramHandler
+  );
 
   // GET /api/v1/telegram/status — check if a Telegram account is linked (auth)
-  fastify.get('/telegram/status', {
-    preHandler: [requireAuth],
-  }, getStatusHandler);
+  fastify.get(
+    '/telegram/status',
+    {
+      preHandler: [requireAuth],
+    },
+    getStatusHandler
+  );
 
   // POST /api/v1/telegram/bot-session — issue JWT for the bot (X-Bot-Secret header auth)
   fastify.post('/telegram/bot-session', getBotSessionHandler);

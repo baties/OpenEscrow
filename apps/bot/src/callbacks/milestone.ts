@@ -55,7 +55,9 @@ function parseCallbackData(data: string): { action: string; id: string } | null 
 export async function milestoneCallbackHandler(ctx: TelegrafContext): Promise<void> {
   // Access .data from the callback_query — type-safely narrowed via Record check.
   // Telegraf's CallbackQuery is a discriminated union; we narrow at runtime via the Record cast.
-  const callbackQuery = ctx.callbackQuery as (Record<string, unknown> & { data?: string }) | undefined;
+  const callbackQuery = ctx.callbackQuery as
+    | (Record<string, unknown> & { data?: string })
+    | undefined;
   const data = callbackQuery?.data;
   const chatId = ctx.chat?.id;
   const telegramUserId = ctx.from?.id;
@@ -63,7 +65,7 @@ export async function milestoneCallbackHandler(ctx: TelegrafContext): Promise<vo
   if (!data) {
     log.warn(
       { module: 'bot', operation: 'milestoneCallbackHandler', chatId },
-      'Received callback_query with no data',
+      'Received callback_query with no data'
     );
     await ctx.answerCbQuery();
     return;
@@ -72,16 +74,29 @@ export async function milestoneCallbackHandler(ctx: TelegrafContext): Promise<vo
   const parsed = parseCallbackData(data);
   if (!parsed) {
     log.warn(
-      { module: 'bot', operation: 'milestoneCallbackHandler', chatId, telegramUserId, callbackData: data },
-      'Unrecognised callback_data format',
+      {
+        module: 'bot',
+        operation: 'milestoneCallbackHandler',
+        chatId,
+        telegramUserId,
+        callbackData: data,
+      },
+      'Unrecognised callback_data format'
     );
     await ctx.answerCbQuery('Unknown action.');
     return;
   }
 
   log.info(
-    { module: 'callbacks.milestone', operation: 'milestoneCallbackHandler', action: parsed.action, id: parsed.id, telegramUserId, chatId },
-    'Dispatching milestone callback',
+    {
+      module: 'callbacks.milestone',
+      operation: 'milestoneCallbackHandler',
+      action: parsed.action,
+      id: parsed.id,
+      telegramUserId,
+      chatId,
+    },
+    'Dispatching milestone callback'
   );
 
   switch (parsed.action) {
@@ -115,8 +130,14 @@ export async function milestoneCallbackHandler(ctx: TelegrafContext): Promise<vo
 
     default:
       log.warn(
-        { module: 'bot', operation: 'milestoneCallbackHandler', action: parsed.action, chatId, telegramUserId },
-        'Unknown callback action',
+        {
+          module: 'bot',
+          operation: 'milestoneCallbackHandler',
+          action: parsed.action,
+          chatId,
+          telegramUserId,
+        },
+        'Unknown callback action'
       );
       await ctx.answerCbQuery('Unknown action.');
   }

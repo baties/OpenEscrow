@@ -25,9 +25,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - '${POSTGRES_PORT:-5432}:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-escrow} -d ${POSTGRES_DB:-open_escrow}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-escrow} -d ${POSTGRES_DB:-open_escrow}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,9 +59,9 @@ services:
       API_PORT: ${API_PORT:-3001}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
-      - "${API_PORT:-3001}:3001"
+      - '${API_PORT:-3001}:3001'
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health || exit 1"]
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/api/v1/health || exit 1']
       interval: 15s
       timeout: 5s
       retries: 5
@@ -86,9 +86,9 @@ services:
       NEXT_PUBLIC_USDT_ADDRESS: ${USDT_ADDRESS}
       NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${WALLETCONNECT_PROJECT_ID:?WALLETCONNECT_PROJECT_ID is required}
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - '${WEB_PORT:-3000}:3000'
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
       interval: 15s
       timeout: 5s
       retries: 5

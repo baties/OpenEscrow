@@ -48,9 +48,7 @@ const envSchema = z.object({
   POLL_INTERVAL_MS: z.coerce.number().int().positive().default(30000),
 
   /** pino log level. */
-  LOG_LEVEL: z
-    .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
-    .default('info'),
+  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 });
 
 /**

@@ -51,29 +51,27 @@ export function Navbar() {
 
         {/* Nav links — authenticated links hidden when not signed in, Help always visible */}
         <div className="hidden items-center gap-6 sm:flex">
-          {NAV_LINKS.filter(({ href }) => isAuthenticated || href === '/help').map(({ href, label }) => {
-            const isActive = pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`text-sm font-medium transition-colors hover:text-indigo-600 ${
-                  isActive ? 'text-indigo-600' : 'text-gray-600'
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
+          {NAV_LINKS.filter(({ href }) => isAuthenticated || href === '/help').map(
+            ({ href, label }) => {
+              const isActive = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`text-sm font-medium transition-colors hover:text-indigo-600 ${
+                    isActive ? 'text-indigo-600' : 'text-gray-600'
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            }
+          )}
         </div>
 
         {/* Wallet connect + sign out */}
         <div className="flex items-center gap-3">
-          <ConnectButton
-            accountStatus="avatar"
-            chainStatus="none"
-            showBalance={false}
-          />
+          <ConnectButton accountStatus="avatar" chainStatus="none" showBalance={false} />
           {isAuthenticated && (
             <button
               type="button"

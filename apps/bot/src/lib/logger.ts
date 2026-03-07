@@ -21,15 +21,7 @@ import { env } from '../config/env.js';
 export const logger = pino({
   level: env.LOG_LEVEL,
   redact: {
-    paths: [
-      'token',
-      'jwt',
-      'authorization',
-      'oneTimeCode',
-      'one_time_code',
-      'password',
-      'secret',
-    ],
+    paths: ['token', 'jwt', 'authorization', 'oneTimeCode', 'one_time_code', 'password', 'secret'],
     censor: '[REDACTED]',
   },
   ...(env.NODE_ENV === 'development'

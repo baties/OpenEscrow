@@ -71,7 +71,7 @@ function assertValidMilestoneTransition(from: string, to: string): void {
  * @throws {AppError} MILESTONE_NOT_FOUND if milestone does not exist
  */
 async function getMilestoneWithDeal(
-  milestoneId: string,
+  milestoneId: string
 ): Promise<{ milestone: Milestone; deal: Deal }> {
   const [milestone] = await db
     .select()
@@ -85,11 +85,7 @@ async function getMilestoneWithDeal(
     });
   }
 
-  const [deal] = await db
-    .select()
-    .from(deals)
-    .where(eq(deals.id, milestone.dealId))
-    .limit(1);
+  const [deal] = await db.select().from(deals).where(eq(deals.id, milestone.dealId)).limit(1);
 
   if (!deal) {
     // Should never happen due to FK constraint, but guard defensively.
@@ -132,14 +128,17 @@ async function areAllMilestonesApproved(dealId: string): Promise<boolean> {
 export async function submitMilestone(
   milestoneId: string,
   freelancerId: string,
-  input: SubmitMilestoneInput,
+  input: SubmitMilestoneInput
 ): Promise<Submission> {
-  log.info({
-    module: 'milestones.service',
-    operation: 'submitMilestone',
-    milestoneId,
-    freelancerId,
-  }, 'Submitting milestone');
+  log.info(
+    {
+      module: 'milestones.service',
+      operation: 'submitMilestone',
+      milestoneId,
+      freelancerId,
+    },
+    'Submitting milestone'
+  );
 
   const { milestone, deal } = await getMilestoneWithDeal(milestoneId);
 
@@ -150,10 +149,14 @@ export async function submitMilestone(
 
   // Deal must be FUNDED for milestone submission to be valid.
   if (deal.status !== 'FUNDED') {
-    throw new AppError('INVALID_TRANSITION', 'Milestone can only be submitted when deal is FUNDED', {
-      milestoneId,
-      dealStatus: deal.status,
-    });
+    throw new AppError(
+      'INVALID_TRANSITION',
+      'Milestone can only be submitted when deal is FUNDED',
+      {
+        milestoneId,
+        dealStatus: deal.status,
+      }
+    );
   }
 
   try {
@@ -192,24 +195,30 @@ export async function submitMilestone(
       return submission;
     });
 
-    log.info({
-      module: 'milestones.service',
-      operation: 'submitMilestone',
-      milestoneId,
-      freelancerId,
-      submissionId: result.id,
-    }, 'Milestone submitted successfully');
+    log.info(
+      {
+        module: 'milestones.service',
+        operation: 'submitMilestone',
+        milestoneId,
+        freelancerId,
+        submissionId: result.id,
+      },
+      'Milestone submitted successfully'
+    );
 
     return result;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'milestones.service',
-      operation: 'submitMilestone',
-      milestoneId,
-      freelancerId,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'submitMilestone transaction failed');
+    log.error(
+      {
+        module: 'milestones.service',
+        operation: 'submitMilestone',
+        milestoneId,
+        freelancerId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'submitMilestone transaction failed'
+    );
     throw new AppError('MILESTONE_SUBMIT_FAILED', 'Failed to submit milestone');
   }
 }
@@ -231,26 +240,23 @@ export async function submitMilestone(
  * @throws {AppError} INVALID_TRANSITION if milestone is not in SUBMITTED status
  * @throws {AppError} MILESTONE_APPROVE_FAILED on database error
  */
-export async function approveMilestone(
-  milestoneId: string,
-  clientId: string,
-): Promise<Milestone> {
-  log.info({
-    module: 'milestones.service',
-    operation: 'approveMilestone',
-    milestoneId,
-    clientId,
-  }, 'Approving milestone');
+export async function approveMilestone(milestoneId: string, clientId: string): Promise<Milestone> {
+  log.info(
+    {
+      module: 'milestones.service',
+      operation: 'approveMilestone',
+      milestoneId,
+      clientId,
+    },
+    'Approving milestone'
+  );
 
   const { milestone, deal } = await getMilestoneWithDeal(milestoneId);
   assertValidMilestoneTransition(milestone.status, 'APPROVED');
 
   try {
     await db.transaction(async (tx) => {
-      await tx
-        .update(milestones)
-        .set({ status: 'APPROVED' })
-        .where(eq(milestones.id, milestoneId));
+      await tx.update(milestones).set({ status: 'APPROVED' }).where(eq(milestones.id, milestoneId));
 
       await tx.insert(dealEvents).values({
         dealId: deal.id,
@@ -265,10 +271,7 @@ export async function approveMilestone(
       // Check if all milestones are now approved → auto-complete the deal.
       const allApproved = await areAllMilestonesApproved(deal.id);
       if (allApproved) {
-        await tx
-          .update(deals)
-          .set({ status: 'COMPLETED' })
-          .where(eq(deals.id, deal.id));
+        await tx.update(deals).set({ status: 'COMPLETED' }).where(eq(deals.id, deal.id));
 
         await tx.insert(dealEvents).values({
           dealId: deal.id,
@@ -280,13 +283,16 @@ export async function approveMilestone(
           },
         });
 
-        log.info({
-          module: 'milestones.service',
-          operation: 'approveMilestone',
-          milestoneId,
-          dealId: deal.id,
-          clientId,
-        }, 'All milestones approved — deal auto-completed');
+        log.info(
+          {
+            module: 'milestones.service',
+            operation: 'approveMilestone',
+            milestoneId,
+            dealId: deal.id,
+            clientId,
+          },
+          'All milestones approved — deal auto-completed'
+        );
       }
     });
 
@@ -301,24 +307,30 @@ export async function approveMilestone(
       throw new AppError('MILESTONE_NOT_FOUND', `Milestone ${milestoneId} not found after update`);
     }
 
-    log.info({
-      module: 'milestones.service',
-      operation: 'approveMilestone',
-      milestoneId,
-      clientId,
-    }, 'Milestone approved successfully');
+    log.info(
+      {
+        module: 'milestones.service',
+        operation: 'approveMilestone',
+        milestoneId,
+        clientId,
+      },
+      'Milestone approved successfully'
+    );
 
     return updated;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'milestones.service',
-      operation: 'approveMilestone',
-      milestoneId,
-      clientId,
-      dealId: deal.id,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'approveMilestone transaction failed');
+    log.error(
+      {
+        module: 'milestones.service',
+        operation: 'approveMilestone',
+        milestoneId,
+        clientId,
+        dealId: deal.id,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'approveMilestone transaction failed'
+    );
     throw new AppError('MILESTONE_APPROVE_FAILED', 'Failed to approve milestone');
   }
 }
@@ -340,14 +352,17 @@ export async function approveMilestone(
 export async function rejectMilestone(
   milestoneId: string,
   clientId: string,
-  input: RejectMilestoneInput,
+  input: RejectMilestoneInput
 ): Promise<RejectionNote> {
-  log.info({
-    module: 'milestones.service',
-    operation: 'rejectMilestone',
-    milestoneId,
-    clientId,
-  }, 'Rejecting milestone');
+  log.info(
+    {
+      module: 'milestones.service',
+      operation: 'rejectMilestone',
+      milestoneId,
+      clientId,
+    },
+    'Rejecting milestone'
+  );
 
   const { milestone, deal } = await getMilestoneWithDeal(milestoneId);
   assertValidMilestoneTransition(milestone.status, 'REJECTED');
@@ -361,18 +376,19 @@ export async function rejectMilestone(
     .limit(1);
 
   if (!latestSubmission) {
-    throw new AppError('MILESTONE_NO_SUBMISSION', `No submission found for milestone ${milestoneId}`, {
-      milestoneId,
-    });
+    throw new AppError(
+      'MILESTONE_NO_SUBMISSION',
+      `No submission found for milestone ${milestoneId}`,
+      {
+        milestoneId,
+      }
+    );
   }
 
   try {
     const rejectionNote = await db.transaction(async (tx) => {
       // Transition: SUBMITTED → REJECTED → REVISION (both in same tx).
-      await tx
-        .update(milestones)
-        .set({ status: 'REVISION' })
-        .where(eq(milestones.id, milestoneId));
+      await tx.update(milestones).set({ status: 'REVISION' }).where(eq(milestones.id, milestoneId));
 
       const noteInsertResult = await tx
         .insert(rejectionNotes)
@@ -415,25 +431,31 @@ export async function rejectMilestone(
       return note;
     });
 
-    log.info({
-      module: 'milestones.service',
-      operation: 'rejectMilestone',
-      milestoneId,
-      clientId,
-      rejectionNoteId: rejectionNote.id,
-    }, 'Milestone rejected and set to REVISION');
+    log.info(
+      {
+        module: 'milestones.service',
+        operation: 'rejectMilestone',
+        milestoneId,
+        clientId,
+        rejectionNoteId: rejectionNote.id,
+      },
+      'Milestone rejected and set to REVISION'
+    );
 
     return rejectionNote;
   } catch (err) {
     if (err instanceof AppError) throw err;
-    log.error({
-      module: 'milestones.service',
-      operation: 'rejectMilestone',
-      milestoneId,
-      clientId,
-      dealId: deal.id,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'rejectMilestone transaction failed');
+    log.error(
+      {
+        module: 'milestones.service',
+        operation: 'rejectMilestone',
+        milestoneId,
+        clientId,
+        dealId: deal.id,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'rejectMilestone transaction failed'
+    );
     throw new AppError('MILESTONE_REJECT_FAILED', 'Failed to reject milestone');
   }
 }

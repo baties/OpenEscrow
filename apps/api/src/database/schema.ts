@@ -10,14 +10,7 @@
  *   users, deals, milestones, submissions, deal_events, telegram_links, rejection_notes
  */
 
-import {
-  pgTable,
-  text,
-  timestamp,
-  integer,
-  jsonb,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, jsonb, uuid } from 'drizzle-orm/pg-core';
 
 // ─── users ────────────────────────────────────────────────────────────────────
 

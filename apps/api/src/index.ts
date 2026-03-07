@@ -92,22 +92,19 @@ export async function buildApp() {
    * @returns { nonce: string }
    * @throws 400 if walletAddress is invalid
    */
-  fastify.post(
-    '/api/v1/auth/nonce',
-    async (request, reply) => {
-      const parsed = GenerateNonceInputSchema.safeParse(request.body);
-      if (!parsed.success) {
-        await reply.status(400).send({
-          error: 'VALIDATION_ERROR',
-          message: 'Invalid request body',
-          details: parsed.error.flatten(),
-        });
-        return;
-      }
-      const nonce = handleGenerateNonce({ walletAddress: parsed.data.walletAddress });
-      await reply.status(200).send({ nonce });
-    },
-  );
+  fastify.post('/api/v1/auth/nonce', async (request, reply) => {
+    const parsed = GenerateNonceInputSchema.safeParse(request.body);
+    if (!parsed.success) {
+      await reply.status(400).send({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request body',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+    const nonce = handleGenerateNonce({ walletAddress: parsed.data.walletAddress });
+    await reply.status(200).send({ nonce });
+  });
 
   /**
    * POST /api/v1/auth/verify
@@ -118,25 +115,22 @@ export async function buildApp() {
    * @returns { token: string }
    * @throws 400 if message or signature are invalid
    */
-  fastify.post(
-    '/api/v1/auth/verify',
-    async (request, reply) => {
-      const parsed = VerifyInputSchema.safeParse(request.body);
-      if (!parsed.success) {
-        await reply.status(400).send({
-          error: 'VALIDATION_ERROR',
-          message: 'Invalid request body',
-          details: parsed.error.flatten(),
-        });
-        return;
-      }
-      const token = await handleVerify(
-        { message: parsed.data.message, signature: parsed.data.signature },
-        fastify,
-      );
-      await reply.status(200).send({ token });
-    },
-  );
+  fastify.post('/api/v1/auth/verify', async (request, reply) => {
+    const parsed = VerifyInputSchema.safeParse(request.body);
+    if (!parsed.success) {
+      await reply.status(400).send({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request body',
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+    const token = await handleVerify(
+      { message: parsed.data.message, signature: parsed.data.signature },
+      fastify
+    );
+    await reply.status(200).send({ token });
+  });
 
   // ─── Feature routes (all under /api/v1) ──────────────────────────────────
 
@@ -163,11 +157,14 @@ async function startServer(): Promise<void> {
     await runMigrations();
     log.info({ module: 'index', operation: 'startServer' }, 'Database migrations complete');
   } catch (err) {
-    log.error({
-      module: 'index',
-      operation: 'startServer',
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Database migration failed — exiting');
+    log.error(
+      {
+        module: 'index',
+        operation: 'startServer',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Database migration failed — exiting'
+    );
     process.exit(1);
   }
 
@@ -176,11 +173,14 @@ async function startServer(): Promise<void> {
   try {
     app = await buildApp();
   } catch (err) {
-    log.error({
-      module: 'index',
-      operation: 'startServer',
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to build Fastify app — exiting');
+    log.error(
+      {
+        module: 'index',
+        operation: 'startServer',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to build Fastify app — exiting'
+    );
     process.exit(1);
   }
 
@@ -192,18 +192,24 @@ async function startServer(): Promise<void> {
   // Start listening.
   try {
     await app.listen({ port: env.API_PORT, host: '0.0.0.0' });
-    log.info({
-      module: 'index',
-      operation: 'startServer',
-      port: env.API_PORT,
-    }, `OpenEscrow API listening on port ${env.API_PORT}`);
+    log.info(
+      {
+        module: 'index',
+        operation: 'startServer',
+        port: env.API_PORT,
+      },
+      `OpenEscrow API listening on port ${env.API_PORT}`
+    );
   } catch (err) {
-    log.error({
-      module: 'index',
-      operation: 'startServer',
-      port: env.API_PORT,
-      error: err instanceof Error ? err.message : String(err),
-    }, 'Failed to start server — exiting');
+    log.error(
+      {
+        module: 'index',
+        operation: 'startServer',
+        port: env.API_PORT,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to start server — exiting'
+    );
     process.exit(1);
   }
 
@@ -220,11 +226,14 @@ async function startServer(): Promise<void> {
       log.info({ module: 'index', operation: 'shutdown' }, 'Server shutdown complete');
       process.exit(0);
     } catch (err) {
-      log.error({
-        module: 'index',
-        operation: 'shutdown',
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Error during shutdown');
+      log.error(
+        {
+          module: 'index',
+          operation: 'shutdown',
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Error during shutdown'
+      );
       process.exit(1);
     }
   };

@@ -46,7 +46,7 @@ type MilestoneRole = 'client' | 'freelancer';
 function requireMilestoneRole(role: MilestoneRole) {
   return async function checkMilestoneRole(
     request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ): Promise<void> {
     const milestoneId = request.params.id;
     const userId = request.user.userId;
@@ -80,17 +80,19 @@ function requireMilestoneRole(role: MilestoneRole) {
         return;
       }
 
-      const allowed =
-        role === 'client' ? deal.clientId === userId : deal.freelancerId === userId;
+      const allowed = role === 'client' ? deal.clientId === userId : deal.freelancerId === userId;
 
       if (!allowed) {
-        log.warn({
-          module: 'milestones.router',
-          operation: 'checkMilestoneRole',
-          milestoneId,
-          userId,
-          requiredRole: role,
-        }, 'Milestone role check failed');
+        log.warn(
+          {
+            module: 'milestones.router',
+            operation: 'checkMilestoneRole',
+            milestoneId,
+            userId,
+            requiredRole: role,
+          },
+          'Milestone role check failed'
+        );
 
         await reply.status(403).send({
           error: 'FORBIDDEN',
@@ -98,13 +100,16 @@ function requireMilestoneRole(role: MilestoneRole) {
         });
       }
     } catch (err) {
-      log.error({
-        module: 'milestones.router',
-        operation: 'checkMilestoneRole',
-        milestoneId,
-        userId,
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Milestone role check database error');
+      log.error(
+        {
+          module: 'milestones.router',
+          operation: 'checkMilestoneRole',
+          milestoneId,
+          userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Milestone role check database error'
+      );
 
       await reply.status(500).send({
         error: 'INTERNAL_ERROR',
@@ -123,17 +128,29 @@ function requireMilestoneRole(role: MilestoneRole) {
  */
 export async function milestonesRouter(fastify: FastifyInstance): Promise<void> {
   // POST /api/v1/milestones/:id/submit — freelancer submits milestone
-  fastify.post<{ Params: { id: string } }>('/milestones/:id/submit', {
-    preHandler: [requireAuth, requireMilestoneRole('freelancer')],
-  }, submitMilestoneHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/milestones/:id/submit',
+    {
+      preHandler: [requireAuth, requireMilestoneRole('freelancer')],
+    },
+    submitMilestoneHandler
+  );
 
   // POST /api/v1/milestones/:id/approve — client approves milestone
-  fastify.post<{ Params: { id: string } }>('/milestones/:id/approve', {
-    preHandler: [requireAuth, requireMilestoneRole('client')],
-  }, approveMilestoneHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/milestones/:id/approve',
+    {
+      preHandler: [requireAuth, requireMilestoneRole('client')],
+    },
+    approveMilestoneHandler
+  );
 
   // POST /api/v1/milestones/:id/reject — client rejects milestone
-  fastify.post<{ Params: { id: string } }>('/milestones/:id/reject', {
-    preHandler: [requireAuth, requireMilestoneRole('client')],
-  }, rejectMilestoneHandler);
+  fastify.post<{ Params: { id: string } }>(
+    '/milestones/:id/reject',
+    {
+      preHandler: [requireAuth, requireMilestoneRole('client')],
+    },
+    rejectMilestoneHandler
+  );
 }

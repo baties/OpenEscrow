@@ -39,7 +39,7 @@ export type DealRole = 'client' | 'freelancer' | 'participant';
 export function requireRole(role: DealRole) {
   return async function checkRole(
     request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply,
+    reply: FastifyReply
   ): Promise<void> {
     const dealId = request.params.id;
     const userId = request.user.userId;
@@ -68,15 +68,18 @@ export function requireRole(role: DealRole) {
       else if (role === 'participant') allowed = isClient || isFreelancer;
 
       if (!allowed) {
-        log.warn({
-          module: 'middleware.role-check',
-          operation: 'checkRole',
-          dealId,
-          userId,
-          requiredRole: role,
-          isClient,
-          isFreelancer,
-        }, 'Role check failed');
+        log.warn(
+          {
+            module: 'middleware.role-check',
+            operation: 'checkRole',
+            dealId,
+            userId,
+            requiredRole: role,
+            isClient,
+            isFreelancer,
+          },
+          'Role check failed'
+        );
 
         await reply.status(403).send({
           error: 'FORBIDDEN',
@@ -84,14 +87,17 @@ export function requireRole(role: DealRole) {
         });
       }
     } catch (err) {
-      log.error({
-        module: 'middleware.role-check',
-        operation: 'checkRole',
-        dealId,
-        userId,
-        requiredRole: role,
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Role check database error');
+      log.error(
+        {
+          module: 'middleware.role-check',
+          operation: 'checkRole',
+          dealId,
+          userId,
+          requiredRole: role,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Role check database error'
+      );
 
       await reply.status(500).send({
         error: 'INTERNAL_ERROR',

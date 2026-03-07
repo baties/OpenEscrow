@@ -72,7 +72,9 @@ async function main(): Promise<void> {
 
   console.log('[deploy] Deployment complete.');
   console.log(`[deploy] To verify on Etherscan:`);
-  console.log(`  npx hardhat verify --network sepolia ${contractAddress} ${usdcAddress} ${usdtAddress}`);
+  console.log(
+    `  npx hardhat verify --network sepolia ${contractAddress} ${usdcAddress} ${usdtAddress}`
+  );
 }
 
 /**

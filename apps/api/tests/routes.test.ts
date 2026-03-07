@@ -118,13 +118,15 @@ function makeSelectChain() {
   return {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([{
-      id: 'user-uuid-1',
-      walletAddress: '0x1234567890123456789012345678901234567890',
-      dealId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',  // DEAL_UUID
-      clientId: 'user-uuid-1',
-      freelancerId: 'user-uuid-1',
-    }]),
+    limit: vi.fn().mockResolvedValue([
+      {
+        id: 'user-uuid-1',
+        walletAddress: '0x1234567890123456789012345678901234567890',
+        dealId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', // DEAL_UUID
+        clientId: 'user-uuid-1',
+        freelancerId: 'user-uuid-1',
+      },
+    ]),
   };
 }
 
@@ -284,8 +286,10 @@ describe('POST /api/v1/auth/verify', () => {
       method: 'POST',
       url: '/api/v1/auth/verify',
       payload: {
-        message: 'localhost wants you to sign in with your Ethereum account:\n0x1234567890123456789012345678901234567890\n\nSign in\n\nNonce: test-nonce-abcdef1234567890\nIssued At: 2026-02-26T00:00:00Z',
-        signature: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab',
+        message:
+          'localhost wants you to sign in with your Ethereum account:\n0x1234567890123456789012345678901234567890\n\nSign in\n\nNonce: test-nonce-abcdef1234567890\nIssued At: 2026-02-26T00:00:00Z',
+        signature:
+          '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab',
       },
     });
 
@@ -593,7 +597,7 @@ describe('State machine: invalid transitions return { error, from, to }', () => 
       new AppError('INVALID_TRANSITION', 'Cannot transition from AGREED to AGREED', {
         from: 'AGREED',
         to: 'AGREED',
-      }),
+      })
     );
 
     // requireRole('freelancer') queries the DB — makeSelectChain() returns
