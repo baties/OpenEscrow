@@ -1,0 +1,48 @@
+###############################################################################
+# docker-compose.dev.yml — OpenEscrow Developer Tools
+#
+# Purpose: Adds pgAdmin for browsing the local PostgreSQL database.
+#          Use alongside docker-compose.yml (production services).
+#          NEVER deploy this file to a production server.
+#
+# Usage:
+#   # Start full stack + pgAdmin together:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+#   # Or start only postgres + pgAdmin (API/Web/Bot run via pnpm dev):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres pgadmin
+#
+#   # pgAdmin UI:  http://localhost:5050
+#   # Login:       admin@openescrow.dev / admin  (see PGADMIN_* vars below)
+#   # Add server:  Host = postgres, Port = 5432, DB = open_escrow, User = escrow
+#
+# Does NOT: contain any application services (api, web, bot).
+#           Those stay in docker-compose.yml.
+###############################################################################
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: open-escrow-pgadmin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@openescrow.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      # Disable the pgAdmin login splash for a faster dev workflow.
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
+      PGADMIN_CONFIG_LOGIN_BANNER: "'OpenEscrow Dev — local only'"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      # Persist pgAdmin server definitions across container restarts.
+      - pgadmin_data:/var/lib/pgadmin
+      # Pre-configure the local postgres server so you don't have to add it manually.
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - default
+
+volumes:
+  pgadmin_data:
+    driver: local

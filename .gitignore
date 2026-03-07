@@ -2,7 +2,7 @@
 node_modules/
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
+# pnpm-lock.yaml is intentionally committed — required for reproducible CI builds.
 
 # ─── Build output ─────────────────────────────────────────────────────────────
 dist/

@@ -11,7 +11,7 @@ Make sure these are installed before you start:
 
 | Tool | Minimum version | Check |
 |------|----------------|-------|
-| Node.js | 20.x | `node --version` |
+| Node.js | 22.x | `node --version` |
 | pnpm | 9.x | `pnpm --version` |
 | Docker + Docker Compose | any recent | `docker compose version` |
 | Git | any | `git --version` |
@@ -30,6 +30,8 @@ pnpm install
 ```
 
 This installs dependencies for all five packages: `contracts`, `api`, `web`, `bot`, and `shared`.
+
+> **Note:** `pnpm-lock.yaml` is committed to the repository. This is intentional — it ensures reproducible installs in CI and across machines.
 
 ---
 
@@ -146,6 +148,18 @@ Confirm it is healthy (wait ~15 seconds after starting):
 docker compose ps
 # postgres row should show: healthy
 ```
+
+### (Optional) Step 3b — Browse the Database with pgAdmin
+
+A developer-only compose file adds pgAdmin. **Never use this in production.**
+
+```bash
+# Start postgres + pgAdmin only (API/Web/Bot run locally via pnpm dev)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres pgadmin
+```
+
+Open **http://localhost:5050** — login: `admin@openescrow.dev` / `admin`.
+The "OpenEscrow Local" server is pre-configured — click it and enter the `POSTGRES_PASSWORD` from your `.env`.
 
 ---
 
@@ -337,7 +351,11 @@ Run through this checklist to confirm everything is working:
 - [ ] Web dashboard loads at `http://localhost:3000`
 - [ ] Wallet connect button appears on the web dashboard
 - [ ] Connect a MetaMask wallet (switch MetaMask network to **Sepolia**)
-- [ ] Sign-in with Ethereum (SIWE) prompt appears and completes successfully
+- [ ] SIWE signature request appears automatically — approve it in MetaMask (no gas fee)
+- [ ] Dashboard redirects to `/deals` after sign-in
+- [ ] Refresh the page — session is restored automatically (no re-signing required; JWT lasts 24 h)
+- [ ] Sign out — "Connect Wallet" button reappears
+- [ ] Reconnect the wallet — SIWE prompt fires automatically again
 - [ ] Telegram bot replies to `/start`
 - [ ] Send `/link` to the bot — it returns a one-time code
 - [ ] Paste the OTP on the web dashboard Settings page — account links successfully
@@ -386,3 +404,5 @@ Then just run `pnpm dev` in `apps/web` without any exports.
 | Hardhat deploy: `Deployer has zero ETH balance` | Deployer wallet not funded | Get Sepolia ETH from a faucet |
 | Hardhat deploy: `No deployer signer found` | `DEPLOYER_PRIVATE_KEY` not set | Add it to `.env` (without quotes, with or without `0x` prefix) |
 | MetaMask shows wrong network | Not on Sepolia | Switch MetaMask to Sepolia testnet (chain ID 11155111) |
+| Page loads with wallet connected but no sign-in prompt | Page-load reconnect — SIWE only fires on explicit connect | Click the "Sign in with Ethereum" button shown on the home page |
+| Signature prompt fires on every page open | Old version of AuthProvider | Ensure `useAccountEffect` is used (not a state-watching `useEffect`) |

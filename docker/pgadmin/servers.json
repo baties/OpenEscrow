@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "OpenEscrow Local",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "open_escrow",
+      "Username": "escrow",
+      "SSLMode": "prefer",
+      "PassFile": "/pgadmin4/pgpassfile",
+      "Comment": "Local OpenEscrow PostgreSQL (Docker network)"
+    }
+  }
+}
