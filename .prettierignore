@@ -5,3 +5,8 @@ build/
 coverage/
 pnpm-lock.yaml
 *.min.js
+.turbo/
+cache/
+contracts/cache/
+artifacts/
+typechain-types/
