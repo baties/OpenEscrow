@@ -59,8 +59,7 @@ services:
     container_name: open-escrow-api
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-escrow}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-open_escrow}
@@ -103,8 +102,7 @@ services:
     container_name: open-escrow-web
     restart: unless-stopped
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://openescrow.smarthinking.tech}
@@ -133,8 +131,7 @@ services:
     container_name: open-escrow-bot
     restart: unless-stopped
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
