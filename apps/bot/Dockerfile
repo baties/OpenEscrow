@@ -48,4 +48,4 @@ COPY --from=deps --chown=telegraf:nodejs /app/apps/bot/node_modules ./apps/bot/n
 
 USER telegraf
 
-CMD ["node", "apps/bot/dist/index.js"]
+CMD ["node", "apps/bot/dist/src/index.js"]
