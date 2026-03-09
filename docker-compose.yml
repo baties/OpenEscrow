@@ -93,6 +93,13 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://openescrow.smarthinking.tech}
+        NEXT_PUBLIC_CHAIN_ID: ${CHAIN_ID:-11155111}
+        NEXT_PUBLIC_CONTRACT_ADDRESS: ${CONTRACT_ADDRESS}
+        NEXT_PUBLIC_USDC_ADDRESS: ${USDC_ADDRESS}
+        NEXT_PUBLIC_USDT_ADDRESS: ${USDT_ADDRESS}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${WALLETCONNECT_PROJECT_ID}
     container_name: open-escrow-web
     restart: unless-stopped
     depends_on:

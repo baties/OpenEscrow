@@ -17,6 +17,9 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Required for Docker: generates .next/standalone/ with a self-contained server.js
+  // that doesn't need the full node_modules tree at runtime.
+  output: 'standalone',
   // ─── Security Headers ────────────────────────────────────────────────────────
   async headers() {
     return [
