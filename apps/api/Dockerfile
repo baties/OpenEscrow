@@ -44,6 +44,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 COPY --from=builder --chown=fastify:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=fastify:nodejs /app/apps/api/dist ./apps/api/dist
+# migrate.ts resolves migrations at path.resolve(__dirname, '../../drizzle')
+# which at runtime (/app/apps/api/dist/src/database/) points to /app/apps/api/dist/drizzle/
+COPY --from=builder --chown=fastify:nodejs /app/apps/api/drizzle ./apps/api/dist/drizzle
 COPY --from=deps --chown=fastify:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=fastify:nodejs /app/apps/api/node_modules ./apps/api/node_modules
 

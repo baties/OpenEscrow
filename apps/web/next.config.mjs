@@ -15,11 +15,25 @@
  * Note: .mjs extension required for Next.js 14 compatibility (.ts not supported).
  */
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Required for Docker: generates .next/standalone/ with a self-contained server.js
   // that doesn't need the full node_modules tree at runtime.
   output: 'standalone',
+  // Required for pnpm monorepo: tells Next.js to trace node_modules from the workspace
+  // root (two levels up from apps/web/) so that packages like `next` itself — which live
+  // in the root node_modules — are included in the standalone output bundle.
+  // Without this, `node apps/web/.next/standalone/server.js` fails with:
+  //   "Cannot find module 'next'"
+  experimental: {
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+  },
   // ─── Security Headers ────────────────────────────────────────────────────────
   async headers() {
     return [
