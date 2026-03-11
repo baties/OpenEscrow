@@ -47,6 +47,9 @@ const CONTRACT_ADDRESS = env.CONTRACT_ADDRESS as `0x${string}`;
 /** Tracks the last block number processed to avoid re-processing the same events. */
 let lastProcessedBlock: bigint | null = null;
 
+/** Guards against overlapping poll cycles when an RPC call takes longer than poll interval. */
+let isPollingInProgress = false;
+
 // ─── ABI fragments for events we care about ───────────────────────────────────
 
 const DEAL_FUNDED_ABI = parseAbiItem(
@@ -268,106 +271,123 @@ async function handleDealCancelled(
  * @returns Promise<void> — resolves after all events in this cycle are processed
  */
 async function pollOnce(): Promise<void> {
-  let currentBlock: bigint;
-
-  try {
-    currentBlock = await publicClient.getBlockNumber();
-  } catch (err) {
+  if (isPollingInProgress) {
     log.warn(
       {
         module: 'chain.indexer',
         operation: 'pollOnce',
-        error: err instanceof Error ? err.message : String(err),
       },
-      'Failed to fetch current block number — will retry next cycle'
+      'Previous poll cycle still running — skipping this tick to avoid overlapping RPC calls'
     );
     return;
   }
 
-  // On first run, start from the current block to avoid replaying old history.
-  if (lastProcessedBlock === null) {
-    lastProcessedBlock = currentBlock;
+  isPollingInProgress = true;
+
+  try {
+    let currentBlock: bigint;
+
+    try {
+      currentBlock = await publicClient.getBlockNumber();
+    } catch (err) {
+      log.warn(
+        {
+          module: 'chain.indexer',
+          operation: 'pollOnce',
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Failed to fetch current block number — will retry next cycle'
+      );
+      return;
+    }
+
+    // On first run, start from the current block to avoid replaying old history.
+    if (lastProcessedBlock === null) {
+      lastProcessedBlock = currentBlock;
+      log.info(
+        {
+          module: 'chain.indexer',
+          operation: 'pollOnce',
+          startBlock: currentBlock.toString(),
+        },
+        'Indexer starting from current block'
+      );
+      return;
+    }
+
+    const fromBlock = lastProcessedBlock + 1n;
+    const toBlock = currentBlock;
+
+    if (fromBlock > toBlock) {
+      // No new blocks since last poll.
+      return;
+    }
+
     log.info(
-      {
-        module: 'chain.indexer',
-        operation: 'pollOnce',
-        startBlock: currentBlock.toString(),
-      },
-      'Indexer starting from current block'
-    );
-    return;
-  }
-
-  const fromBlock = lastProcessedBlock + 1n;
-  const toBlock = currentBlock;
-
-  if (fromBlock > toBlock) {
-    // No new blocks since last poll.
-    return;
-  }
-
-  log.info(
-    {
-      module: 'chain.indexer',
-      operation: 'pollOnce',
-      fromBlock: fromBlock.toString(),
-      toBlock: toBlock.toString(),
-    },
-    'Polling chain events'
-  );
-
-  try {
-    // Fetch DealFunded events.
-    const fundedLogs = await publicClient.getLogs({
-      address: CONTRACT_ADDRESS,
-      event: DEAL_FUNDED_ABI,
-      fromBlock,
-      toBlock,
-    });
-
-    for (const log_entry of fundedLogs) {
-      if (log_entry.args.dealId !== undefined) {
-        await handleDealFunded(
-          log_entry.args.dealId.toString(),
-          log_entry.transactionHash ?? '',
-          log_entry.blockNumber ?? 0n
-        );
-      }
-    }
-
-    // Fetch DealCancelled events.
-    const cancelledLogs = await publicClient.getLogs({
-      address: CONTRACT_ADDRESS,
-      event: DEAL_CANCELLED_ABI,
-      fromBlock,
-      toBlock,
-    });
-
-    for (const log_entry of cancelledLogs) {
-      if (log_entry.args.dealId !== undefined) {
-        await handleDealCancelled(
-          log_entry.args.dealId.toString(),
-          log_entry.transactionHash ?? '',
-          (log_entry.args.refundAmount ?? 0n).toString(),
-          log_entry.blockNumber ?? 0n
-        );
-      }
-    }
-
-    // Advance the last processed block only after successful processing.
-    lastProcessedBlock = toBlock;
-  } catch (err) {
-    log.warn(
       {
         module: 'chain.indexer',
         operation: 'pollOnce',
         fromBlock: fromBlock.toString(),
         toBlock: toBlock.toString(),
-        error: err instanceof Error ? err.message : String(err),
       },
-      'Event log fetch failed — will retry from same block next cycle'
+      'Polling chain events'
     );
-    // Do not advance lastProcessedBlock so we retry this range.
+
+    try {
+      // Fetch DealFunded events.
+      const fundedLogs = await publicClient.getLogs({
+        address: CONTRACT_ADDRESS,
+        event: DEAL_FUNDED_ABI,
+        fromBlock,
+        toBlock,
+      });
+
+      for (const log_entry of fundedLogs) {
+        if (log_entry.args.dealId !== undefined) {
+          await handleDealFunded(
+            log_entry.args.dealId.toString(),
+            log_entry.transactionHash ?? '',
+            log_entry.blockNumber ?? 0n
+          );
+        }
+      }
+
+      // Fetch DealCancelled events.
+      const cancelledLogs = await publicClient.getLogs({
+        address: CONTRACT_ADDRESS,
+        event: DEAL_CANCELLED_ABI,
+        fromBlock,
+        toBlock,
+      });
+
+      for (const log_entry of cancelledLogs) {
+        if (log_entry.args.dealId !== undefined) {
+          await handleDealCancelled(
+            log_entry.args.dealId.toString(),
+            log_entry.transactionHash ?? '',
+            (log_entry.args.refundAmount ?? 0n).toString(),
+            log_entry.blockNumber ?? 0n
+          );
+        }
+      }
+
+      // Advance the last processed block only after successful processing.
+      lastProcessedBlock = toBlock;
+    } catch (err) {
+      log.warn(
+        {
+          module: 'chain.indexer',
+          operation: 'pollOnce',
+          fromBlock: fromBlock.toString(),
+          toBlock: toBlock.toString(),
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Event log fetch failed — will retry from same block next cycle'
+      );
+      // Do not advance lastProcessedBlock so we retry this range.
+    }
+  } finally {
+    isPollingInProgress = false;
   }
 }
 
