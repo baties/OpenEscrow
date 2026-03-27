@@ -27,6 +27,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { SubmitMilestoneModal } from '@/components/SubmitMilestoneModal';
 import { RejectMilestoneModal } from '@/components/RejectMilestoneModal';
 import { formatTokenAmount, truncateAddress, formatDate } from '@/lib/format';
+import { CopyButton } from '@/components/CopyButton';
 import type { SubmitMilestoneFormValues, RejectMilestoneFormValues } from '@/lib/schemas';
 
 /**
@@ -75,6 +76,24 @@ export default function DealDetailPage() {
       router.replace('/');
     }
   }, [isAuthenticated, router]);
+
+  // Auto-refresh when the NotificationProvider detects a change for this deal.
+  // NotificationProvider dispatches 'deal:updated' with { dealId } whenever it
+  // detects a status change during its 30s poll cycle.
+  useEffect(() => {
+    if (!dealId) return;
+
+    function handleDealUpdated(e: Event) {
+      const evt = e as CustomEvent<{ dealId: string }>;
+      if (evt.detail?.dealId === dealId) {
+        refreshDeal();
+        refreshTimeline();
+      }
+    }
+
+    window.addEventListener('deal:updated', handleDealUpdated);
+    return () => window.removeEventListener('deal:updated', handleDealUpdated);
+  }, [dealId, refreshDeal, refreshTimeline]);
 
   if (!isAuthenticated || !walletAddress) return null;
 
@@ -235,18 +254,30 @@ export default function DealDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <StatusBadge status={deal.status} />
-              <span className="text-xs text-gray-400 font-mono">#{deal.id.slice(0, 8)}</span>
+              <CopyButton
+                text={deal.id}
+                variant="icon"
+                className="text-gray-300"
+              />
+              <span className="text-xs text-gray-400 font-mono" title={deal.id}>
+                #{deal.id.slice(0, 8)}
+              </span>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-              <div>
+            {/* Grid: 1 col on mobile (stacked), 2 cols on sm+ */}
+            <div className="mt-2 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Client</p>
-                <p className="font-mono text-gray-700">{truncateAddress(deal.clientAddress)}</p>
+                <p className="truncate font-mono text-gray-700" title={deal.clientAddress}>
+                  {truncateAddress(deal.clientAddress)}
+                </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                   Freelancer
                 </p>
-                <p className="font-mono text-gray-700">{truncateAddress(deal.freelancerAddress)}</p>
+                <p className="truncate font-mono text-gray-700" title={deal.freelancerAddress}>
+                  {truncateAddress(deal.freelancerAddress)}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">

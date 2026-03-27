@@ -3,8 +3,10 @@
  *
  * Create Deal page — allows a client to create a new deal with milestones.
  * Handles: multi-milestone form state, Zod validation, API call via useDealActions,
+ *          on-chain freelancer wallet validation (tx count + token balances via viem),
  *          redirecting to the new deal's detail page on success.
- * Does NOT: manage auth state, interact with the blockchain, call the API directly.
+ * Does NOT: manage auth state, interact with the smart contract directly,
+ *            call the API directly.
  *
  * Only accessible to authenticated users. Non-authenticated users are redirected to /.
  * Role enforcement: the API will reject if the caller is not a valid client
@@ -14,13 +16,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isAddress } from 'viem';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useDealActions } from '@/hooks/use-deal-actions';
+import { useWalletInfo } from '@/hooks/use-wallet-info';
 import { createDealSchema, type CreateDealFormValues, type MilestoneInput } from '@/lib/schemas';
 import { parseTokenAmount } from '@/lib/format';
-import { config } from '@/lib/config';
+import { config as appConfig } from '@/lib/config';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
@@ -46,9 +50,16 @@ export default function NewDealPage() {
 
   // Form state
   const [freelancerAddress, setFreelancerAddress] = useState('');
-  const [tokenAddress, setTokenAddress] = useState(config.usdcAddress);
+  const [tokenAddress, setTokenAddress] = useState(appConfig.usdcAddress);
   const [milestones, setMilestones] = useState<MilestoneInput[]>([{ ...EMPTY_MILESTONE }]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // On-chain wallet info — fetched when a valid address is entered (debounced 600ms)
+  const {
+    info: walletInfo,
+    isLoading: walletInfoLoading,
+    error: walletInfoError,
+  } = useWalletInfo(freelancerAddress);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -175,6 +186,49 @@ export default function NewDealPage() {
             {fieldErrors['freelancerAddress'] && (
               <p className="mt-1 text-xs text-red-600">{fieldErrors['freelancerAddress']}</p>
             )}
+
+            {/* Wallet info panel — shown after a valid address is entered */}
+            {freelancerAddress && isAddress(freelancerAddress) && (
+              <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs">
+                {walletInfoLoading && (
+                  <span className="flex items-center gap-1.5 text-gray-400">
+                    <LoadingSpinner size="sm" />
+                    Looking up wallet on {appConfig.chainMeta.name}…
+                  </span>
+                )}
+                {walletInfoError && !walletInfoLoading && (
+                  <span className="text-amber-600">
+                    ⚠ Could not fetch wallet info — RPC may be unavailable.
+                  </span>
+                )}
+                {walletInfo && !walletInfoLoading && (
+                  <dl className="grid grid-cols-3 gap-x-4 gap-y-1">
+                    <div>
+                      {/* Sent Txns = EVM nonce (outgoing transactions only, not incoming) */}
+                      <dt className="text-gray-400 font-medium" title="Number of transactions sent from this address (outgoing only)">
+                        Sent Txns
+                      </dt>
+                      <dd className="font-semibold text-gray-700">
+                        {walletInfo.sentTxCount.toLocaleString()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-400 font-medium">USDC balance</dt>
+                      <dd className="font-semibold text-gray-700">{walletInfo.usdcBalance}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-400 font-medium">USDT balance</dt>
+                      <dd className="font-semibold text-gray-700">{walletInfo.usdtBalance}</dd>
+                    </div>
+                  </dl>
+                )}
+              </div>
+            )}
+            {freelancerAddress && !isAddress(freelancerAddress) && (
+              <p className="mt-1 text-xs text-amber-600">
+                Not a valid EVM address — must start with 0x and be 42 characters.
+              </p>
+            )}
           </div>
 
           {/* Token selection */}
@@ -189,8 +243,12 @@ export default function NewDealPage() {
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               disabled={createState.isLoading}
             >
-              <option value={config.usdcAddress}>USDC (Sepolia)</option>
-              <option value={config.usdtAddress}>USDT (Sepolia)</option>
+              <option value={appConfig.usdcAddress}>
+                USDC ({appConfig.chainMeta.shortName})
+              </option>
+              <option value={appConfig.usdtAddress}>
+                USDT ({appConfig.chainMeta.shortName})
+              </option>
             </select>
             {fieldErrors['tokenAddress'] && (
               <p className="mt-1 text-xs text-red-600">{fieldErrors['tokenAddress']}</p>

@@ -28,6 +28,7 @@ import { telegramLinkSchema } from '@/lib/schemas';
 import { getErrorMessage } from '@/lib/errors';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { CopyButton } from '@/components/CopyButton';
 import { formatDate } from '@/lib/format';
 
 /**
@@ -204,9 +205,18 @@ export default function TelegramSettingsPage() {
             <h2 className="font-semibold text-emerald-900">Telegram Connected</h2>
           </div>
           <dl className="space-y-1 text-sm">
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <dt className="text-emerald-700 font-medium w-28 shrink-0">Telegram ID:</dt>
-              <dd className="font-mono text-emerald-900">{status.telegramUserId}</dd>
+              <dd className="flex items-center gap-1 font-mono text-emerald-900">
+                {status.telegramUserId}
+                {status.telegramUserId && (
+                  <CopyButton
+                    text={status.telegramUserId}
+                    variant="icon"
+                    className="text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100"
+                  />
+                )}
+              </dd>
             </div>
             {status.linkedAt && (
               <div className="flex gap-2">
@@ -319,18 +329,35 @@ export default function TelegramSettingsPage() {
             <ErrorAlert message={generateError} onDismiss={() => setGenerateError(null)} />
 
             {generatedCode && codeExpiresAt && (
-              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-2">
+              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-indigo-400">
                   Your Linking Code
                 </p>
-                <p className="font-mono text-xl font-bold tracking-widest text-indigo-700">
-                  {generatedCode}
-                </p>
+
+                {/* Code — click to copy */}
+                <CopyButton
+                  text={generatedCode}
+                  className="px-2 py-1"
+                >
+                  <span className="font-mono text-xl font-bold tracking-widest text-indigo-700">
+                    {generatedCode}
+                  </span>
+                </CopyButton>
+
                 <p className="text-xs text-indigo-500">Expires at: {formatDate(codeExpiresAt)}</p>
-                <p className="text-xs text-indigo-600">
-                  Send this to the bot:{' '}
-                  <code className="bg-indigo-100 px-1 rounded">/link {generatedCode}</code>
-                </p>
+
+                {/* /link command — click to copy */}
+                <div className="space-y-1">
+                  <p className="text-xs text-indigo-600">Send this command to the bot:</p>
+                  <CopyButton
+                    text={`/link ${generatedCode}`}
+                    className="px-2 py-1"
+                  >
+                    <code className="text-sm font-mono text-indigo-700">
+                      /link {generatedCode}
+                    </code>
+                  </CopyButton>
+                </div>
               </div>
             )}
 

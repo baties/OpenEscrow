@@ -3,12 +3,13 @@
  *
  * Root Next.js App Router layout.
  * Handles: HTML shell, global styles import, provider tree setup,
- *          shared Navbar component.
+ *          shared Navbar, ToastContainer for deal event notifications.
  * Does NOT: contain page-specific content, manage auth state directly,
  *            or fetch any data.
  *
- * Provider order (outer → inner): Web3Provider → AuthProvider
+ * Provider order (outer → inner): Web3Provider → AuthProvider → NotificationProvider
  * Web3Provider must be outermost because AuthProvider uses wagmi hooks.
+ * NotificationProvider must be inside AuthProvider (needs the JWT from auth-storage).
  */
 
 import type { Metadata } from 'next';
@@ -16,7 +17,9 @@ import dynamic from 'next/dynamic';
 import '@rainbow-me/rainbowkit/styles.css';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { NotificationProvider } from '@/providers/NotificationProvider';
 import { Navbar } from '@/components/Navbar';
+import { ToastContainer } from '@/components/ToastContainer';
 
 /**
  * Web3Provider loaded client-side only (ssr: false) to prevent wagmi/WalletConnect
@@ -53,8 +56,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
         <Web3Provider>
           <AuthProvider>
-            <Navbar />
-            <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
+            <NotificationProvider>
+              <Navbar />
+              <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
+              <ToastContainer />
+            </NotificationProvider>
           </AuthProvider>
         </Web3Provider>
       </body>

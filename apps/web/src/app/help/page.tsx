@@ -5,11 +5,12 @@
  *
  * Static help and documentation page for the OpenEscrow product.
  * Handles: displaying role-specific guides (Client and Freelancer flows),
- *          explaining the milestone lifecycle, FAQ, and Telegram bot usage.
+ *          explaining the deal lifecycle, milestone lifecycle, FAQ, and Telegram bot usage.
  * Does NOT: fetch any data, manage auth state, or perform any API calls.
  */
 
 import Link from 'next/link';
+import { config } from '@/lib/config';
 
 interface FaqItem {
   question: string;
@@ -19,13 +20,12 @@ interface FaqItem {
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'What tokens are supported?',
-    answer:
-      'OpenEscrow supports USDC and USDT on Sepolia testnet. These are the only accepted stablecoins in the MVP. No native tokens or other ERC-20s are accepted.',
+    answer: `OpenEscrow supports USDC and USDT on ${config.chainMeta.name}. These are the only accepted stablecoins. No native tokens or other ERC-20s are accepted.`,
   },
   {
     question: 'What happens if there is a dispute?',
     answer:
-      'OpenEscrow uses a structured approve/reject + revision loop. The client can reject a milestone with specific reasons, and the freelancer revises and resubmits. There is no third-party arbitration in the MVP.',
+      'OpenEscrow uses a structured approve/reject + revision loop. The client can reject a milestone with specific reasons, and the freelancer revises and resubmits. There is no third-party arbitration.',
   },
   {
     question: 'Can I cancel a deal after funding?',
@@ -33,9 +33,10 @@ const FAQ_ITEMS: FaqItem[] = [
       'Yes. Either party can cancel. If cancelled before funding (DRAFT or AGREED status), there is nothing to refund. If cancelled after funding, all unreleased milestone amounts are returned to the client. Released milestones are irreversible.',
   },
   {
-    question: 'Is this on mainnet?',
-    answer:
-      'No. The MVP runs exclusively on Sepolia testnet. Do not use real funds. Mainnet deployment requires a professional security audit.',
+    question: 'What network is this on?',
+    answer: config.chainMeta.isTestnet
+      ? `This deployment runs on ${config.chainMeta.name} (testnet). Do not use real funds. Mainnet deployment requires a professional security audit.`
+      : `This deployment runs on ${config.chainMeta.name}. All transactions use real funds — verify deal terms carefully before funding.`,
   },
   {
     question: 'How does the Telegram bot work?',
@@ -44,8 +45,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     question: 'What does it cost?',
-    answer:
-      'The smart contract charges no platform fee in the MVP. You only pay Ethereum gas fees for on-chain transactions (deposit, milestone approval, cancel).',
+    answer: `The smart contract charges no platform fee. You only pay ${config.chainMeta.name} gas fees for on-chain transactions (deposit, milestone approval, cancel).`,
   },
 ];
 
@@ -135,7 +135,7 @@ export default function HelpPage() {
           />
           <Step
             n={2}
-            text="Click New Deal and fill in the freelancer's wallet address, the payment token (USDC or USDT), and define milestones — each with a title, description, acceptance criteria, and amount."
+            text={`Click New Deal and fill in the freelancer's wallet address, the payment token (USDC or USDT on ${config.chainMeta.name}), and define milestones — each with a title, description, acceptance criteria, and amount.`}
           />
           <Step
             n={3}
@@ -158,7 +158,13 @@ export default function HelpPage() {
             text="After all milestones are approved, the deal is automatically marked Complete."
           />
         </div>
-        <div className="mt-5 rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+        {config.chainMeta.isTestnet && (
+          <div className="mt-5 rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+            <strong>Testnet note:</strong> This deployment uses {config.chainMeta.name}. All tokens
+            are test tokens with no real value.
+          </div>
+        )}
+        <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
           <strong>Tip:</strong> Define acceptance criteria clearly before funding. Vague criteria
           lead to revision loops. The criteria you set are binding — the freelancer can rely on
           them.
@@ -210,6 +216,104 @@ export default function HelpPage() {
         <div className="mt-5 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">
           <strong>Tip:</strong> Connect the Telegram bot (Settings → Telegram) to get instant
           notifications when the client approves, rejects, or funds the deal.
+        </div>
+      </section>
+
+      {/* Deal Lifecycle */}
+      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900">Deal Lifecycle</h2>
+        <p className="mt-2 text-sm text-gray-500">
+          Every deal moves through these stages from creation to completion.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <th className="pb-2 pr-4">Status</th>
+                <th className="pb-2 pr-4">Meaning</th>
+                <th className="pb-2">Who acts next</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">
+                    DRAFT
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Client created the deal with milestones. Awaiting freelancer agreement.
+                </td>
+                <td className="py-2 text-gray-500">Freelancer</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 font-mono text-xs font-medium text-indigo-700">
+                    AGREED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Freelancer confirmed milestones and acceptance criteria. Client may now fund.
+                </td>
+                <td className="py-2 text-gray-500">Client</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 font-mono text-xs font-medium text-blue-700">
+                    FUNDED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Client deposited funds into the smart contract. Work can now begin.
+                </td>
+                <td className="py-2 text-gray-500">Freelancer</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 font-mono text-xs font-medium text-amber-700">
+                    (milestone cycle)
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Each milestone moves through its own lifecycle: PENDING → SUBMITTED → APPROVED /
+                  REJECTED → REVISION. See Milestone Lifecycle below.
+                </td>
+                <td className="py-2 text-gray-500">Both parties</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-xs font-medium text-emerald-700">
+                    COMPLETED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  All milestones approved. Set automatically by the system. Deal is finished.
+                </td>
+                <td className="py-2 text-gray-500">—</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 font-mono text-xs font-medium text-red-700">
+                    CANCELLED
+                  </span>
+                </td>
+                <td className="py-2 pr-4 text-gray-600">
+                  Deal cancelled by either party. Refund rules: DRAFT/AGREED cancel = no refund
+                  (funds not yet deposited). FUNDED cancel = all unreleased amounts returned to
+                  client. Released milestones are irreversible.
+                </td>
+                <td className="py-2 text-gray-500">Either party</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {/* State flow diagram */}
+        <div className="mt-4 rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs font-mono text-gray-500 overflow-x-auto whitespace-nowrap">
+          DRAFT → AGREED → FUNDED → [milestone cycle] → COMPLETED
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CANCELLED (from any stage before COMPLETED)
         </div>
       </section>
 

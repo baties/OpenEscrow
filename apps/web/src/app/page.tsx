@@ -22,6 +22,7 @@ import { useAccount } from 'wagmi';
 import { useAuth } from '@/hooks/use-auth';
 import { ErrorAlert } from '@/components/ErrorAlert';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { config } from '@/lib/config';
 
 /**
  * Truncates a wallet address to the form 0x1234…abcd for compact display.
@@ -72,7 +73,7 @@ export default function HomePage() {
           {
             icon: '🔐',
             title: 'Funds locked on-chain',
-            desc: 'USDC/USDT secured in an audited Sepolia smart contract',
+            desc: `USDC/USDT secured in a smart contract on ${config.chainMeta.name}`,
           },
           {
             icon: '📋',
@@ -190,10 +191,12 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Network notice */}
-      <p className="mt-8 rounded-lg bg-amber-50 px-4 py-2 text-xs text-amber-700 border border-amber-200">
-        Testnet MVP — Sepolia only. Do not use real funds.
-      </p>
+      {/* Network notice — testnet warning shown only when running on a testnet */}
+      {config.chainMeta.isTestnet && (
+        <p className="mt-8 rounded-lg bg-amber-50 px-4 py-2 text-xs text-amber-700 border border-amber-200">
+          Testnet MVP — {config.chainMeta.name} only. Do not use real funds.
+        </p>
+      )}
     </div>
   );
 }

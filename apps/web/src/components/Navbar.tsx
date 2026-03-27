@@ -4,7 +4,7 @@
  * Top navigation bar component shown on all authenticated pages.
  * Handles: displaying the app logo, navigation links, wallet connect button,
  *          and a sign-out action.
- * Does NOT: manage auth state (reads from useAuth), make API calls,
+ * Does NOT: manage auth state (reads from useAuth), make API calls directly,
  *            or handle routing logic beyond Link components.
  */
 
@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAuth } from '@/hooks/use-auth';
+import { TokenBalances } from '@/components/TokenBalances';
+import { NotificationBell } from '@/components/NotificationBell';
 
 /**
  * Navigation link item definition.
@@ -69,8 +71,12 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Wallet connect + sign out */}
+        {/* Wallet connect + token balances + notifications + sign out */}
         <div className="flex items-center gap-3">
+          {/* USDC/USDT balances — shown when wallet is connected */}
+          <TokenBalances />
+          {/* Notification bell — shown when authenticated */}
+          {isAuthenticated && <NotificationBell />}
           <ConnectButton accountStatus="avatar" chainStatus="none" showBalance={false} />
           {isAuthenticated && (
             <button

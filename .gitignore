@@ -38,6 +38,8 @@ vitest-results/
 .env
 .env.local
 .env.*.local
+.env.* 
+.env.local.*
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 logs/

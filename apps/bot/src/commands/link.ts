@@ -165,14 +165,19 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
     // Instruct the user to complete linking on the web dashboard.
     // The web dashboard needs: { oneTimeCode, telegramUserId } + user JWT.
     // The bot cannot call /telegram/link itself (no JWT for unauthenticated user).
+    //
+    // Tap-to-copy: Telegram renders `code` spans as monospace blocks that can be
+    // copied with a long-press (Android) or tap-and-hold (iOS). Each value is
+    // on its own line in a separate code span to make mobile copying easy.
     await ctx.replyWithMarkdown(
       `✅ *Code received!*\n\n` +
-        `To complete linking, go to the web dashboard:\n` +
-        `Settings → Telegram → Enter your details:\n\n` +
-        `• *OTP code:* \`${parseResult.data}\`\n` +
-        `• *Your Telegram ID:* \`${telegramUserId}\`\n\n` +
-        `After submitting on the web dashboard, your account will be linked.\n` +
-        `_You'll receive a confirmation message here once linked._`
+        `Now go to the web dashboard → *Settings → Telegram* and enter both values:\n\n` +
+        `🔑 *OTP Code* (tap to copy):\n` +
+        `\`${parseResult.data}\`\n\n` +
+        `📱 *Your Telegram ID* (tap to copy):\n` +
+        `\`${telegramUserId}\`\n\n` +
+        `Click *Verify & Link* on the dashboard to complete linking.\n` +
+        `_You'll receive a confirmation here once it's done._`
     );
 
     // Track this user so the session-creator poller can confirm when they're linked.

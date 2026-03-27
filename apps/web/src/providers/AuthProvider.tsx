@@ -16,6 +16,13 @@
  * is restored from localStorage instead. This prevents unwanted signature popups
  * on page refresh or after sign-out.
  *
+ * Reconnect bug fix: On the initial render, wagmi reports isConnected=false before
+ * it has had a chance to restore the previous connection from IndexedDB/localStorage.
+ * Without a guard, the isConnected effect fires immediately with isConnected=false,
+ * calls clearAuth() which deletes the JWT, then wagmi reconnects but finds no JWT.
+ * hasMountedRef guards against this: the disconnect-handling branch of the isConnected
+ * effect is skipped on the very first render so wagmi can reconnect first.
+ *
  * Stale-closure guard: useAccountEffect.onConnect fires before wagmi re-renders,
  * so address/chainId from useAccount() are still the old (undefined) values at that
  * moment. The internal performSiwe() helper takes explicit addr/chain params from
@@ -28,7 +35,7 @@
 
 'use client';
 
-import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { useAccount, useAccountEffect, useSignMessage, useDisconnect } from 'wagmi';
 import { authApi } from '@/lib/api-client';
 import { saveAuth, getAuthToken, getStoredWalletAddress, clearAuth } from '@/lib/auth-storage';
@@ -94,6 +101,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   const [signInError, setSignInError] = useState<string | null>(null);
 
+  /**
+   * Guards against clearing auth on the initial render before wagmi reconnects.
+   * See the module-level comment for a full explanation of the race condition.
+   */
+  const hasMountedRef = useRef(false);
+
   // On mount: restore auth from localStorage so authenticated users skip sign-in
   // on page reload without any additional action.
   useEffect(() => {
@@ -108,7 +121,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // When wallet address changes (e.g. user switches accounts in MetaMask):
   // validate the stored JWT still belongs to the connected wallet.
   // A clean disconnect (address === undefined) also clears auth here.
+  //
+  // IMPORTANT: skip the very first run. On initial render, wagmi reports
+  // isConnected=false before it has restored the previous connection.
+  // We must not call clearAuth() at that point or we erase the stored JWT
+  // before wagmi gets to reconnect. hasMountedRef becomes true after the
+  // first fire so all subsequent changes (real disconnects, wallet switches)
+  // are handled normally.
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     if (!isConnected || !address) {
       clearAuth();
       setIsAuthenticated(false);

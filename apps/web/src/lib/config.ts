@@ -8,7 +8,53 @@
  *
  * All env vars are expected to be set at build time by Next.js.
  * Missing required vars will throw at module import time to surface issues early.
+ *
+ * Multi-chain: the active chain is determined by NEXT_PUBLIC_CHAIN_ID.
+ * Supported chains: Sepolia (11155111), Ethereum Mainnet (1), BNB Smart Chain (56),
+ * Polygon Mainnet (137). One chain per deployment — switch by changing env vars only.
  */
+
+/**
+ * Display metadata for a supported chain.
+ */
+export interface ChainMeta {
+  /** Human-readable chain name, e.g. "Ethereum Mainnet" */
+  readonly name: string;
+  /** Short label for use in UI badges, e.g. "Mainnet" */
+  readonly shortName: string;
+  /** Whether this is a testnet — drives the "testnet" warning banner */
+  readonly isTestnet: boolean;
+  /** Chain-specific block explorer base URL */
+  readonly explorerUrl: string;
+}
+
+/** Chain metadata map for all supported chains. */
+const CHAIN_META: Record<number, ChainMeta> = {
+  11155111: {
+    name: 'Ethereum Sepolia',
+    shortName: 'Sepolia',
+    isTestnet: true,
+    explorerUrl: 'https://sepolia.etherscan.io',
+  },
+  1: {
+    name: 'Ethereum Mainnet',
+    shortName: 'Mainnet',
+    isTestnet: false,
+    explorerUrl: 'https://etherscan.io',
+  },
+  56: {
+    name: 'BNB Smart Chain',
+    shortName: 'BSC',
+    isTestnet: false,
+    explorerUrl: 'https://bscscan.com',
+  },
+  137: {
+    name: 'Polygon',
+    shortName: 'Polygon',
+    isTestnet: false,
+    explorerUrl: 'https://polygonscan.com',
+  },
+};
 
 /**
  * Application configuration derived from environment variables.
@@ -17,7 +63,7 @@
 export interface AppConfig {
   /** Base URL of the OpenEscrow API, e.g. http://localhost:3001 */
   readonly apiUrl: string;
-  /** EVM chain ID — 11155111 for Sepolia testnet */
+  /** EVM chain ID for the active deployment chain */
   readonly chainId: number;
   /** Deployed OpenEscrow contract address (checksum address) */
   readonly contractAddress: `0x${string}`;
@@ -27,6 +73,14 @@ export interface AppConfig {
   readonly usdtAddress: `0x${string}`;
   /** WalletConnect Cloud project ID */
   readonly walletConnectProjectId: string;
+  /**
+   * Optional public RPC URL for the active chain.
+   * If set, used as the wagmi transport for read-only calls (balances, tx counts).
+   * If not set, wagmi uses the chain's default public RPC endpoints.
+   */
+  readonly rpcUrl: string | null;
+  /** Display metadata for the active chain (name, testnet flag, explorer URL). */
+  readonly chainMeta: ChainMeta;
 }
 
 /**
@@ -90,17 +144,35 @@ function requireNumberEnv(key: string, value: string | undefined, defaultValue?:
  * the values into the client bundle at compile time.
  * Throws immediately if any required env var is missing.
  */
-export const config: AppConfig = {
-  apiUrl: requireEnv('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL),
-  chainId: requireNumberEnv('NEXT_PUBLIC_CHAIN_ID', process.env.NEXT_PUBLIC_CHAIN_ID, 11155111),
-  contractAddress: requireAddressEnv(
-    'NEXT_PUBLIC_CONTRACT_ADDRESS',
-    process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
-  ),
-  usdcAddress: requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS', process.env.NEXT_PUBLIC_USDC_ADDRESS),
-  usdtAddress: requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS', process.env.NEXT_PUBLIC_USDT_ADDRESS),
-  walletConnectProjectId: requireEnv(
-    'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',
-    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
-  ),
-} as const;
+function buildConfig(): AppConfig {
+  const chainId = requireNumberEnv('NEXT_PUBLIC_CHAIN_ID', process.env.NEXT_PUBLIC_CHAIN_ID, 11155111);
+  const chainMeta: ChainMeta = CHAIN_META[chainId] ?? {
+    name: `Chain ${chainId}`,
+    shortName: `Chain ${chainId}`,
+    isTestnet: false,
+    explorerUrl: '',
+  };
+
+  // NEXT_PUBLIC_RPC_URL is optional — falls back to chain default public RPC if not set
+  const rawRpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+  const rpcUrl = rawRpcUrl && rawRpcUrl.trim() !== '' ? rawRpcUrl.trim() : null;
+
+  return {
+    apiUrl: requireEnv('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL),
+    chainId,
+    contractAddress: requireAddressEnv(
+      'NEXT_PUBLIC_CONTRACT_ADDRESS',
+      process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
+    ),
+    usdcAddress: requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS', process.env.NEXT_PUBLIC_USDC_ADDRESS),
+    usdtAddress: requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS', process.env.NEXT_PUBLIC_USDT_ADDRESS),
+    walletConnectProjectId: requireEnv(
+      'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',
+      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+    ),
+    rpcUrl,
+    chainMeta,
+  };
+}
+
+export const config: AppConfig = buildConfig();
