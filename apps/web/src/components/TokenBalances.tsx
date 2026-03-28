@@ -46,10 +46,7 @@ function formatBalance(raw: bigint): string {
 export function TokenBalances() {
   const { address, isConnected } = useAccount();
 
-  const {
-    data: usdcRaw,
-    isLoading: usdcLoading,
-  } = useReadContract({
+  const { data: usdcRaw, isLoading: usdcLoading } = useReadContract({
     address: appConfig.usdcAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -61,10 +58,7 @@ export function TokenBalances() {
     },
   });
 
-  const {
-    data: usdtRaw,
-    isLoading: usdtLoading,
-  } = useReadContract({
+  const { data: usdtRaw, isLoading: usdtLoading } = useReadContract({
     address: appConfig.usdtAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',

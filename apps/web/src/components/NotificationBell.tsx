@@ -155,11 +155,7 @@ export function NotificationBell() {
               <p className="py-8 text-center text-sm text-gray-400">No notifications yet.</p>
             ) : (
               notifications.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notif={n}
-                  onNavigate={() => setOpen(false)}
-                />
+                <NotificationItem key={n.id} notif={n} onNavigate={() => setOpen(false)} />
               ))
             )}
           </div>

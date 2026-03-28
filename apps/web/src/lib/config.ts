@@ -145,7 +145,11 @@ function requireNumberEnv(key: string, value: string | undefined, defaultValue?:
  * Throws immediately if any required env var is missing.
  */
 function buildConfig(): AppConfig {
-  const chainId = requireNumberEnv('NEXT_PUBLIC_CHAIN_ID', process.env.NEXT_PUBLIC_CHAIN_ID, 11155111);
+  const chainId = requireNumberEnv(
+    'NEXT_PUBLIC_CHAIN_ID',
+    process.env.NEXT_PUBLIC_CHAIN_ID,
+    11155111
+  );
   const chainMeta: ChainMeta = CHAIN_META[chainId] ?? {
     name: `Chain ${chainId}`,
     shortName: `Chain ${chainId}`,
@@ -164,8 +168,14 @@ function buildConfig(): AppConfig {
       'NEXT_PUBLIC_CONTRACT_ADDRESS',
       process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
     ),
-    usdcAddress: requireAddressEnv('NEXT_PUBLIC_USDC_ADDRESS', process.env.NEXT_PUBLIC_USDC_ADDRESS),
-    usdtAddress: requireAddressEnv('NEXT_PUBLIC_USDT_ADDRESS', process.env.NEXT_PUBLIC_USDT_ADDRESS),
+    usdcAddress: requireAddressEnv(
+      'NEXT_PUBLIC_USDC_ADDRESS',
+      process.env.NEXT_PUBLIC_USDC_ADDRESS
+    ),
+    usdtAddress: requireAddressEnv(
+      'NEXT_PUBLIC_USDT_ADDRESS',
+      process.env.NEXT_PUBLIC_USDT_ADDRESS
+    ),
     walletConnectProjectId: requireEnv(
       'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID',
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID

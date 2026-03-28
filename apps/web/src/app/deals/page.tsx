@@ -85,8 +85,8 @@ export default function DealsPage() {
             <div className="flex-1">
               <h2 className="font-semibold text-indigo-900">Get deal notifications on Telegram</h2>
               <p className="mt-1 text-sm text-indigo-700">
-                Connect your Telegram account to receive instant alerts when your deal is funded,
-                a milestone is approved or rejected, or the other party takes action.
+                Connect your Telegram account to receive instant alerts when your deal is funded, a
+                milestone is approved or rejected, or the other party takes action.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link

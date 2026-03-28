@@ -109,10 +109,7 @@ export function CopyButton({ text, children, className = '', variant = 'block' }
       className={`group flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-transparent transition-colors hover:border-indigo-200 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`}
     >
       <span className="flex-1 text-left">{children}</span>
-      <span
-        className="shrink-0 text-xs font-medium transition-colors"
-        aria-hidden="true"
-      >
+      <span className="shrink-0 text-xs font-medium transition-colors" aria-hidden="true">
         {copied ? (
           <span className="flex items-center gap-1 text-emerald-600">
             <svg

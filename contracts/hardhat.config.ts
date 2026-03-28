@@ -40,18 +40,17 @@ if (fs.existsSync(envPath)) {
 
 const DEPLOYER_PRIVATE_KEY: string = process.env['DEPLOYER_PRIVATE_KEY'] ?? '';
 /** Normalizes a private key: strips leading 0x if present, prefixes with 0x. */
-const pk = (key: string): string[] =>
-  key ? [`0x${key.replace(/^0x/, '')}`] : [];
+const pk = (key: string): string[] => (key ? [`0x${key.replace(/^0x/, '')}`] : []);
 
 // ─── RPC endpoints ────────────────────────────────────────────────────────────
-const SEPOLIA_RPC_URL: string  = process.env['SEPOLIA_RPC_URL']  ?? '';
-const MAINNET_RPC_URL: string  = process.env['MAINNET_RPC_URL']  ?? '';
-const BSC_RPC_URL: string      = process.env['BSC_RPC_URL']      ?? '';
-const POLYGON_RPC_URL: string  = process.env['POLYGON_RPC_URL']  ?? '';
+const SEPOLIA_RPC_URL: string = process.env['SEPOLIA_RPC_URL'] ?? '';
+const MAINNET_RPC_URL: string = process.env['MAINNET_RPC_URL'] ?? '';
+const BSC_RPC_URL: string = process.env['BSC_RPC_URL'] ?? '';
+const POLYGON_RPC_URL: string = process.env['POLYGON_RPC_URL'] ?? '';
 
 // ─── Block explorer API keys ──────────────────────────────────────────────────
-const ETHERSCAN_API_KEY: string   = process.env['ETHERSCAN_API_KEY']   ?? '';
-const BSCSCAN_API_KEY: string     = process.env['BSCSCAN_API_KEY']     ?? '';
+const ETHERSCAN_API_KEY: string = process.env['ETHERSCAN_API_KEY'] ?? '';
+const BSCSCAN_API_KEY: string = process.env['BSCSCAN_API_KEY'] ?? '';
 const POLYGONSCAN_API_KEY: string = process.env['POLYGONSCAN_API_KEY'] ?? '';
 
 const config: HardhatUserConfig = {

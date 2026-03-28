@@ -254,11 +254,7 @@ export default function DealDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <StatusBadge status={deal.status} />
-              <CopyButton
-                text={deal.id}
-                variant="icon"
-                className="text-gray-300"
-              />
+              <CopyButton text={deal.id} variant="icon" className="text-gray-300" />
               <span className="text-xs text-gray-400 font-mono" title={deal.id}>
                 #{deal.id.slice(0, 8)}
               </span>

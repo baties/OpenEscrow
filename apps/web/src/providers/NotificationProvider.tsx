@@ -161,7 +161,10 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             newNotifications.push(notif);
 
             // Debug: log state change (only warn/error allowed by ESLint; use console.warn)
-          console.warn('[NotificationProvider] Deal status change detected', { dealId: deal.id, status: deal.status });
+            console.warn('[NotificationProvider] Deal status change detected', {
+              dealId: deal.id,
+              status: deal.status,
+            });
           }
 
           // Dispatch a window event so the open deal detail page can auto-refresh.

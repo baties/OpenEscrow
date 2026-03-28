@@ -335,10 +335,7 @@ export default function TelegramSettingsPage() {
                 </p>
 
                 {/* Code — click to copy */}
-                <CopyButton
-                  text={generatedCode}
-                  className="px-2 py-1"
-                >
+                <CopyButton text={generatedCode} className="px-2 py-1">
                   <span className="font-mono text-xl font-bold tracking-widest text-indigo-700">
                     {generatedCode}
                   </span>
@@ -349,13 +346,8 @@ export default function TelegramSettingsPage() {
                 {/* /link command — click to copy */}
                 <div className="space-y-1">
                   <p className="text-xs text-indigo-600">Send this command to the bot:</p>
-                  <CopyButton
-                    text={`/link ${generatedCode}`}
-                    className="px-2 py-1"
-                  >
-                    <code className="text-sm font-mono text-indigo-700">
-                      /link {generatedCode}
-                    </code>
+                  <CopyButton text={`/link ${generatedCode}`} className="px-2 py-1">
+                    <code className="text-sm font-mono text-indigo-700">/link {generatedCode}</code>
                   </CopyButton>
                 </div>
               </div>

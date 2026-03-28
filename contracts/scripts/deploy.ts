@@ -65,11 +65,10 @@ async function main(): Promise<void> {
   // upgrades.deployProxy deploys the implementation + ERC-1967 proxy in one transaction.
   // The proxy address is what you set as CONTRACT_ADDRESS in your .env.
   const OpenEscrowV1Factory = await ethers.getContractFactory('OpenEscrowV1');
-  const proxy = await upgrades.deployProxy(
-    OpenEscrowV1Factory,
-    [usdcAddress, usdtAddress],
-    { initializer: 'initialize', kind: 'uups' }
-  );
+  const proxy = await upgrades.deployProxy(OpenEscrowV1Factory, [usdcAddress, usdtAddress], {
+    initializer: 'initialize',
+    kind: 'uups',
+  });
   await proxy.waitForDeployment();
 
   const proxyAddress = await proxy.getAddress();
