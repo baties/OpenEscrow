@@ -36,10 +36,10 @@ async function exportAbi(): Promise<void> {
   // Read compiled artifact (requires `hardhat compile` to have been run first).
   let artifact;
   try {
-    artifact = await artifacts.readArtifact('OpenEscrow');
+    artifact = await artifacts.readArtifact('OpenEscrowV1');
   } catch (err) {
     throw new Error(
-      `Could not read OpenEscrow artifact. Run 'pnpm build' in contracts/ first.\n` +
+      `Could not read OpenEscrowV1 artifact. Run 'pnpm build' in contracts/ first.\n` +
         `Original error: ${err instanceof Error ? err.message : String(err)}`
     );
   }

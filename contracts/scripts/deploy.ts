@@ -1,106 +1,114 @@
 /**
  * deploy.ts — OpenEscrow contracts/scripts
  *
- * Hardhat deployment script for OpenEscrow on Sepolia testnet.
- * Handles: deploying OpenEscrow.sol with USDC and USDT token addresses,
- *          logging the deployed contract address, and exporting the ABI
- *          to packages/shared/src/abis/OpenEscrow.json.
- * Does NOT: deploy mock tokens, verify on Etherscan automatically
+ * Deployment script for OpenEscrowV1 via UUPS proxy pattern.
+ * Handles: deploying the implementation + ERC-1967 proxy via OpenZeppelin upgrades,
+ *          logging deployed addresses, and exporting the ABI to packages/shared.
+ * Does NOT: deploy mock tokens, run Etherscan verification automatically
  *           (run `hardhat verify` separately), or interact with the contract
  *           post-deployment.
  *
- * Usage:
- *   pnpm deploy:sepolia
- *   (from contracts/ directory, or via turbo from repo root)
+ * Usage (from contracts/ or via turbo from repo root):
+ *   pnpm deploy:sepolia    — deploy to Sepolia testnet
+ *   pnpm deploy:mainnet   — deploy to Ethereum mainnet
+ *   pnpm deploy:bsc       — deploy to BNB Smart Chain
+ *   pnpm deploy:polygon   — deploy to Polygon
  *
- * Required env vars (sourced from .env at repo root):
- *   SEPOLIA_RPC_URL           — RPC endpoint for Sepolia
- *   DEPLOYER_PRIVATE_KEY      — Deployer wallet private key (no 0x prefix needed)
- *   SEPOLIA_USDC_ADDRESS      — USDC token contract address on Sepolia
- *   SEPOLIA_USDT_ADDRESS      — USDT token contract address on Sepolia
+ * Required env vars (sourced from root .env):
+ *   USDC_ADDRESS          — USDC token contract address on the target network
+ *   USDT_ADDRESS          — USDT token contract address on the target network
+ *   DEPLOYER_PRIVATE_KEY  — Deployer wallet private key
+ *   <NETWORK>_RPC_URL     — RPC endpoint for the target network
+ *
+ * After deployment, save PROXY_ADDRESS to .env as CONTRACT_ADDRESS.
  */
 
-import { ethers, artifacts } from 'hardhat';
+import { ethers, upgrades, artifacts } from 'hardhat';
 import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * Main deployment function. Reads token addresses from env, deploys the contract,
+ * Main deployment entry point. Reads token addresses from env, deploys the UUPS proxy,
  * and exports the ABI to the shared package.
  *
  * @returns Promise that resolves when deployment and ABI export are complete.
  * @throws {Error} If required env vars are missing or deployment fails.
  */
 async function main(): Promise<void> {
-  const usdcAddress = process.env['SEPOLIA_USDC_ADDRESS'];
-  const usdtAddress = process.env['SEPOLIA_USDT_ADDRESS'];
+  const usdcAddress = process.env['USDC_ADDRESS'];
+  const usdtAddress = process.env['USDT_ADDRESS'];
 
   if (!usdcAddress) {
-    throw new Error('Missing env var: SEPOLIA_USDC_ADDRESS');
+    throw new Error('Missing env var: USDC_ADDRESS');
   }
   if (!usdtAddress) {
-    throw new Error('Missing env var: SEPOLIA_USDT_ADDRESS');
+    throw new Error('Missing env var: USDT_ADDRESS');
   }
 
-  console.log('[deploy] Starting OpenEscrow deployment...');
-  console.log(`[deploy] Network: ${(await ethers.provider.getNetwork()).name}`);
+  const network = await ethers.provider.getNetwork();
+  console.log('[deploy] Starting OpenEscrowV1 UUPS proxy deployment...');
+  console.log(`[deploy] Network: ${network.name} (chainId: ${network.chainId})`);
   console.log(`[deploy] USDC address: ${usdcAddress}`);
   console.log(`[deploy] USDT address: ${usdtAddress}`);
 
   const [deployer] = await ethers.getSigners();
   if (!deployer) throw new Error('No deployer signer found — check DEPLOYER_PRIVATE_KEY env var');
-
   console.log(`[deploy] Deployer: ${deployer.address}`);
 
   const balance = await ethers.provider.getBalance(deployer.address);
   console.log(`[deploy] Deployer balance: ${ethers.formatEther(balance)} ETH`);
-
   if (balance === 0n) {
     throw new Error('Deployer has zero ETH balance — fund the wallet before deploying');
   }
 
-  // Deploy the contract.
-  const OpenEscrowFactory = await ethers.getContractFactory('OpenEscrow');
-  const escrow = await OpenEscrowFactory.deploy(usdcAddress, usdtAddress);
-  await escrow.waitForDeployment();
+  // Deploy the UUPS proxy.
+  // upgrades.deployProxy deploys the implementation + ERC-1967 proxy in one transaction.
+  // The proxy address is what you set as CONTRACT_ADDRESS in your .env.
+  const OpenEscrowV1Factory = await ethers.getContractFactory('OpenEscrowV1');
+  const proxy = await upgrades.deployProxy(
+    OpenEscrowV1Factory,
+    [usdcAddress, usdtAddress],
+    { initializer: 'initialize', kind: 'uups' }
+  );
+  await proxy.waitForDeployment();
 
-  const contractAddress = await escrow.getAddress();
-  console.log(`[deploy] OpenEscrow deployed at: ${contractAddress}`);
+  const proxyAddress = await proxy.getAddress();
+  const implAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
 
-  // Export ABI to packages/shared/src/abis/OpenEscrow.json.
-  await exportAbi(contractAddress);
+  console.log(`[deploy] Proxy (CONTRACT_ADDRESS) deployed at: ${proxyAddress}`);
+  console.log(`[deploy] Implementation deployed at:           ${implAddress}`);
+
+  // Export ABI from the implementation artifact to packages/shared.
+  await exportAbi(proxyAddress);
 
   console.log('[deploy] Deployment complete.');
-  console.log(`[deploy] To verify on Etherscan:`);
-  console.log(
-    `  npx hardhat verify --network sepolia ${contractAddress} ${usdcAddress} ${usdtAddress}`
-  );
+  console.log('[deploy] Next steps:');
+  console.log(`  1. Update .env: CONTRACT_ADDRESS=${proxyAddress}`);
+  console.log(`  2. Update .env: NEXT_PUBLIC_CONTRACT_ADDRESS=${proxyAddress}`);
+  console.log(`  3. Verify implementation on block explorer:`);
+  console.log(`     npx hardhat verify --network <network> ${implAddress} --no-compile`);
 }
 
 /**
- * Reads the compiled artifact, writes the ABI to packages/shared/src/abis/OpenEscrow.json,
- * and updates packages/shared/src/abis/index.ts to export the ABI.
+ * Reads the compiled OpenEscrowV1 artifact and writes the ABI to
+ * packages/shared/src/abis/OpenEscrow.json (keeping the consumer-facing filename stable).
  *
- * @param contractAddress - The deployed contract address (included in the export for reference).
+ * @param proxyAddress - The deployed proxy address (included in the export for reference).
  * @returns Promise that resolves when the ABI file is written.
  * @throws {Error} If the artifact cannot be read or the target directory does not exist.
  */
-async function exportAbi(contractAddress: string): Promise<void> {
-  // Resolve the shared package path relative to this script.
+async function exportAbi(proxyAddress: string): Promise<void> {
   const sharedAbisDir = path.resolve(__dirname, '../../packages/shared/src/abis');
-
   if (!fs.existsSync(sharedAbisDir)) {
     throw new Error(`Target ABI directory does not exist: ${sharedAbisDir}`);
   }
 
-  // Read the compiled artifact.
-  const artifact = await artifacts.readArtifact('OpenEscrow');
+  const artifact = await artifacts.readArtifact('OpenEscrowV1');
 
-  // Write ABI + metadata to the shared package.
   const exportData = {
     _comment: 'Auto-generated by contracts/scripts/deploy.ts — do not edit manually',
     contractName: artifact.contractName,
-    deployedAddress: contractAddress,
+    deployedAddress: proxyAddress,
     abi: artifact.abi,
   };
 
@@ -109,7 +117,6 @@ async function exportAbi(contractAddress: string): Promise<void> {
   console.log(`[deploy] ABI exported to: ${abiOutPath}`);
 }
 
-// Execute.
 main()
   .then(() => process.exit(0))
   .catch((err: unknown) => {

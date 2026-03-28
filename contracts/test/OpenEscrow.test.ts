@@ -21,9 +21,9 @@
  */
 
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
+import { ethers, upgrades } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
-import type { OpenEscrow } from '../typechain-types';
+import type { OpenEscrowV1 } from '../typechain-types';
 import type { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -52,12 +52,13 @@ async function deployFixture() {
   const usdc = await ERC20Mock.deploy('USD Coin', 'USDC', 6);
   const usdt = await ERC20Mock.deploy('Tether USD', 'USDT', 6);
 
-  // Deploy the main contract.
-  const OpenEscrowFactory = await ethers.getContractFactory('OpenEscrow');
-  const escrow = (await OpenEscrowFactory.deploy(
-    await usdc.getAddress(),
-    await usdt.getAddress()
-  )) as OpenEscrow;
+  // Deploy the main contract via UUPS proxy (mirrors production deployment).
+  const OpenEscrowV1Factory = await ethers.getContractFactory('OpenEscrowV1');
+  const escrow = (await upgrades.deployProxy(
+    OpenEscrowV1Factory,
+    [await usdc.getAddress(), await usdt.getAddress()],
+    { initializer: 'initialize', kind: 'uups' }
+  )) as unknown as OpenEscrowV1;
 
   // Mint tokens to the client for testing.
   const mintAmount = parseToken('10000');

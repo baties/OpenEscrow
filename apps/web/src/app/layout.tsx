@@ -19,6 +19,7 @@ import '@/styles/globals.css';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { NotificationProvider } from '@/providers/NotificationProvider';
 import { Navbar } from '@/components/Navbar';
+import { ContractInfoBar } from '@/components/ContractInfoBar';
 import { ToastContainer } from '@/components/ToastContainer';
 
 /**
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <NotificationProvider>
               <Navbar />
+              <ContractInfoBar />
               <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">{children}</main>
               <ToastContainer />
             </NotificationProvider>
