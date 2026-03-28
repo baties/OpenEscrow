@@ -43,7 +43,10 @@ const DEPLOYER_PRIVATE_KEY: string = process.env['DEPLOYER_PRIVATE_KEY'] ?? '';
 const pk = (key: string): string[] => (key ? [`0x${key.replace(/^0x/, '')}`] : []);
 
 // ─── RPC endpoints ────────────────────────────────────────────────────────────
-const SEPOLIA_RPC_URL: string = process.env['SEPOLIA_RPC_URL'] ?? '';
+// RPC_URL is the generic active-chain endpoint set in root .env (one-chain-per-deployment).
+// Chain-specific overrides (SEPOLIA_RPC_URL etc.) take precedence when set.
+const RPC_URL: string = process.env['RPC_URL'] ?? '';
+const SEPOLIA_RPC_URL: string = process.env['SEPOLIA_RPC_URL'] ?? RPC_URL;
 const MAINNET_RPC_URL: string = process.env['MAINNET_RPC_URL'] ?? '';
 const BSC_RPC_URL: string = process.env['BSC_RPC_URL'] ?? '';
 const POLYGON_RPC_URL: string = process.env['POLYGON_RPC_URL'] ?? '';
