@@ -10,7 +10,7 @@
  * can verify transactions directly from the dashboard.
  */
 
-import { appConfig } from '@/lib/config';
+import { config as appConfig } from '@/lib/config';
 
 /** Zero address — used to detect a not-yet-deployed contract. */
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
