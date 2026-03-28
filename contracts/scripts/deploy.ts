@@ -84,8 +84,10 @@ async function main(): Promise<void> {
   console.log('[deploy] Next steps:');
   console.log(`  1. Update .env: CONTRACT_ADDRESS=${proxyAddress}`);
   console.log(`  2. Update .env: NEXT_PUBLIC_CONTRACT_ADDRESS=${proxyAddress}`);
-  console.log(`  3. Verify implementation on block explorer:`);
-  console.log(`     npx hardhat verify --network <network> ${implAddress} --no-compile`);
+  console.log(`  3. Verify the IMPLEMENTATION (not the proxy) on the block explorer:`);
+  console.log(`     npx hardhat verify --network sepolia ${implAddress}`);
+  console.log(`  4. On Etherscan: open the PROXY address → Contract → "Is this a Proxy?" → Save`);
+  console.log(`     This links the proxy to the verified implementation so the full ABI is shown.`);
 }
 
 /**

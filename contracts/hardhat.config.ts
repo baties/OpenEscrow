@@ -102,16 +102,10 @@ const config: HardhatUserConfig = {
     },
   },
 
-  // Multi-chain block explorer verification.
-  // Keys are the network names from the `networks` config above.
-  // hardhat-verify (included in hardhat-toolbox) supports these chains natively.
+  // Etherscan V2: single API key covers all chains (mainnet, Sepolia, BSC, Polygon).
+  // V1 per-network object is deprecated — see https://docs.etherscan.io/v2-migration
   etherscan: {
-    apiKey: {
-      mainnet: ETHERSCAN_API_KEY,
-      sepolia: ETHERSCAN_API_KEY,
-      bsc: BSCSCAN_API_KEY,
-      polygon: POLYGONSCAN_API_KEY,
-    },
+    apiKey: ETHERSCAN_API_KEY,
   },
 
   paths: {
@@ -124,6 +118,10 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: './typechain-types',
     target: 'ethers-v6',
+  },
+
+  sourcify: {
+    enabled: true,
   },
 };
 
