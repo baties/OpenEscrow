@@ -10,3 +10,4 @@ cache/
 contracts/cache/
 artifacts/
 typechain-types/
+contracts/.openzeppelin/
