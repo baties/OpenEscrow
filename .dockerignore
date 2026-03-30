@@ -1,0 +1,36 @@
+###############################################################################
+# .dockerignore — OpenEscrow
+#
+# Excludes files from the Docker build context.
+# Prevents local env files from overriding docker-compose build args,
+# reduces build context size, and avoids leaking secrets into images.
+###############################################################################
+
+# Local env files — must never enter the build context.
+# Next.js .env.local has higher priority than Docker build args (ARG/ENV),
+# so including it would bake local URLs/keys into the production image.
+.env
+.env.local
+.env.*.local
+apps/**/.env.local
+apps/**/.env.*.local
+
+# Dev / build artifacts
+node_modules/
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/.turbo/
+**/coverage/
+
+# Hardhat artifacts (not needed for web/api build)
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/.openzeppelin/
+
+# Git / editor / OS
+.git/
+.gitignore
+**/.DS_Store
