@@ -91,7 +91,7 @@ export default function FundDealPage() {
   if (!deal) return null;
 
   // Only the client can fund
-  const isClient = deal.clientId.toLowerCase() === walletAddress.toLowerCase();
+  const isClient = deal.clientAddress.toLowerCase() === walletAddress.toLowerCase();
   if (!isClient) {
     return (
       <div className="space-y-4">
@@ -159,7 +159,7 @@ export default function FundDealPage() {
                 Freelancer Address
               </p>
               <p className="mt-0.5 font-mono text-gray-700">
-                {truncateAddress(deal.freelancerId, 6, 6)}
+                {truncateAddress(deal.freelancerAddress, 6, 6)}
               </p>
             </div>
             <div>

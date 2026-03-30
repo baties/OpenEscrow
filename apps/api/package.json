@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:reset": "tsx scripts/reset-db.ts",
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
