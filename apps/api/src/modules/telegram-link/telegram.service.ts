@@ -310,9 +310,7 @@ export async function getAllLinkedTelegramUsers(): Promise<string[]> {
       .from(users)
       .where(isNotNull(users.telegramUserId));
 
-    return rows
-      .map((r) => r.telegramUserId)
-      .filter((id): id is string => id !== null);
+    return rows.map((r) => r.telegramUserId).filter((id): id is string => id !== null);
   } catch (err) {
     log.error(
       {

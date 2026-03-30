@@ -179,6 +179,24 @@ docker compose logs -f api
 docker compose logs -f bot
 ```
 
+### Resetting All Data (Dev Testing)
+
+During development and testing you will often want to wipe all deals, users, milestones, and Telegram links to start fresh. Use the `db:reset` script:
+
+```bash
+# From repo root (containers must be running so the API can reach PostgreSQL)
+pnpm --filter @open-escrow/api db:reset
+
+# Or from apps/api/
+cd apps/api && pnpm db:reset
+```
+
+This truncates all 7 tables (`users`, `deals`, `milestones`, `submissions`, `deal_events`, `telegram_links`, `rejection_notes`) with `RESTART IDENTITY CASCADE`. The database schema and migrations are untouched — only the data is deleted.
+
+> **Safety:** The script exits immediately with an error if `NODE_ENV=production`. It is safe to run on a VPS only in development mode.
+
+After resetting, re-link your Telegram account (the bot session is cleared along with user data) and create new test deals.
+
 ### pgAdmin (Optional — Database Browser)
 
 A developer-only compose file adds pgAdmin for browsing the PostgreSQL database. **Never deploy this to production.**

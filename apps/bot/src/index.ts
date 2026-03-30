@@ -155,7 +155,12 @@ async function restoreSessionsFromDb(): Promise<void> {
   }
 
   log.info(
-    { module: 'index', operation: 'restoreSessionsFromDb', restored, total: telegramUserIds.length },
+    {
+      module: 'index',
+      operation: 'restoreSessionsFromDb',
+      restored,
+      total: telegramUserIds.length,
+    },
     'Session restoration complete'
   );
 }
