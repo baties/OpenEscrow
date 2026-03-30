@@ -51,16 +51,56 @@ interface DealTimelineProps {
   isLoading: boolean;
   /** Error message if the fetch failed */
   error: string | null;
+  /** Internal UUID of the deal's client — used to label actors in the timeline */
+  clientId: string;
+  /** Internal UUID of the deal's freelancer — used to label actors in the timeline */
+  freelancerId: string;
+  /** Wallet address of the client — shown alongside the role label */
+  clientAddress: string;
+  /** Wallet address of the freelancer — shown alongside the role label */
+  freelancerAddress: string;
+}
+
+/**
+ * Resolves an event's actorId to a human-readable label using the deal's participant IDs.
+ * Returns "Client (0xABCD…1234)", "Freelancer (0xABCD…1234)", or "System" for auto events.
+ *
+ * @param actorId - Internal user UUID from the event record
+ * @param clientId - Internal UUID of the deal's client
+ * @param freelancerId - Internal UUID of the deal's freelancer
+ * @param clientAddress - Wallet address of the client
+ * @param freelancerAddress - Wallet address of the freelancer
+ * @returns Human-readable actor label
+ */
+function resolveActor(
+  actorId: string | null,
+  clientId: string,
+  freelancerId: string,
+  clientAddress: string,
+  freelancerAddress: string
+): string {
+  if (!actorId) return 'System';
+  if (actorId === clientId) return `Client (${truncateAddress(clientAddress)})`;
+  if (actorId === freelancerId) return `Freelancer (${truncateAddress(freelancerAddress)})`;
+  return 'System';
 }
 
 /**
  * Renders the deal audit trail as a vertical timeline.
  * Shows a spinner while loading and an error alert on failure.
  *
- * @param props - Events array, loading state, and error message
+ * @param props - Events array, loading state, error message, and deal participant context
  * @returns A timeline element or appropriate loading/error state
  */
-export function DealTimeline({ events, isLoading, error }: DealTimelineProps) {
+export function DealTimeline({
+  events,
+  isLoading,
+  error,
+  clientId,
+  freelancerId,
+  clientAddress,
+  freelancerAddress,
+}: DealTimelineProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -101,7 +141,16 @@ export function DealTimeline({ events, isLoading, error }: DealTimelineProps) {
                 {formatDate(event.createdAt)}
               </time>
               <p className="mt-0.5 text-xs text-gray-500">
-                by <span className="font-mono">{truncateAddress(event.actorId)}</span>
+                by{' '}
+                <span className="font-mono">
+                  {resolveActor(
+                    event.actorId,
+                    clientId,
+                    freelancerId,
+                    clientAddress,
+                    freelancerAddress
+                  )}
+                </span>
               </p>
             </div>
           </li>

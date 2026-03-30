@@ -296,6 +296,37 @@ export async function getTelegramStatus(userId: string): Promise<{
 }
 
 /**
+ * Returns all Telegram user IDs that are currently linked to a wallet account.
+ * Used by the bot on startup to restore in-memory sessions from the database,
+ * ensuring session persistence across bot container restarts.
+ *
+ * @returns Array of Telegram user ID strings (from users.telegram_user_id)
+ * @throws {AppError} TELEGRAM_STATUS_FAILED on database error
+ */
+export async function getAllLinkedTelegramUsers(): Promise<string[]> {
+  try {
+    const rows = await db
+      .select({ telegramUserId: users.telegramUserId })
+      .from(users)
+      .where(isNotNull(users.telegramUserId));
+
+    return rows
+      .map((r) => r.telegramUserId)
+      .filter((id): id is string => id !== null);
+  } catch (err) {
+    log.error(
+      {
+        module: 'telegram.service',
+        operation: 'getAllLinkedTelegramUsers',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to fetch all linked Telegram users'
+    );
+    throw new AppError('TELEGRAM_STATUS_FAILED', 'Failed to fetch linked Telegram users');
+  }
+}
+
+/**
  * Looks up a user by their Telegram user ID.
  * Used by the bot's bot-session endpoint to issue JWTs for linked users.
  *

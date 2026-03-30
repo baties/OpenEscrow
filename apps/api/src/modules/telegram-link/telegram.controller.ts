@@ -144,6 +144,40 @@ export async function getStatusHandler(
 }
 
 /**
+ * GET /api/v1/telegram/bot-sessions
+ * Returns all Telegram user IDs currently linked to a wallet account.
+ * Authenticated via the X-Bot-Secret header.
+ * Used by the bot on startup to restore sessions from the database.
+ *
+ * @param request - Fastify request with X-Bot-Secret header
+ * @param reply - Fastify reply
+ * @returns 200 with { telegramUserIds: string[] }
+ * @returns 401 if bot secret is wrong
+ */
+export async function getAllBotSessionsHandler(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
+  const botSecret = (request.headers as Record<string, string | undefined>)['x-bot-secret'];
+  if (!botSecret || botSecret !== env.BOT_API_SECRET) {
+    log.warn(
+      { module: 'telegram.controller', operation: 'getAllBotSessionsHandler' },
+      'Rejected get-all-bot-sessions request: invalid or missing X-Bot-Secret'
+    );
+    await reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Invalid bot secret' });
+    return;
+  }
+
+  log.info(
+    { module: 'telegram.controller', operation: 'getAllBotSessionsHandler' },
+    'Handling get-all-bot-sessions request'
+  );
+
+  const telegramUserIds = await telegramService.getAllLinkedTelegramUsers();
+  await reply.status(200).send({ telegramUserIds });
+}
+
+/**
  * POST /api/v1/telegram/bot-session
  * Issues a JWT for a linked Telegram user.
  * Authenticated via the X-Bot-Secret header (must match BOT_API_SECRET env var).

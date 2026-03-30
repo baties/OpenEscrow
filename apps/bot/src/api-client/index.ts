@@ -30,6 +30,7 @@ import type {
   CancelDealResponse,
   ApiErrorResponse,
   BotSessionResponse,
+  GetAllLinkedUsersResponse,
 } from './types.js';
 
 const log = logger.child({ module: 'api-client' });
@@ -399,6 +400,61 @@ export async function rejectMilestone(
     jwt,
     body
   );
+}
+
+/**
+ * Fetches all Telegram user IDs currently linked to a wallet account.
+ * Calls GET /api/v1/telegram/bot-sessions with the shared bot secret.
+ * Used on bot startup to restore in-memory sessions from the database.
+ *
+ * @param botApiSecret - The BOT_API_SECRET shared with the API (from env)
+ * @returns Array of Telegram user ID strings
+ * @throws {ApiClientError} On 401 (wrong secret) or 5xx
+ */
+export async function getAllLinkedTelegramUsers(botApiSecret: string): Promise<string[]> {
+  log.info(
+    { module: 'api-client', operation: 'getAllLinkedTelegramUsers' },
+    'Fetching all linked Telegram users for session restoration'
+  );
+
+  const url = `${env.API_BASE_URL}/api/v1/telegram/bot-sessions`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'X-Bot-Secret': botApiSecret,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const parsed: unknown = contentType.includes('application/json')
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      const apiErr = isApiErrorResponse(parsed) ? parsed : null;
+      throw new ApiClientError(
+        response.status,
+        apiErr,
+        `getAllLinkedTelegramUsers API error ${response.status}: ${apiErr?.message ?? String(parsed)}`
+      );
+    }
+
+    return (parsed as GetAllLinkedUsersResponse).telegramUserIds;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof ApiClientError) throw err;
+    throw new Error(
+      `getAllLinkedTelegramUsers network error: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
 }
 
 /**

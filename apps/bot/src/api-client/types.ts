@@ -148,6 +148,15 @@ export interface TelegramLinkResponse {
 }
 
 /**
+ * Response from GET /api/v1/telegram/bot-sessions.
+ * Returns all Telegram user IDs currently linked to a wallet account.
+ * Used by the bot on startup to restore sessions from the database.
+ */
+export interface GetAllLinkedUsersResponse {
+  telegramUserIds: string[];
+}
+
+/**
  * Response from POST /api/v1/telegram/bot-session.
  * Returns a JWT the bot can use to call the API on behalf of the linked user.
  */

@@ -380,7 +380,15 @@ export default function DealDetailPage() {
       <div>
         <h2 className="mb-3 text-lg font-semibold text-gray-900">Activity Timeline</h2>
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <DealTimeline events={events} isLoading={isTimelineLoading} error={timelineError} />
+          <DealTimeline
+            events={events}
+            isLoading={isTimelineLoading}
+            error={timelineError}
+            clientId={deal.clientId}
+            freelancerId={deal.freelancerId}
+            clientAddress={deal.clientAddress}
+            freelancerAddress={deal.freelancerAddress}
+          />
         </div>
       </div>
 

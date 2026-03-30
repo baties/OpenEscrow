@@ -25,6 +25,8 @@ import { helpCommandHandler } from './commands/help.js';
 import { milestoneCallbackHandler } from './callbacks/milestone.js';
 import { startNotificationPolling } from './polling/notifier.js';
 import { startSessionCreatorPolling } from './polling/session-creator.js';
+import { getAllLinkedTelegramUsers, getBotSession } from './api-client/index.js';
+import { setSession } from './store/sessions.js';
 
 const log = logger.child({ module: 'index' });
 
@@ -86,6 +88,78 @@ bot.catch((err, ctx) => {
  * @returns Promise<void>
  * @throws Exits process on fatal startup error
  */
+/**
+ * Restores in-memory sessions for all users who were linked before the bot restarted.
+ * Fetches all linked Telegram user IDs from the API (backed by PostgreSQL),
+ * then issues a fresh JWT for each via the bot-session endpoint.
+ * Non-fatal: any per-user failure is logged and skipped so the bot still starts.
+ *
+ * @returns Promise<void>
+ */
+async function restoreSessionsFromDb(): Promise<void> {
+  log.info(
+    { module: 'index', operation: 'restoreSessionsFromDb' },
+    'Restoring bot sessions from database'
+  );
+
+  let telegramUserIds: string[];
+  try {
+    telegramUserIds = await getAllLinkedTelegramUsers(env.BOT_API_SECRET);
+  } catch (err) {
+    log.error(
+      {
+        module: 'bot',
+        operation: 'restoreSessionsFromDb',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'Failed to fetch linked Telegram users — continuing without restored sessions'
+    );
+    return;
+  }
+
+  log.info(
+    { module: 'index', operation: 'restoreSessionsFromDb', count: telegramUserIds.length },
+    'Linked Telegram users found in database'
+  );
+
+  let restored = 0;
+  for (const telegramUserId of telegramUserIds) {
+    try {
+      const sessionData = await getBotSession(telegramUserId, env.BOT_API_SECRET);
+      if (!sessionData) {
+        // Should not happen — user is in DB but API returned 404
+        log.warn(
+          { module: 'bot', operation: 'restoreSessionsFromDb', telegramUserId },
+          'User in DB but bot-session returned null — skipping'
+        );
+        continue;
+      }
+      setSession(telegramUserId, {
+        userId: sessionData.userId,
+        jwt: sessionData.token,
+        walletAddress: sessionData.walletAddress,
+        lastSeenEventAt: null,
+      });
+      restored++;
+    } catch (err) {
+      log.error(
+        {
+          module: 'bot',
+          operation: 'restoreSessionsFromDb',
+          telegramUserId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'Failed to restore session for user — skipping'
+      );
+    }
+  }
+
+  log.info(
+    { module: 'index', operation: 'restoreSessionsFromDb', restored, total: telegramUserIds.length },
+    'Session restoration complete'
+  );
+}
+
 async function main(): Promise<void> {
   log.info(
     {
@@ -97,6 +171,10 @@ async function main(): Promise<void> {
     },
     'Starting OpenEscrow Telegram Bot'
   );
+
+  // Restore sessions from DB before starting polling loops.
+  // This ensures users who were linked before a restart can use the bot immediately.
+  await restoreSessionsFromDb();
 
   // Start notification polling loop (deal events for linked users)
   const pollingInterval = startNotificationPolling(bot);
