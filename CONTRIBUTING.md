@@ -2,9 +2,9 @@
 
 ## Before You Code
 
-Read **[CLAUDE.md](./CLAUDE.md)** completely — all sections A through N.
+Read **[CONTRIBUTING_RULES.md](./CONTRIBUTING_RULES.md)** completely — all sections A through L.
 It is the single source of truth for all engineering decisions, the tech stack, and the build order.
-All rules in CLAUDE.md are non-negotiable. If you believe a rule should change, open a discussion issue first.
+All rules are non-negotiable. If you believe a rule should change, open a GitHub discussion issue first.
 
 ## Branching
 
@@ -31,7 +31,7 @@ test: add reentrancy test for approveMilestone
 2. CI must pass: `pnpm lint` + `pnpm test` + `pnpm build`
 3. Every PR description must include:
    - What changed and why
-   - Any dependency additions with justification (per CLAUDE.md rule F.1)
+   - Any dependency additions with justification (per rule F.1 in CONTRIBUTING_RULES.md)
    - Test coverage for new functionality
 
 ## Code Quality Checklist (non-exhaustive)
@@ -43,6 +43,8 @@ test: add reentrancy test for approveMilestone
 - [ ] No hardcoded secrets, RPC URLs, or API keys
 - [ ] Zod validation on all external inputs
 - [ ] TypeScript `strict: true` — no type errors
+
+See [CONTRIBUTING_RULES.md](./CONTRIBUTING_RULES.md) for the full checklist and what will cause a PR to be rejected.
 
 ## Running Locally
 

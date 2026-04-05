@@ -200,7 +200,7 @@ NEXT_PUBLIC_USDT_ADDRESS=<usdt_address>
 - Bot sessions are in-memory only (lost on restart). Users must re-link after bot restart.
 - Chain indexer processes only `DealFunded` and `DealCancelled` events. `MilestoneApproved`
   on-chain is triggered by the web frontend directly (see `DECISIONS.md` DEC-005).
-- No arbitration, no council, no third-party dispute resolution (by design — see `CLAUDE.md`).
+- No arbitration, no council, no third-party dispute resolution (by design — see `CONTRIBUTING_RULES.md` Section C).
 - No email/password auth (by design — wallet sign-in only).
 - OTP linking requires both web and Telegram bot interaction.
 
@@ -210,7 +210,7 @@ NEXT_PUBLIC_USDT_ADDRESS=<usdt_address>
 
 | What                   | Where                                         |
 | ---------------------- | --------------------------------------------- |
-| Build specification    | `CLAUDE.md`                                   |
+| Engineering spec       | `CONTRIBUTING_RULES.md`                       |
 | Architecture decisions | `DECISIONS.md`                                |
 | Build status           | `STATUS.md`                                   |
 | Handoff doc            | `HANDOFF.md`                                  |
