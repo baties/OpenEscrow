@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background circle in indigo -->
+  <circle cx="16" cy="16" r="16" fill="#4F46E5"/>
+  <!-- Lock body -->
+  <rect x="10" y="15" width="12" height="10" rx="2" fill="white"/>
+  <!-- Lock shackle -->
+  <path d="M12 15v-3.5a4 4 0 0 1 8 0V15" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Keyhole dot -->
+  <circle cx="16" cy="19.5" r="1.5" fill="#4F46E5"/>
+</svg>

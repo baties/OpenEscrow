@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
@@ -70,6 +70,8 @@ export default function DealDetailPage() {
   const [rejectModalMilestoneId, setRejectModalMilestoneId] = useState<string | null>(null);
   // Success banner shown after agree/cancel actions
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Copy-share-link transient feedback
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -227,6 +229,24 @@ export default function DealDetailPage() {
     }
   }
 
+  /**
+   * Copies the deal's shareable accept URL to the clipboard.
+   * The URL points to /deals/accept/[id] — a public landing page for
+   * the freelancer to sign in and accept the deal.
+   *
+   * @returns void
+   */
+  const handleCopyShareLink = useCallback(async () => {
+    const url = `${window.location.origin}/deals/accept/${deal?.id ?? ''}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 1500);
+    } catch {
+      console.warn('[DealDetailPage] Clipboard write failed');
+    }
+  }, [deal?.id]);
+
   return (
     <div className="space-y-6">
       {/* Back link */}
@@ -253,12 +273,57 @@ export default function DealDetailPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <StatusBadge status={deal.status} />
               <CopyButton text={deal.id} variant="icon" className="text-gray-300" />
               <span className="text-xs text-gray-400 font-mono" title={deal.id}>
                 #{deal.id.slice(0, 8)}
               </span>
+              {/* Share link — client only, shown on DRAFT deals so client can invite freelancer */}
+              {isClient && deal.status === 'DRAFT' && (
+                <button
+                  type="button"
+                  onClick={() => void handleCopyShareLink()}
+                  title={
+                    shareLinkCopied ? 'Link copied!' : 'Copy shareable deal link for freelancer'
+                  }
+                  className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-100"
+                >
+                  {shareLinkCopied ? (
+                    <>
+                      <svg
+                        className="h-3 w-3 text-emerald-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
+                        />
+                      </svg>
+                      Share Link
+                    </>
+                  )}
+                </button>
+              )}
             </div>
             {/* Grid: 1 col on mobile (stacked), 2 cols on sm+ */}
             <div className="mt-2 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">

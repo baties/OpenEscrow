@@ -11,6 +11,10 @@
  *   - Page-load reconnect (wagmi restoring previous connection) → existing JWT is used;
  *     if no JWT exists, a manual "Sign in with Ethereum" button is shown.
  *   - Signature rejected → error + "Try Again" button.
+ *
+ * Post-auth redirect:
+ *   If sessionStorage contains 'openescrow_post_auth_redirect', the user is redirected
+ *   there instead of /deals after sign-in. Set by /deals/accept/[id] (share-link flow).
  */
 
 'use client';
@@ -46,10 +50,21 @@ export default function HomePage() {
   const { isConnected, address } = useAccount();
   const { isAuthenticated, isSigningIn, signInError, signIn, signOut } = useAuth();
 
-  // Redirect to deals list if already authenticated
+  // Redirect after authentication.
+  // Checks sessionStorage for a post-auth redirect (set by /deals/accept/[id]).
+  // Falls back to /deals if no redirect is stored.
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/deals');
+      const stored =
+        typeof window !== 'undefined'
+          ? sessionStorage.getItem('openescrow_post_auth_redirect')
+          : null;
+      if (stored) {
+        sessionStorage.removeItem('openescrow_post_auth_redirect');
+        router.replace(stored);
+      } else {
+        router.replace('/deals');
+      }
     }
   }, [isAuthenticated, router]);
 

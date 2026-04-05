@@ -183,14 +183,17 @@ async function pollUserNotifications(
 
     if (!Array.isArray(deals) || deals.length === 0) return;
 
-    // Only poll active deals — skip COMPLETED and CANCELLED
-    const activeDeals = deals.filter((d) => d.status !== 'COMPLETED' && d.status !== 'CANCELLED');
+    // Poll all deals, including COMPLETED and CANCELLED, so the final
+    // DEAL_COMPLETED and DEAL_CANCELLED events are delivered to both parties.
+    // Deduplication is handled by the lastSeenEventAt timestamp filter below.
+    // Once the final event has been seen, completed/cancelled deals produce
+    // 0 new events and are skipped cheaply on every subsequent poll.
 
     // Track the latest createdAt timestamp seen in this poll cycle.
     // ISO 8601 string comparison is safe for chronological ordering.
     let newestEventAt = session.lastSeenEventAt;
 
-    for (const deal of activeDeals) {
+    for (const deal of deals) {
       try {
         const timelineResponse = await getDealTimeline(session.jwt, deal.id);
         const events: DealEvent[] =

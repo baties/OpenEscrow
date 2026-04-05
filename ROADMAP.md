@@ -3,7 +3,7 @@
 > Single source of truth for project phase status and future direction.
 > Updated by lead after every phase completion or milestone.
 >
-> Last updated: 2026-03-27
+> Last updated: 2026-04-05
 
 ---
 
@@ -110,17 +110,17 @@ Fixes and enhancements discovered during live testing.
 
 ---
 
-## Improvement Phase III — Planned (Future)
+## Improvement Phase III — Complete (2026-04-05)
 
-> Start after Phase II testing on production confirms stability.
+> Improvement Phase II confirmed complete. III-2 was shipped in Phase II.
 
-| #     | Feature                                                                  | Priority | Notes                                                                                                          |
-| ----- | ------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
-| III-1 | Client↔Freelancer chat per deal                                          | Medium   | New feature — not in original MVP scope. Requires new API endpoint, message storage table, real-time delivery. |
-| III-2 | Bot session persistence (survive restarts)                               | High     | Currently in-memory only — users must re-link after bot restart. Requires DB-backed session store.             |
-| III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | Currently only notifies the non-acting party for specific events                                               |
-| III-4 | Mobile hamburger nav menu                                                | Low      | Nav links hidden on mobile; need a collapsible menu                                                            |
-| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | Currently freelancer must be told the deal ID out-of-band                                                      |
+| #     | Feature                                                                  | Priority | Status     | Notes                                                                                                          |
+| ----- | ------------------------------------------------------------------------ | -------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| III-1 | Client↔Freelancer chat per deal                                          | Medium   | 🔄 Planned | New feature — not in original MVP scope. Requires new API endpoint, message storage table, real-time delivery. |
+| III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done    | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.        |
+| III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | ✅ Done    | Removed COMPLETED/CANCELLED filter in notifier.ts; final events now delivered to both parties.                 |
+| III-4 | Mobile hamburger nav menu                                                | Low      | ✅ Done    | Hamburger toggle + dropdown panel in Navbar.tsx; auto-closes on route change.                                  |
+| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | ✅ Done    | /deals/accept/[id] invitation page + Share Link button on deal detail (client, DRAFT) + post-auth redirect.   |
 
 ---
 

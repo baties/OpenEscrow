@@ -10,8 +10,9 @@
 [![CI](https://github.com/baties/OpenEscrow/actions/workflows/ci.yml/badge.svg)](https://github.com/baties/OpenEscrow/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/baties/OpenEscrow?style=social)](https://github.com/baties/OpenEscrow)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Sepolia%20Testnet-4F46E5?style=flat&logo=ethereum&logoColor=white)](https://openescrow.smarthinking.tech/)
 
-**[Getting Started](#-getting-started) · [Architecture](#-architecture) · [Workflow](#-how-it-works) · [Roadmap](#-roadmap) · [Contributing](#-contributing)**
+**[Live Demo](https://openescrow.smarthinking.tech/) · [Getting Started](#-getting-started) · [Architecture](#-architecture) · [Workflow](#-how-it-works) · [Roadmap](#-roadmap) · [Contributing](#-contributing)**
 
 </div>
 
@@ -38,6 +39,16 @@
 - [License](#-license)
 - [Acknowledgements](#-acknowledgements)
 - [Disclaimer](#-disclaimer)
+
+---
+
+## 🌐 Try It Live
+
+A live instance of OpenEscrow is running on **Ethereum Sepolia testnet**:
+
+> **https://openescrow.smarthinking.tech/**
+
+Connect a wallet (MetaMask, Coinbase Wallet, or WalletConnect) to create and manage escrow deals. This is a **testnet deployment** — no real funds are required or at risk.
 
 ---
 
