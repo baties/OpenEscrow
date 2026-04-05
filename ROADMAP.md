@@ -117,10 +117,10 @@ Fixes and enhancements discovered during live testing.
 | #     | Feature                                                                  | Priority | Status     | Notes                                                                                                          |
 | ----- | ------------------------------------------------------------------------ | -------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
 | III-1 | Client↔Freelancer chat per deal                                          | Medium   | 🔄 Planned | New feature — not in original MVP scope. Requires new API endpoint, message storage table, real-time delivery. |
-| III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done    | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.        |
+| III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done    | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.         |
 | III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | ✅ Done    | Removed COMPLETED/CANCELLED filter in notifier.ts; final events now delivered to both parties.                 |
 | III-4 | Mobile hamburger nav menu                                                | Low      | ✅ Done    | Hamburger toggle + dropdown panel in Navbar.tsx; auto-closes on route change.                                  |
-| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | ✅ Done    | /deals/accept/[id] invitation page + Share Link button on deal detail (client, DRAFT) + post-auth redirect.   |
+| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | ✅ Done    | /deals/accept/[id] invitation page + Share Link button on deal detail (client, DRAFT) + post-auth redirect.    |
 
 ---
 
