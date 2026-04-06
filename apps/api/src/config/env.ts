@@ -47,7 +47,7 @@ const envSchema = z.object({
   USDT_ADDRESS: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/, { message: 'USDT_ADDRESS must be a valid EVM address' }),
-  INDEXER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(12000),
+  INDEXER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(60000),
 });
 
 /**

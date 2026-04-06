@@ -1,15 +1,21 @@
 /**
  * chain/indexer.ts — OpenEscrow API
  *
- * Handles: Polling the EVM chain for OpenEscrow contract events every 12 seconds.
+ * Handles: Polling the EVM chain for OpenEscrow contract events.
  *          Processing DealFunded and DealCancelled events to update deal status in the DB.
  *          Tracking the last processed block to avoid reprocessing events.
  * Does NOT: send transactions (read-only), issue JWTs, handle HTTP requests,
  *            or call smart contract write functions (approveMilestone etc. are frontend responsibility).
  *
+ * RPC call reduction strategy (to stay within Infura free-tier limits):
+ *   1. Skip polling entirely when no active deals exist (AGREED/FUNDED/DRAFT) — 0 RPC calls when idle.
+ *   2. Both event types are fetched in a single getLogs call instead of two.
+ *   3. Default poll interval is 60 s (configurable via INDEXER_POLL_INTERVAL_MS).
+ *   Result: ~0 RPC calls/day when idle; ~2 calls/poll when active (getBlockNumber + getLogs).
+ *
  * Events processed:
  *   - DealFunded     → transitions matching deal AGREED → FUNDED
- *   - DealCancelled  → confirms on-chain cancellation, updates deal metadata
+ *   - DealCancelled  → confirms on-chain cancellation, appends to audit trail
  *
  * Events not processed (handled by API endpoints directly):
  *   - DealCreated, DealAgreed, MilestoneSubmitted, MilestoneApproved, MilestoneRejected
@@ -20,7 +26,7 @@
 
 import { createPublicClient, http, parseAbiItem } from 'viem';
 import { sepolia } from 'viem/chains';
-import { eq } from 'drizzle-orm';
+import { eq, inArray, count } from 'drizzle-orm';
 import { db } from '../database/index.js';
 import { deals, dealEvents } from '../database/schema.js';
 import { env } from '../config/env.js';
@@ -32,13 +38,16 @@ const log = logger.child({ module: 'chain.indexer' });
  * Viem public client for reading chain state.
  * Uses HTTP transport with a 10-second timeout per CLAUDE.md rules.
  * Targets Sepolia testnet — mainnet only after audit.
+ *
+ * retryCount is set to 1 (one retry on transient failure) to avoid multiplying
+ * RPC usage on sustained Infura rate-limit errors.
  */
 const publicClient = createPublicClient({
   chain: sepolia,
   transport: http(env.RPC_URL, {
     timeout: 10_000,
-    retryCount: 3,
-    retryDelay: 1_000,
+    retryCount: 1,
+    retryDelay: 2_000,
   }),
 });
 
@@ -50,7 +59,7 @@ let lastProcessedBlock: bigint | null = null;
 /** Guards against overlapping poll cycles when an RPC call takes longer than poll interval. */
 let isPollingInProgress = false;
 
-// ─── ABI fragments for events we care about ───────────────────────────────────
+// ─── ABI fragments for both events we care about ─────────────────────────────
 
 const DEAL_FUNDED_ABI = parseAbiItem(
   'event DealFunded(uint256 indexed dealId, address indexed client, address token, uint256 amount)'
@@ -59,6 +68,39 @@ const DEAL_FUNDED_ABI = parseAbiItem(
 const DEAL_CANCELLED_ABI = parseAbiItem(
   'event DealCancelled(uint256 indexed dealId, address indexed cancelledBy, uint256 refundAmount)'
 );
+
+/** States that can produce on-chain events we need to index. */
+const ACTIVE_STATES = ['DRAFT', 'AGREED', 'FUNDED'] as const;
+
+// ─── Active deal check ────────────────────────────────────────────────────────
+
+/**
+ * Returns true if there is at least one deal in a state that can produce
+ * on-chain events (DRAFT, AGREED, or FUNDED). Used to skip RPC calls entirely
+ * when no actionable deals exist, reducing Infura API usage to zero when idle.
+ *
+ * @returns Promise<boolean> — true if polling should proceed
+ */
+async function hasActiveDeals(): Promise<boolean> {
+  try {
+    const [row] = await db
+      .select({ total: count() })
+      .from(deals)
+      .where(inArray(deals.status, [...ACTIVE_STATES]));
+    return (row?.total ?? 0) > 0;
+  } catch (err) {
+    // On DB error, allow polling to proceed (fail open — better to over-poll than miss events).
+    log.warn(
+      {
+        module: 'chain.indexer',
+        operation: 'hasActiveDeals',
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'DB check for active deals failed — proceeding with poll'
+    );
+    return true;
+  }
+}
 
 // ─── Event handlers ───────────────────────────────────────────────────────────
 
@@ -265,8 +307,12 @@ async function handleDealCancelled(
 // ─── Polling loop ─────────────────────────────────────────────────────────────
 
 /**
- * Runs a single poll cycle: fetches events from the last processed block to current,
- * dispatches each event to the appropriate handler.
+ * Runs a single poll cycle: checks for active deals first (skips RPC if none),
+ * then fetches both DealFunded and DealCancelled events in a single getLogs call,
+ * and dispatches each event to the appropriate handler.
+ *
+ * RPC calls per cycle (when active deals exist): 2 — getBlockNumber + getLogs.
+ * RPC calls per cycle (when no active deals): 0 — returns immediately after DB check.
  *
  * @returns Promise<void> — resolves after all events in this cycle are processed
  */
@@ -285,6 +331,20 @@ async function pollOnce(): Promise<void> {
   isPollingInProgress = true;
 
   try {
+    // ── Step 1: Skip RPC entirely if no deals are in an indexable state ──────
+    const active = await hasActiveDeals();
+    if (!active) {
+      // Reset lastProcessedBlock so the next active poll starts from current block,
+      // avoiding a large historical getLogs range after a period of inactivity.
+      lastProcessedBlock = null;
+      log.debug(
+        { module: 'chain.indexer', operation: 'pollOnce' },
+        'No active deals — skipping RPC poll to conserve API quota'
+      );
+      return;
+    }
+
+    // ── Step 2: Get current block number ─────────────────────────────────────
     let currentBlock: bigint;
 
     try {
@@ -301,7 +361,8 @@ async function pollOnce(): Promise<void> {
       return;
     }
 
-    // On first run, start from the current block to avoid replaying old history.
+    // On first run (or after an idle period), start from current block to avoid
+    // replaying potentially large historical ranges.
     if (lastProcessedBlock === null) {
       lastProcessedBlock = currentBlock;
       log.info(
@@ -333,45 +394,43 @@ async function pollOnce(): Promise<void> {
       'Polling chain events'
     );
 
+    // ── Step 3: Single getLogs call for both event types ─────────────────────
+    // Using `events` (plural) batches DealFunded and DealCancelled into one
+    // RPC request instead of two, halving getLogs usage per cycle.
     try {
-      // Fetch DealFunded events.
-      const fundedLogs = await publicClient.getLogs({
+      const logs = await publicClient.getLogs({
         address: CONTRACT_ADDRESS,
-        event: DEAL_FUNDED_ABI,
+        events: [DEAL_FUNDED_ABI, DEAL_CANCELLED_ABI],
         fromBlock,
         toBlock,
       });
 
-      for (const log_entry of fundedLogs) {
-        if (log_entry.args.dealId !== undefined) {
-          await handleDealFunded(
-            log_entry.args.dealId.toString(),
-            log_entry.transactionHash ?? '',
-            log_entry.blockNumber ?? 0n
-          );
+      for (const entry of logs) {
+        if (entry.eventName === 'DealFunded') {
+          // args typing: { dealId: bigint; client: `0x${string}`; token: `0x${string}`; amount: bigint }
+          const args = entry.args as { dealId?: bigint };
+          if (args.dealId !== undefined) {
+            await handleDealFunded(
+              args.dealId.toString(),
+              entry.transactionHash ?? '',
+              entry.blockNumber ?? 0n
+            );
+          }
+        } else if (entry.eventName === 'DealCancelled') {
+          // args typing: { dealId: bigint; cancelledBy: `0x${string}`; refundAmount: bigint }
+          const args = entry.args as { dealId?: bigint; refundAmount?: bigint };
+          if (args.dealId !== undefined) {
+            await handleDealCancelled(
+              args.dealId.toString(),
+              entry.transactionHash ?? '',
+              (args.refundAmount ?? 0n).toString(),
+              entry.blockNumber ?? 0n
+            );
+          }
         }
       }
 
-      // Fetch DealCancelled events.
-      const cancelledLogs = await publicClient.getLogs({
-        address: CONTRACT_ADDRESS,
-        event: DEAL_CANCELLED_ABI,
-        fromBlock,
-        toBlock,
-      });
-
-      for (const log_entry of cancelledLogs) {
-        if (log_entry.args.dealId !== undefined) {
-          await handleDealCancelled(
-            log_entry.args.dealId.toString(),
-            log_entry.transactionHash ?? '',
-            (log_entry.args.refundAmount ?? 0n).toString(),
-            log_entry.blockNumber ?? 0n
-          );
-        }
-      }
-
-      // Advance the last processed block only after successful processing.
+      // Advance only after successful processing.
       lastProcessedBlock = toBlock;
     } catch (err) {
       log.warn(
@@ -396,7 +455,8 @@ let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Starts the chain event indexer polling loop.
- * Polls every INDEXER_POLL_INTERVAL_MS milliseconds (default: 12000ms per MVP spec).
+ * Polls every INDEXER_POLL_INTERVAL_MS milliseconds (default: 60000ms).
+ * Skips RPC calls when no deals are in an indexable state to preserve API quota.
  * Safe to call only once — calling again while already running logs a warning and returns.
  *
  * @returns void

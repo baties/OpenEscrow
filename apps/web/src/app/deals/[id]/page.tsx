@@ -98,6 +98,24 @@ export default function DealDetailPage() {
     return () => window.removeEventListener('deal:updated', handleDealUpdated);
   }, [dealId, refreshDeal, refreshTimeline]);
 
+  /**
+   * Copies the deal's shareable accept URL to the clipboard.
+   * The URL points to /deals/accept/[id] — a public landing page for
+   * the freelancer to sign in and accept the deal.
+   *
+   * @returns void
+   */
+  const handleCopyShareLink = useCallback(async () => {
+    const url = `${window.location.origin}/deals/accept/${deal?.id ?? ''}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 1500);
+    } catch {
+      console.warn('[DealDetailPage] Clipboard write failed');
+    }
+  }, [deal?.id]);
+
   if (!isAuthenticated || !walletAddress) return null;
 
   // Only show full-page spinner on first load (deal is null).
@@ -228,24 +246,6 @@ export default function DealDetailPage() {
       refreshTimeline();
     }
   }
-
-  /**
-   * Copies the deal's shareable accept URL to the clipboard.
-   * The URL points to /deals/accept/[id] — a public landing page for
-   * the freelancer to sign in and accept the deal.
-   *
-   * @returns void
-   */
-  const handleCopyShareLink = useCallback(async () => {
-    const url = `${window.location.origin}/deals/accept/${deal?.id ?? ''}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareLinkCopied(true);
-      setTimeout(() => setShareLinkCopied(false), 1500);
-    } catch {
-      console.warn('[DealDetailPage] Clipboard write failed');
-    }
-  }, [deal?.id]);
 
   return (
     <div className="space-y-6">
