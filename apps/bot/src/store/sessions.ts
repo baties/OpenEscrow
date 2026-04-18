@@ -65,6 +65,43 @@ export function isLinked(telegramUserId: number | string): boolean {
 }
 
 /**
+ * Sets or clears the active chat room deal ID for a user.
+ * When set to a dealId, all subsequent plain-text messages from this user are
+ * routed as chat messages to that deal. Set to null to exit chat mode.
+ * Also resets chatOldestMessageAt when entering a new room (or clearing).
+ *
+ * @param telegramUserId - The Telegram user ID whose chat context to update
+ * @param dealId - Deal UUID to enter as active chat room, or null to exit
+ * @returns true if the session was found and updated, false if user is not linked
+ */
+export function setChatDealId(telegramUserId: number | string, dealId: string | null): boolean {
+  const key = String(telegramUserId);
+  const session = sessionStore.get(key);
+  if (!session) return false;
+  sessionStore.set(key, { ...session, chatDealId: dealId, chatOldestMessageAt: null });
+  return true;
+}
+
+/**
+ * Updates the chatOldestMessageAt cursor for the active chat room.
+ * Called after loading older messages to advance the pagination cursor.
+ *
+ * @param telegramUserId - The Telegram user ID whose cursor to update
+ * @param oldestMessageAt - ISO 8601 createdAt of the oldest currently visible message
+ * @returns true if the session was found and updated, false if user is not linked
+ */
+export function setChatOldestMessageAt(
+  telegramUserId: number | string,
+  oldestMessageAt: string | null
+): boolean {
+  const key = String(telegramUserId);
+  const session = sessionStore.get(key);
+  if (!session) return false;
+  sessionStore.set(key, { ...session, chatOldestMessageAt: oldestMessageAt });
+  return true;
+}
+
+/**
  * Updates the lastSeenEventAt timestamp for a linked user's session.
  * Called by the notification poller after processing new events.
  * Stores an ISO 8601 timestamp (from DealEvent.createdAt) for reliable

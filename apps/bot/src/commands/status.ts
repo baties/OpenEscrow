@@ -125,7 +125,9 @@ function buildActionKeyboard(
     }
   }
 
-  if (buttons.length === 0) return undefined;
+  // Chat button is always shown — available throughout the deal lifecycle.
+  buttons.push([Markup.button.callback('💬 Chat', `chat:${deal.id}`)]);
+
   return Markup.inlineKeyboard(buttons);
 }
 

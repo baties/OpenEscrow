@@ -120,7 +120,23 @@ export type DealEventType =
   | 'MILESTONE_SUBMITTED'
   | 'MILESTONE_APPROVED'
   | 'MILESTONE_REJECTED'
-  | 'MILESTONE_REVISION';
+  | 'MILESTONE_REVISION'
+  /** Internal event used to drive bot message notifications. Filtered out of timeline responses. */
+  | 'MESSAGE_RECEIVED';
+
+/**
+ * A deal chat message sent between client and freelancer via the Telegram bot.
+ * Messages are permanent — no soft delete. Telegram IDs are never stored here.
+ * The bot proxies messages between parties without revealing Telegram identities.
+ */
+export interface Message {
+  id: string;
+  dealId: string;
+  /** UUID of the user who sent the message (maps to clientId or freelancerId on the deal). */
+  senderId: string;
+  content: string;
+  createdAt: string; // ISO 8601
+}
 
 /**
  * Rejection notes for a milestone submission.

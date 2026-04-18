@@ -17,6 +17,7 @@
 import type {
   Deal,
   DealEvent,
+  Message,
   Milestone,
   Submission,
   RejectionNote,
@@ -354,6 +355,26 @@ export const dealsApi = {
    */
   async getTimeline(dealId: string): Promise<DealEvent[]> {
     return request<DealEvent[]>(`/api/v1/deals/${encodeURIComponent(dealId)}/timeline`);
+  },
+
+  /**
+   * Retrieves paginated chat message history for a deal (oldest-first).
+   * Calls GET /api/v1/deals/:id/messages.
+   *
+   * @param dealId - The deal UUID
+   * @param cursor - Optional ISO 8601 timestamp: returns messages older than this point
+   * @param limit  - Maximum number of messages to return (default 20)
+   * @returns Array of Message objects in ascending created_at order
+   * @throws {AuthExpiredError} If JWT is invalid or expired
+   * @throws {ApiCallError} On non-2xx response (403 if not a participant)
+   * @throws {NetworkError} On network failure
+   */
+  async getMessages(dealId: string, cursor?: string, limit: number = 20): Promise<Message[]> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set('cursor', cursor);
+    return request<Message[]>(
+      `/api/v1/deals/${encodeURIComponent(dealId)}/messages?${params.toString()}`
+    );
   },
 };
 

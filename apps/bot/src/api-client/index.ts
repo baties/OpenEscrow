@@ -31,6 +31,8 @@ import type {
   ApiErrorResponse,
   BotSessionResponse,
   GetAllLinkedUsersResponse,
+  SendMessageResponse,
+  Message,
 } from './types.js';
 
 const log = logger.child({ module: 'api-client' });
@@ -400,6 +402,53 @@ export async function rejectMilestone(
     jwt,
     body
   );
+}
+
+/**
+ * Fetches paginated chat messages for a deal in chronological order (oldest first).
+ * Calls GET /api/v1/deals/:id/messages.
+ *
+ * @param jwt    - JWT token for the authenticated user
+ * @param dealId - UUID of the deal whose messages to fetch
+ * @param cursor - Optional ISO 8601 timestamp: returns messages older than this point
+ * @param limit  - Maximum number of messages to return (default 10 for bot display)
+ * @returns Array of Message objects in ascending created_at order
+ * @throws {ApiClientError} On 403 (not participant), 404, or other API errors
+ */
+export async function getDealMessages(
+  jwt: string,
+  dealId: string,
+  cursor?: string,
+  limit: number = 10
+): Promise<Message[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  const path = `/api/v1/deals/${dealId}/messages?${params.toString()}`;
+
+  log.info({ module: 'api-client', operation: 'getDealMessages', dealId }, 'Fetching messages');
+  const result = await request<Message[] | { messages: Message[] }>('GET', path, jwt);
+  // API returns a bare array; handle both shapes defensively.
+  return Array.isArray(result) ? result : result.messages;
+}
+
+/**
+ * Sends a chat message to the counterparty on a deal.
+ * Calls POST /api/v1/deals/:id/messages.
+ * The API also emits a MESSAGE_RECEIVED event so the counterparty gets a notification.
+ *
+ * @param jwt     - JWT token for the authenticated user
+ * @param dealId  - UUID of the deal to send the message on
+ * @param content - Message text (1–2000 characters)
+ * @returns The created message record
+ * @throws {ApiClientError} On 400 (validation), 403 (not participant), or other API errors
+ */
+export async function sendDealMessage(
+  jwt: string,
+  dealId: string,
+  content: string
+): Promise<SendMessageResponse> {
+  log.info({ module: 'api-client', operation: 'sendDealMessage', dealId }, 'Sending message');
+  return request<SendMessageResponse>('POST', `/api/v1/deals/${dealId}/messages`, jwt, { content });
 }
 
 /**

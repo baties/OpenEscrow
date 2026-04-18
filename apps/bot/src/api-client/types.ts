@@ -18,10 +18,11 @@ export type {
   Milestone,
   DealEvent,
   DealEventType,
+  Message,
 } from '@open-escrow/shared';
 
 // Import locally for use in interface definitions below
-import type { Deal, MilestoneStatus, DealEvent } from '@open-escrow/shared';
+import type { Deal, MilestoneStatus, DealEvent, Message } from '@open-escrow/shared';
 
 // ─── API Response Shapes ──────────────────────────────────────────────────────
 
@@ -148,6 +149,20 @@ export interface TelegramLinkResponse {
 }
 
 /**
+ * Response from GET /api/v1/deals/:id/messages.
+ * Returns messages in ascending chronological order (oldest first).
+ * The API may return a bare array; callers should handle both shapes.
+ */
+export interface GetMessagesResponse {
+  messages: Message[];
+}
+
+/**
+ * Response from POST /api/v1/deals/:id/messages.
+ */
+export type SendMessageResponse = Message;
+
+/**
  * Response from GET /api/v1/telegram/bot-sessions.
  * Returns all Telegram user IDs currently linked to a wallet account.
  * Used by the bot on startup to restore sessions from the database.
@@ -184,4 +199,16 @@ export interface UserSession {
    * not monotonically ordered).
    */
   lastSeenEventAt: string | null;
+  /**
+   * UUID of the deal whose chat room is currently active for this user.
+   * When set, all plain-text messages from this user are routed as chat
+   * messages to this deal. Null means no chat room is active.
+   */
+  chatDealId: string | null;
+  /**
+   * ISO 8601 timestamp of the oldest message currently visible in the chat room.
+   * Used as the cursor for "load older messages" pagination.
+   * Null when no messages have been loaded yet.
+   */
+  chatOldestMessageAt: string | null;
 }

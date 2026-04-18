@@ -52,6 +52,8 @@ function makeSession(overrides: Partial<UserSession> = {}): UserSession {
     jwt: 'eyJhbGciOiJIUzI1NiJ9.test',
     walletAddress: '0xabc123',
     lastSeenEventAt: null,
+    chatDealId: null,
+    chatOldestMessageAt: null,
     ...overrides,
   };
 }

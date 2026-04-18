@@ -22,6 +22,7 @@ import {
   handleDealStatus,
   handleCancelAction,
 } from './milestone-actions.js';
+import { handleEnterChat, handleLoadOlderMessages } from './chat-actions.js';
 
 const log = logger.child({ module: 'callbacks.milestone' });
 
@@ -126,6 +127,18 @@ export async function milestoneCallbackHandler(ctx: TelegrafContext): Promise<vo
 
     case 'cancel_action':
       await handleCancelAction(ctx);
+      break;
+
+    // ── Chat room callbacks ───────────────────────────────────────────────
+    // id = dealId for both 'chat' and 'open_chat'.
+    // id = dealId for 'load_older_chat' — cursor stored in session.chatOldestMessageAt.
+    case 'chat':
+    case 'open_chat':
+      await handleEnterChat(ctx, parsed.id);
+      break;
+
+    case 'load_older_chat':
+      await handleLoadOlderMessages(ctx, parsed.id);
       break;
 
     default:

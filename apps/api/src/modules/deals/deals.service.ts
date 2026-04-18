@@ -12,7 +12,7 @@
  * All invalid transitions return AppError with code INVALID_TRANSITION.
  */
 
-import { eq, or, desc, inArray } from 'drizzle-orm';
+import { eq, or, desc, inArray, ne, and } from 'drizzle-orm';
 import { db } from '../../database/index.js';
 import {
   deals,
@@ -611,10 +611,12 @@ export async function getDealTimeline(dealId: string): Promise<DealEvent[]> {
       throw new AppError('DEAL_NOT_FOUND', `Deal ${dealId} not found`, { dealId });
     }
 
+    // MESSAGE_RECEIVED events are filtered out — they exist only for bot notification
+    // polling and should not appear in the public-facing audit trail.
     const events = await db
       .select()
       .from(dealEvents)
-      .where(eq(dealEvents.dealId, dealId))
+      .where(and(eq(dealEvents.dealId, dealId), ne(dealEvents.eventType, 'MESSAGE_RECEIVED')))
       .orderBy(dealEvents.createdAt);
 
     return events;

@@ -3,7 +3,7 @@
 > Single source of truth for project phase status and future direction.
 > Updated by lead after every phase completion or milestone.
 >
-> Last updated: 2026-04-05
+> Last updated: 2026-04-17
 
 ---
 
@@ -116,7 +116,7 @@ Fixes and enhancements discovered during live testing.
 
 | #     | Feature                                                                  | Priority | Status     | Notes                                                                                                          |
 | ----- | ------------------------------------------------------------------------ | -------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| III-1 | Client↔Freelancer chat per deal                                          | Medium   | 🔄 Planned | New feature — not in original MVP scope. Requires new API endpoint, message storage table, real-time delivery. |
+| III-1 | Client↔Freelancer chat per deal                                          | Medium   | ✅ Done    | Privacy relay via Telegram bot. Messages stored permanently in DB. Web panel shows read-only history with 🧑‍💼/🛠️ icons + Load older pagination. Bot poller sends MESSAGE_RECEIVED notifications with Open Chat button. |
 | III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done    | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.         |
 | III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | ✅ Done    | Removed COMPLETED/CANCELLED filter in notifier.ts; final events now delivered to both parties.                 |
 | III-4 | Mobile hamburger nav menu                                                | Low      | ✅ Done    | Hamburger toggle + dropdown panel in Navbar.tsx; auto-closes on route change.                                  |

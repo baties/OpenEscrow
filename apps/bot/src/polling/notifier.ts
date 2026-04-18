@@ -22,6 +22,7 @@
  */
 
 import type { Telegraf, Context } from 'telegraf';
+import { Markup } from 'telegraf';
 import { getAllSessions, updateLastSeenEventAt } from '../store/sessions.js';
 import { listDeals, getDealTimeline, ApiClientError } from '../api-client/index.js';
 import { env } from '../config/env.js';
@@ -132,6 +133,28 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
         `_Refund rules apply per agreement. Check the web dashboard for details._`
       );
 
+    case 'MESSAGE_RECEIVED': {
+      // Only notify the counterparty — not the sender themselves.
+      const senderRole =
+        typeof event.metadata?.['senderRole'] === 'string' ? event.metadata['senderRole'] : null;
+      const isFromSelf =
+        (senderRole === 'client' && userRole === 'client') ||
+        (senderRole === 'freelancer' && userRole === 'freelancer');
+      if (isFromSelf) return null; // Never notify the sender of their own message.
+
+      const senderIcon = senderRole === 'client' ? '🧑‍💼 Client' : '🛠️ Freelancer';
+      const preview =
+        typeof event.metadata?.['preview'] === 'string'
+          ? event.metadata['preview']
+          : 'New message';
+
+      return (
+        `💬 *New message — Deal \\#${shortDealId}*\n\n` +
+        `${senderIcon}: "${preview}"\n\n` +
+        `_Tap the button below to open the chat room and reply._`
+      );
+    }
+
     case 'MILESTONE_REVISION': {
       // Notify freelancer the milestone is ready for revision
       if (userRole === 'freelancer') {
@@ -216,8 +239,17 @@ async function pollUserNotifications(
           const message = formatEventNotification(event, userRole);
           if (message) {
             try {
+              // MESSAGE_RECEIVED notifications include an "Open Chat" inline button.
+              const replyMarkup =
+                event.eventType === 'MESSAGE_RECEIVED'
+                  ? Markup.inlineKeyboard([
+                      [Markup.button.callback('💬 Open Chat', `open_chat:${deal.id}`)],
+                    ]).reply_markup
+                  : undefined;
+
               await bot.telegram.sendMessage(Number(telegramUserId), message, {
                 parse_mode: 'Markdown',
+                ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
               });
               log.info(
                 {

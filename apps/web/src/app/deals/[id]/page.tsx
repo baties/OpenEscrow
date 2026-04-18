@@ -1,7 +1,7 @@
 /**
  * deals/[id]/page.tsx — OpenEscrow Web Dashboard
  *
- * Deal detail page — shows deal info, milestones, role-aware actions, and timeline.
+ * Deal detail page — shows deal info, milestones, role-aware actions, timeline, and chat.
  * Handles: fetching deal + timeline, role detection (client vs freelancer),
  *          approve/reject/submit/agree/cancel actions via hooks,
  *          modal state for submit and reject flows.
@@ -28,6 +28,7 @@ import { SubmitMilestoneModal } from '@/components/SubmitMilestoneModal';
 import { RejectMilestoneModal } from '@/components/RejectMilestoneModal';
 import { formatTokenAmount, truncateAddress, formatDate } from '@/lib/format';
 import { CopyButton } from '@/components/CopyButton';
+import { DealChat } from '@/components/DealChat';
 import { config as appConfig } from '@/lib/config';
 import type { SubmitMilestoneFormValues, RejectMilestoneFormValues } from '@/lib/schemas';
 
@@ -503,6 +504,9 @@ export default function DealDetailPage() {
           />
         </div>
       </div>
+
+      {/* Chat */}
+      <DealChat dealId={deal.id} clientId={deal.clientId} />
 
       {/* Submit Milestone Modal */}
       {submitModalMilestoneId && submitMilestone_ && (

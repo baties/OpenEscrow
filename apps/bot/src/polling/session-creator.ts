@@ -54,6 +54,8 @@ async function tryCreateSession(bot: Telegraf<Context>, telegramUserId: string):
       jwt: sessionData.token,
       walletAddress: sessionData.walletAddress,
       lastSeenEventAt: null,
+      chatDealId: null,
+      chatOldestMessageAt: null,
     });
 
     // Remove from pending list — session is established

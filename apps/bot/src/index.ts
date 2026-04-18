@@ -23,6 +23,7 @@ import { dealsCommandHandler } from './commands/deals.js';
 import { statusCommandHandler } from './commands/status.js';
 import { helpCommandHandler } from './commands/help.js';
 import { milestoneCallbackHandler } from './callbacks/milestone.js';
+import { chatMessageHandler } from './commands/chat-message.js';
 import { startNotificationPolling } from './polling/notifier.js';
 import { startSessionCreatorPolling } from './polling/session-creator.js';
 import { getAllLinkedTelegramUsers, getBotSession } from './api-client/index.js';
@@ -54,8 +55,15 @@ bot.command('help', helpCommandHandler);
 
 // ─── Callback query handler ───────────────────────────────────────────────────
 
-// Handles all inline keyboard callbacks (approve, reject, submit, deal_status, etc.)
+// Handles all inline keyboard callbacks (approve, reject, submit, deal_status, chat, etc.)
 bot.on('callback_query', milestoneCallbackHandler);
+
+// ─── Text message handler (chat room relay) ───────────────────────────────────
+
+// Handles plain-text messages when the user is in an active chat room.
+// Also handles the "🚪 Exit Chat Room" persistent keyboard button.
+// Commands (starting with /) are intercepted above and never reach this handler.
+bot.on('text', chatMessageHandler);
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 
@@ -139,6 +147,8 @@ async function restoreSessionsFromDb(): Promise<void> {
         jwt: sessionData.token,
         walletAddress: sessionData.walletAddress,
         lastSeenEventAt: null,
+        chatDealId: null,
+        chatOldestMessageAt: null,
       });
       restored++;
     } catch (err) {

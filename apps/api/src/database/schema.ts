@@ -1,13 +1,13 @@
 /**
  * database/schema.ts — OpenEscrow API
  *
- * Handles: Drizzle ORM table definitions for all 7 database tables.
+ * Handles: Drizzle ORM table definitions for all 8 database tables.
  *          Defines column types, constraints, and relations used by repositories.
  * Does NOT: contain query logic (that lives in service files),
  *            run migrations (see migrate.ts), or manage connections (see index.ts).
  *
- * Tables (7):
- *   users, deals, milestones, submissions, deal_events, telegram_links, rejection_notes
+ * Tables (8):
+ *   users, deals, milestones, submissions, deal_events, telegram_links, rejection_notes, messages
  */
 
 import { pgTable, text, timestamp, integer, jsonb, uuid } from 'drizzle-orm/pg-core';
@@ -150,6 +150,26 @@ export const rejectionNotes = pgTable('rejection_notes', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── messages ─────────────────────────────────────────────────────────────────
+
+/**
+ * Deal-scoped private chat messages between client and freelancer.
+ * Messages are permanent — no soft delete. Telegram IDs are NOT stored here;
+ * the bot proxies messages without exposing Telegram identities to either party.
+ * All messages are retrievable for admin/audit purposes via deal_id + sender_id.
+ */
+export const messages = pgTable('messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  dealId: uuid('deal_id')
+    .notNull()
+    .references(() => deals.id),
+  senderId: uuid('sender_id')
+    .notNull()
+    .references(() => users.id),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Type Exports ─────────────────────────────────────────────────────────────
 
 /** Inferred TypeScript types for each table row (select shape). */
@@ -160,6 +180,7 @@ export type Submission = typeof submissions.$inferSelect;
 export type DealEvent = typeof dealEvents.$inferSelect;
 export type TelegramLink = typeof telegramLinks.$inferSelect;
 export type RejectionNote = typeof rejectionNotes.$inferSelect;
+export type Message = typeof messages.$inferSelect;
 
 /** Inferred TypeScript types for inserts (all required columns). */
 export type NewUser = typeof users.$inferInsert;
@@ -169,3 +190,4 @@ export type NewSubmission = typeof submissions.$inferInsert;
 export type NewDealEvent = typeof dealEvents.$inferInsert;
 export type NewTelegramLink = typeof telegramLinks.$inferInsert;
 export type NewRejectionNote = typeof rejectionNotes.$inferInsert;
+export type NewMessage = typeof messages.$inferInsert;
