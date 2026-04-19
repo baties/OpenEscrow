@@ -52,6 +52,9 @@ export type AppErrorCode =
   // Chain
   | 'CHAIN_TX_FAILED'
   | 'CHAIN_READ_FAILED'
+  // Users
+  | 'USERNAME_TAKEN'
+  | 'USER_UPDATE_FAILED'
   // Generic
   | 'VALIDATION_ERROR'
   | 'INTERNAL_ERROR'

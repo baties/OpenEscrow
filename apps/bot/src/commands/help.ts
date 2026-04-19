@@ -47,6 +47,16 @@ export async function helpCommandHandler(ctx: Context): Promise<void> {
     `4. *Freelancer* submits each milestone for review\n` +
     `5. *Client* approves (funds released) or rejects (freelancer revises)\n` +
     `6. After all milestones approved, deal is COMPLETED\n\n` +
+    `*💬 Chat Room*\n\n` +
+    `Each deal has a private chat room for the client and freelancer to communicate.\n` +
+    `Messages are relayed through the bot — neither party sees the other\'s Telegram ID.\n\n` +
+    `To enter a chat room:\n` +
+    `• Tap the *💬 Chat* button on any deal status message or notification\n` +
+    `• Or use the inline button on deal notifications that include an "Open Chat" button\n\n` +
+    `Inside the chat room:\n` +
+    `• Just type normally — your message is sent to your counterparty\n` +
+    `• Press *🚪 Exit Chat Room* to leave the room (the keyboard button at the bottom)\n` +
+    `• Chat history is also visible on the deal detail page on the web dashboard\n\n` +
     `*Linking your account*\n\n` +
     `1. Go to web dashboard, Settings, Telegram\n` +
     `2. Click *Generate Code*\n` +

@@ -160,10 +160,13 @@ export async function linkTelegram(userId: string, input: LinkTelegramInput): Pr
         .set({ usedAt: new Date() })
         .where(eq(telegramLinks.id, otpRecord.id));
 
-      // Link the Telegram user ID on the user record.
+      // Link the Telegram user ID (and optional username) on the user record.
       await tx
         .update(users)
-        .set({ telegramUserId: input.telegramUserId })
+        .set({
+          telegramUserId: input.telegramUserId,
+          ...(input.telegramUsername ? { telegramUsername: input.telegramUsername } : {}),
+        })
         .where(eq(users.id, userId));
     });
 
@@ -255,17 +258,18 @@ export async function unlinkTelegram(userId: string): Promise<void> {
 export async function getTelegramStatus(userId: string): Promise<{
   linked: boolean;
   telegramUserId: string | null;
+  telegramUsername: string | null;
   linkedAt: string | null;
 }> {
   try {
     const [user] = await db
-      .select({ telegramUserId: users.telegramUserId })
+      .select({ telegramUserId: users.telegramUserId, telegramUsername: users.telegramUsername })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
 
     if (!user?.telegramUserId) {
-      return { linked: false, telegramUserId: null, linkedAt: null };
+      return { linked: false, telegramUserId: null, telegramUsername: null, linkedAt: null };
     }
 
     // Derive linkedAt from the most recently used OTP for this user.
@@ -279,6 +283,7 @@ export async function getTelegramStatus(userId: string): Promise<{
     return {
       linked: true,
       telegramUserId: user.telegramUserId,
+      telegramUsername: user.telegramUsername ?? null,
       linkedAt: lastLink?.usedAt?.toISOString() ?? null,
     };
   } catch (err) {

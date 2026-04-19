@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { requireLinked } from '../middleware/auth.js';
 import { getDeal, ApiClientError } from '../api-client/index.js';
 import { logger } from '../lib/logger.js';
+import { formatTokenAmount } from '../lib/format.js';
 import type { Deal, Milestone } from '../api-client/types.js';
 
 const log = logger.child({ module: 'commands.status' });
@@ -67,9 +68,10 @@ function formatMilestoneStatus(status: string): string {
  * Formats a deal's milestones as a readable list.
  *
  * @param milestones - Array of milestone objects from the deal
+ * @param tokenAddress - ERC-20 contract address used for human-readable amount formatting
  * @returns Formatted markdown string showing all milestones
  */
-function formatMilestones(milestones: Milestone[]): string {
+function formatMilestones(milestones: Milestone[], tokenAddress: string): string {
   if (!milestones || milestones.length === 0) {
     return '_No milestones._';
   }
@@ -79,7 +81,7 @@ function formatMilestones(milestones: Milestone[]): string {
       (m) =>
         `*${m.sequence}. ${m.title}*\n` +
         `   Status: ${formatMilestoneStatus(m.status)}\n` +
-        `   Amount: ${m.amount} tokens`
+        `   Amount: ${formatTokenAmount(m.amount, tokenAddress)}`
     )
     .join('\n\n');
 }
@@ -199,17 +201,26 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
       return;
     }
 
-    const role = deal.clientId === session.userId ? 'Client' : 'Freelancer';
+    const isClient = deal.clientId === session.userId;
+    const role = isClient ? 'Client' : 'Freelancer';
     const shortId = deal.id.slice(0, 8);
+    const counterparty = isClient
+      ? deal.freelancerUsername
+        ? `🛠️ ${deal.freelancerUsername}`
+        : '🛠️ Freelancer'
+      : deal.clientUsername
+        ? `🧑‍💼 ${deal.clientUsername}`
+        : '🧑‍💼 Client';
 
     const message =
       `*Deal \`${shortId}...\`*\n\n` +
       `*Status:* ${formatDealStatus(deal.status)}\n` +
       `*Your Role:* ${role}\n` +
-      `*Total Amount:* ${deal.totalAmount} tokens\n` +
+      `*Counterparty:* ${counterparty}\n` +
+      `*Total Amount:* ${formatTokenAmount(deal.totalAmount, deal.tokenAddress)}\n` +
       `*Created:* ${new Date(deal.createdAt).toLocaleDateString()}\n` +
       (deal.agreedAt ? `*Agreed:* ${new Date(deal.agreedAt).toLocaleDateString()}\n` : '') +
-      `\n*Milestones:*\n\n${formatMilestones(deal.milestones ?? [])}\n\n` +
+      `\n*Milestones:*\n\n${formatMilestones(deal.milestones ?? [], deal.tokenAddress)}\n\n` +
       `_Full ID:_ \`${deal.id}\``;
 
     const keyboard = buildActionKeyboard(deal, session.userId);

@@ -25,6 +25,16 @@ export const LinkTelegramSchema = z.object({
    * This is provided by the bot when the user runs /link.
    */
   telegramUserId: z.string().min(1, 'Telegram user ID is required'),
+  /**
+   * The Telegram @username of the account (optional).
+   * Shown in the bot's /link reply. Stored for display on the settings page.
+   * Leading @ is stripped if present.
+   */
+  telegramUsername: z
+    .string()
+    .max(32, 'Telegram username must be at most 32 characters')
+    .transform((v) => (v.startsWith('@') ? v.slice(1) : v))
+    .optional(),
 });
 
 export type LinkTelegramInput = z.infer<typeof LinkTelegramSchema>;

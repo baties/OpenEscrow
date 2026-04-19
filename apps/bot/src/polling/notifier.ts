@@ -144,9 +144,7 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
 
       const senderIcon = senderRole === 'client' ? '🧑‍💼 Client' : '🛠️ Freelancer';
       const preview =
-        typeof event.metadata?.['preview'] === 'string'
-          ? event.metadata['preview']
-          : 'New message';
+        typeof event.metadata?.['preview'] === 'string' ? event.metadata['preview'] : 'New message';
 
       return (
         `💬 *New message — Deal \\#${shortDealId}*\n\n` +

@@ -15,6 +15,7 @@ import { Markup } from 'telegraf';
 import { requireLinked } from '../middleware/auth.js';
 import { listDeals, ApiClientError } from '../api-client/index.js';
 import { logger } from '../lib/logger.js';
+import { formatTokenAmount } from '../lib/format.js';
 import type { Deal } from '../api-client/types.js';
 
 const log = logger.child({ module: 'commands.deals' });
@@ -53,10 +54,20 @@ function formatDealSummary(deal: Deal, userRole: string): string {
   const milestoneCount = deal.milestones?.length ?? 0;
   const roleLabel = userRole === 'client' ? '👤 Client' : '💼 Freelancer';
 
+  const counterparty =
+    userRole === 'client'
+      ? deal.freelancerUsername
+        ? `🛠️ ${deal.freelancerUsername}`
+        : '🛠️ Freelancer'
+      : deal.clientUsername
+        ? `🧑‍💼 ${deal.clientUsername}`
+        : '🧑‍💼 Client';
+
   return (
     `*Deal \`${shortId}...\`*\n` +
     `Status: ${statusLabel} | Role: ${roleLabel}\n` +
-    `Milestones: ${milestoneCount} | Amount: ${deal.totalAmount} tokens\n` +
+    `Counterparty: ${counterparty}\n` +
+    `Milestones: ${milestoneCount} | Amount: ${formatTokenAmount(deal.totalAmount, deal.tokenAddress)}\n` +
     `ID: \`${deal.id}\``
   );
 }

@@ -20,6 +20,7 @@ import { dealsRouter } from './modules/deals/deals.router.js';
 import { milestonesRouter } from './modules/milestones/milestones.router.js';
 import { telegramRouter } from './modules/telegram-link/telegram.router.js';
 import { messagesRouter } from './modules/messages/messages.router.js';
+import { usersRouter } from './modules/users/users.router.js';
 import { startIndexer, stopIndexer } from './chain/indexer.js';
 import { handleGenerateNonce, handleVerify } from './modules/auth/verify.js';
 import { GenerateNonceInputSchema, VerifyInputSchema } from './modules/auth/auth.schema.js';
@@ -139,6 +140,7 @@ export async function buildApp() {
   await fastify.register(milestonesRouter, { prefix: '/api/v1' });
   await fastify.register(telegramRouter, { prefix: '/api/v1' });
   await fastify.register(messagesRouter, { prefix: '/api/v1' });
+  await fastify.register(usersRouter, { prefix: '/api/v1' });
 
   return fastify;
 }

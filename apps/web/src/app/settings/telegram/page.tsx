@@ -54,6 +54,7 @@ export default function TelegramSettingsPage() {
   // Link with code state
   const [linkCode, setLinkCode] = useState('');
   const [linkTelegramUserId, setLinkTelegramUserId] = useState('');
+  const [linkTelegramUsername, setLinkTelegramUsername] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [isLinking, setIsLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export default function TelegramSettingsPage() {
       } catch (err) {
         console.error('[TelegramSettingsPage] getStatus failed:', getErrorMessage(err));
         // Non-fatal — page still works without status
-        setStatus({ linked: false, telegramUserId: null, linkedAt: null });
+        setStatus({ linked: false, telegramUserId: null, linkedAt: null, telegramUsername: null });
       } finally {
         setStatusLoading(false);
       }
@@ -136,7 +137,11 @@ export default function TelegramSettingsPage() {
 
     setIsLinking(true);
     try {
-      await telegramApi.link(result.data.code, result.data.telegramUserId);
+      await telegramApi.link(
+        result.data.code,
+        result.data.telegramUserId,
+        linkTelegramUsername.trim() || undefined
+      );
       const successMsg = `Telegram account linked! ID ${result.data.telegramUserId} is now connected. The bot will send you a confirmation.`;
       setLinkSuccess(successMsg);
       setLinkCode('');
@@ -172,7 +177,7 @@ export default function TelegramSettingsPage() {
       setLinkSuccess(null);
       setGeneratedCode(null);
       setCodeExpiresAt(null);
-      setStatus({ linked: false, telegramUserId: null, linkedAt: null });
+      setStatus({ linked: false, telegramUserId: null, linkedAt: null, telegramUsername: null });
     } catch (err) {
       const message = getErrorMessage(err);
       console.error('[TelegramSettingsPage] unlink failed:', { error: message });
@@ -205,6 +210,12 @@ export default function TelegramSettingsPage() {
             <h2 className="font-semibold text-emerald-900">Telegram Connected</h2>
           </div>
           <dl className="space-y-1 text-sm">
+            {status.telegramUsername && (
+              <div className="flex items-center gap-2">
+                <dt className="text-emerald-700 font-medium w-28 shrink-0">Username:</dt>
+                <dd className="font-mono text-emerald-900">@{status.telegramUsername}</dd>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <dt className="text-emerald-700 font-medium w-28 shrink-0">Telegram ID:</dt>
               <dd className="flex items-center gap-1 font-mono text-emerald-900">
@@ -300,6 +311,33 @@ export default function TelegramSettingsPage() {
                   disabled={isLinking}
                 />
                 {fieldError && <p className="mt-1 text-xs text-red-600">{fieldError}</p>}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="linkTelegramUsername"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Your Telegram Username{' '}
+                  <span className="font-normal text-gray-400">(optional)</span>
+                </label>
+                <div className="relative mt-1">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+                    @
+                  </span>
+                  <input
+                    id="linkTelegramUsername"
+                    type="text"
+                    value={linkTelegramUsername}
+                    onChange={(e) => setLinkTelegramUsername(e.target.value)}
+                    placeholder="yourhandle"
+                    className="block w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 font-mono text-sm placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    disabled={isLinking}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400">
+                  Find your username in Telegram → Settings → Username. Stored for display.
+                </p>
               </div>
 
               <ErrorAlert message={linkError} onDismiss={() => setLinkError(null)} />

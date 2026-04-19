@@ -117,12 +117,19 @@ export default function HomePage() {
       {/* Auth flow */}
       <div className="flex flex-col items-center gap-4">
         {!isConnected ? (
-          /* Step 1 — wallet not connected */
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-sm text-gray-500">Connect your wallet to get started</p>
-            <ConnectButton label="Connect Wallet" />
+          /* Step 1 — wallet not connected: show two CTAs without forcing immediate connect */
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-wrap justify-center gap-3">
+              <ConnectButton label="Get Started — Connect Wallet" />
+              <a
+                href="/help"
+                className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+              >
+                Learn More
+              </a>
+            </div>
             <p className="text-xs text-gray-400">
-              Supports MetaMask, Coinbase Wallet, WalletConnect
+              Supports MetaMask, Coinbase Wallet, WalletConnect — no sign-up required
             </p>
           </div>
         ) : isSigningIn ? (

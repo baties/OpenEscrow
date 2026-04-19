@@ -49,6 +49,18 @@ const envSchema = z.object({
 
   /** pino log level. */
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
+
+  /**
+   * USDC token contract address on the target chain (optional).
+   * When set, token amounts whose address matches will display as "X.XX USDC".
+   */
+  USDC_ADDRESS: z.string().default(''),
+
+  /**
+   * USDT token contract address on the target chain (optional).
+   * When set, token amounts whose address matches will display as "X.XX USDT".
+   */
+  USDT_ADDRESS: z.string().default(''),
 });
 
 /**

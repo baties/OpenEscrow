@@ -82,10 +82,7 @@ export async function sendMessage(
   try {
     const result = await db.transaction(async (tx) => {
       // Insert the message.
-      const [msg] = await tx
-        .insert(messages)
-        .values({ dealId, senderId, content })
-        .returning();
+      const [msg] = await tx.insert(messages).values({ dealId, senderId, content }).returning();
 
       if (!msg) {
         throw new Error('Message insert returned no rows');

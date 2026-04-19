@@ -161,8 +161,23 @@ export interface TelegramStatusResponse {
   linked: boolean;
   /** The linked Telegram numeric user ID, or null if not linked */
   telegramUserId: string | null;
+  /** The Telegram @username, or null if not stored */
+  telegramUsername: string | null;
   /** ISO 8601 timestamp of when the account was linked, or null if not linked */
   linkedAt: string | null;
+}
+
+/** Response from GET /users/me */
+export interface UserProfileResponse {
+  id: string;
+  walletAddress: string;
+  username: string | null;
+  createdAt: string;
+}
+
+/** Response from PATCH /users/me/username */
+export interface UpdateUsernameResponse {
+  username: string;
 }
 
 /**
@@ -479,10 +494,18 @@ export const telegramApi = {
    * @throws {ApiCallError} On 400 (invalid/expired code) or non-2xx
    * @throws {NetworkError} On network failure
    */
-  async link(oneTimeCode: string, telegramUserId: string): Promise<TelegramLinkResponse> {
+  async link(
+    oneTimeCode: string,
+    telegramUserId: string,
+    telegramUsername?: string
+  ): Promise<TelegramLinkResponse> {
     return request<TelegramLinkResponse>('/api/v1/telegram/link', {
       method: 'POST',
-      body: JSON.stringify({ oneTimeCode, telegramUserId }),
+      body: JSON.stringify({
+        oneTimeCode,
+        telegramUserId,
+        ...(telegramUsername ? { telegramUsername } : {}),
+      }),
     });
   },
 
@@ -509,6 +532,40 @@ export const telegramApi = {
    */
   async getStatus(): Promise<TelegramStatusResponse> {
     return request<TelegramStatusResponse>('/api/v1/telegram/status');
+  },
+};
+
+// ─── Users Endpoints ──────────────────────────────────────────────────────────
+
+/** Users API namespace — profile and username management */
+export const usersApi = {
+  /**
+   * Returns the authenticated user's profile including username.
+   *
+   * @returns User profile with id, walletAddress, username, createdAt
+   * @throws {AuthExpiredError} If JWT is invalid or expired
+   * @throws {ApiCallError} On non-2xx response
+   * @throws {NetworkError} On network failure
+   */
+  async getMe(): Promise<UserProfileResponse> {
+    return request<UserProfileResponse>('/api/v1/users/me');
+  },
+
+  /**
+   * Updates the authenticated user's platform username.
+   * Username must be 4–10 alphanumeric characters and unique.
+   *
+   * @param username - Desired new username
+   * @returns Object with the confirmed new username
+   * @throws {AuthExpiredError} If JWT is invalid or expired
+   * @throws {ApiCallError} On 409 (taken) or other non-2xx
+   * @throws {NetworkError} On network failure
+   */
+  async updateUsername(username: string): Promise<UpdateUsernameResponse> {
+    return request<UpdateUsernameResponse>('/api/v1/users/me/username', {
+      method: 'PATCH',
+      body: JSON.stringify({ username }),
+    });
   },
 };
 

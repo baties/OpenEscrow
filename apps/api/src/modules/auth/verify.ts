@@ -12,6 +12,7 @@
  *   4. API verifies signature, upserts user, issues JWT
  */
 
+import { randomBytes } from 'crypto';
 import { SiweMessage } from 'siwe';
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
@@ -22,6 +23,22 @@ import { logger } from '../../lib/logger.js';
 import { generateNonce, getNonce, consumeNonce } from './nonce.js';
 
 const log = logger.child({ module: 'modules.auth.verify' });
+
+/** Character set for generated platform usernames: uppercase + lowercase + digits (no O/0/I/l). */
+const USERNAME_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+/**
+ * Generates a random 8-character platform username from a safe alphanumeric charset.
+ * Excludes visually ambiguous characters (O, 0, I, l).
+ *
+ * @returns 8-character random alphanumeric string
+ */
+function generateUsername(): string {
+  const bytes = randomBytes(8);
+  return Array.from(bytes)
+    .map((b) => USERNAME_CHARS[b % USERNAME_CHARS.length])
+    .join('');
+}
 
 /**
  * Input shape for the nonce generation request.
@@ -133,15 +150,25 @@ export async function handleVerify(input: VerifyInput, fastify: FastifyInstance)
     if (existingUser !== undefined) {
       userId = existingUser.id;
     } else {
-      const insertResult = await db
-        .insert(users)
-        .values({ walletAddress })
-        .returning({ id: users.id });
-      const newUser = insertResult[0];
-      if (!newUser) {
-        throw new Error('Insert returned no rows');
+      // Generate a unique username — retry up to 5 times on the rare collision.
+      let newUserId: string | undefined;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const candidateUsername = generateUsername();
+        const insertResult = await db
+          .insert(users)
+          .values({ walletAddress, username: candidateUsername })
+          .onConflictDoNothing()
+          .returning({ id: users.id });
+        const row = insertResult[0];
+        if (row) {
+          newUserId = row.id;
+          break;
+        }
       }
-      userId = newUser.id;
+      if (!newUserId) {
+        throw new Error('Username generation exhausted retries');
+      }
+      userId = newUserId;
 
       log.info(
         {

@@ -114,13 +114,24 @@ Fixes and enhancements discovered during live testing.
 
 > Improvement Phase II confirmed complete. III-2 was shipped in Phase II.
 
-| #     | Feature                                                                  | Priority | Status     | Notes                                                                                                          |
-| ----- | ------------------------------------------------------------------------ | -------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| III-1 | Client↔Freelancer chat per deal                                          | Medium   | ✅ Done    | Privacy relay via Telegram bot. Messages stored permanently in DB. Web panel shows read-only history with 🧑‍💼/🛠️ icons + Load older pagination. Bot poller sends MESSAGE_RECEIVED notifications with Open Chat button. |
-| III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done    | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.         |
-| III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | ✅ Done    | Removed COMPLETED/CANCELLED filter in notifier.ts; final events now delivered to both parties.                 |
-| III-4 | Mobile hamburger nav menu                                                | Low      | ✅ Done    | Hamburger toggle + dropdown panel in Navbar.tsx; auto-closes on route change.                                  |
-| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | ✅ Done    | /deals/accept/[id] invitation page + Share Link button on deal detail (client, DRAFT) + post-auth redirect.    |
+| #     | Feature                                                                  | Priority | Status  | Notes                                                                                                                                                                                                                 |
+| ----- | ------------------------------------------------------------------------ | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| III-1 | Client↔Freelancer chat per deal                                          | Medium   | ✅ Done | Privacy relay via Telegram bot. Messages stored permanently in DB. Web panel shows read-only history with 🧑‍💼/🛠️ icons + Load older pagination. Bot poller sends MESSAGE_RECEIVED notifications with Open Chat button. |
+| III-2 | Bot session persistence (survive restarts)                               | High     | ✅ Done | Shipped in Improvement Phase II — bot calls GET /telegram/bot-sessions on startup to restore sessions.                                                                                                                |
+| III-3 | Telegram notifications for Completed/Cancelled status too (both parties) | Medium   | ✅ Done | Removed COMPLETED/CANCELLED filter in notifier.ts; final events now delivered to both parties.                                                                                                                        |
+| III-4 | Mobile hamburger nav menu                                                | Low      | ✅ Done | Hamburger toggle + dropdown panel in Navbar.tsx; auto-closes on route change.                                                                                                                                         |
+| III-5 | Deal sharing link (shareable URL for freelancer to accept)               | Medium   | ✅ Done | /deals/accept/[id] invitation page + Share Link button on deal detail (client, DRAFT) + post-auth redirect.                                                                                                           |
+
+---
+
+## Improvement Phase IV — Planned
+
+Privacy, identity, and administration layer. Not started.
+
+| #    | Feature                            | Priority | Status         | Notes                                                                                                                                                                                           |
+| ---- | ---------------------------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IV-1 | Platform usernames + privacy model | High     | 🔄 In Progress | Auto-generated 8-char alphanumeric username per user. User-changeable (4–10 chars, unique). Wallet/Telegram IDs hidden from counterparty. Usernames shown on all deal views, bot, and timeline. |
+| IV-2 | Admin dashboard                    | Medium   | ⏸️ Planned     | Admin-only UI: user list (username, userId, wallet, Telegram), deal browser, deal event audit log, reporting. Backend: admin role + protected routes.                                           |
 
 ---
 

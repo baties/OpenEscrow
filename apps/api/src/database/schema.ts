@@ -16,12 +16,16 @@ import { pgTable, text, timestamp, integer, jsonb, uuid } from 'drizzle-orm/pg-c
 
 /**
  * Core user identity. Wallet address is the primary identifier.
- * Telegram user ID is optional — set only after the linking flow.
+ * Telegram user ID and username are optional — set after their respective flows.
+ * username: public display handle used instead of wallet address for counterparty privacy.
+ * telegramUsername: Telegram @handle, stored when provided during the linking flow.
  */
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   walletAddress: text('wallet_address').notNull().unique(),
   telegramUserId: text('telegram_user_id').unique(),
+  telegramUsername: text('telegram_username'),
+  username: text('username').unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

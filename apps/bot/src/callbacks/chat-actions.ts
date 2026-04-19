@@ -198,10 +198,7 @@ export async function handleEnterChat(ctx: TelegrafContext, dealId: string): Pro
  * @param dealId - UUID of the deal whose older messages to load
  * @returns Promise<void>
  */
-export async function handleLoadOlderMessages(
-  ctx: TelegrafContext,
-  dealId: string
-): Promise<void> {
+export async function handleLoadOlderMessages(ctx: TelegrafContext, dealId: string): Promise<void> {
   const telegramUserId = ctx.from?.id;
   const chatId = ctx.chat?.id;
 
@@ -220,12 +217,7 @@ export async function handleLoadOlderMessages(
     await ctx.answerCbQuery('Loading older messages…');
 
     const deal = await getDeal(session.jwt, dealId);
-    const olderMsgs = await getDealMessages(
-      session.jwt,
-      dealId,
-      session.chatOldestMessageAt,
-      10
-    );
+    const olderMsgs = await getDealMessages(session.jwt, dealId, session.chatOldestMessageAt, 10);
 
     if (olderMsgs.length === 0) {
       await ctx.replyWithMarkdown('_No older messages._');

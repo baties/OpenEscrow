@@ -44,6 +44,8 @@ export interface User {
   id: string;
   walletAddress: string;
   telegramUserId: string | null;
+  /** Platform username — public display handle (4–10 alphanumeric chars). */
+  username: string | null;
   createdAt: string; // ISO 8601
 }
 
@@ -60,6 +62,10 @@ export interface Deal {
   clientAddress: string;
   /** Ethereum wallet address of the freelancer (lowercase). Use for display and role detection. */
   freelancerAddress: string;
+  /** Platform username of the client (null if not yet set). */
+  clientUsername: string | null;
+  /** Platform username of the freelancer (null if not yet set). */
+  freelancerUsername: string | null;
   tokenAddress: string;
   totalAmount: string; // BigInt as string to avoid precision loss
   status: DealStatus;

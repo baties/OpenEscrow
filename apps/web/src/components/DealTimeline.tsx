@@ -7,7 +7,7 @@
  */
 
 import type { DealEvent } from '@open-escrow/shared';
-import { formatDate, truncateAddress } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorAlert } from './ErrorAlert';
 
@@ -55,33 +55,34 @@ interface DealTimelineProps {
   clientId: string;
   /** Internal UUID of the deal's freelancer — used to label actors in the timeline */
   freelancerId: string;
-  /** Wallet address of the client — shown alongside the role label */
-  clientAddress: string;
-  /** Wallet address of the freelancer — shown alongside the role label */
-  freelancerAddress: string;
+  /** Platform username of the client — shown instead of wallet address */
+  clientUsername: string | null;
+  /** Platform username of the freelancer — shown instead of wallet address */
+  freelancerUsername: string | null;
 }
 
 /**
  * Resolves an event's actorId to a human-readable label using the deal's participant IDs.
- * Returns "Client (0xABCD…1234)", "Freelancer (0xABCD…1234)", or "System" for auto events.
+ * Shows the platform username for privacy — wallet addresses are not exposed in the timeline.
  *
  * @param actorId - Internal user UUID from the event record
  * @param clientId - Internal UUID of the deal's client
  * @param freelancerId - Internal UUID of the deal's freelancer
- * @param clientAddress - Wallet address of the client
- * @param freelancerAddress - Wallet address of the freelancer
+ * @param clientUsername - Platform username of the client (null if not set)
+ * @param freelancerUsername - Platform username of the freelancer (null if not set)
  * @returns Human-readable actor label
  */
 function resolveActor(
   actorId: string | null,
   clientId: string,
   freelancerId: string,
-  clientAddress: string,
-  freelancerAddress: string
+  clientUsername: string | null,
+  freelancerUsername: string | null
 ): string {
   if (!actorId) return 'System';
-  if (actorId === clientId) return `Client (${truncateAddress(clientAddress)})`;
-  if (actorId === freelancerId) return `Freelancer (${truncateAddress(freelancerAddress)})`;
+  if (actorId === clientId) return clientUsername ? `🧑‍💼 ${clientUsername}` : '🧑‍💼 Client';
+  if (actorId === freelancerId)
+    return freelancerUsername ? `🛠️ ${freelancerUsername}` : '🛠️ Freelancer';
   return 'System';
 }
 
@@ -98,8 +99,8 @@ export function DealTimeline({
   error,
   clientId,
   freelancerId,
-  clientAddress,
-  freelancerAddress,
+  clientUsername,
+  freelancerUsername,
 }: DealTimelineProps) {
   if (isLoading) {
     return (
@@ -147,8 +148,8 @@ export function DealTimeline({
                     event.actorId,
                     clientId,
                     freelancerId,
-                    clientAddress,
-                    freelancerAddress
+                    clientUsername,
+                    freelancerUsername
                   )}
                 </span>
               </p>

@@ -50,7 +50,12 @@ export async function chatMessageHandler(ctx: Context): Promise<void> {
     if (session?.chatDealId) {
       setChatDealId(telegramUserId, null);
       log.info(
-        { module: 'commands.chat-message', operation: 'chatMessageHandler', telegramUserId, chatId },
+        {
+          module: 'commands.chat-message',
+          operation: 'chatMessageHandler',
+          telegramUserId,
+          chatId,
+        },
         'User exited chat room'
       );
     }
@@ -99,9 +104,7 @@ export async function chatMessageHandler(ctx: Context): Promise<void> {
       );
 
       if (err.statusCode === 400) {
-        await ctx.reply(
-          '❌ Message too long (max 2000 characters). Please shorten and try again.'
-        );
+        await ctx.reply('❌ Message too long (max 2000 characters). Please shorten and try again.');
         return;
       }
       if (err.statusCode === 403) {

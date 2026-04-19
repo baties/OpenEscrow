@@ -41,7 +41,14 @@ const log = logger.child({ module: 'deals.service' });
  */
 async function enrichDealsWithAddresses<T extends Deal>(
   dealRows: T[]
-): Promise<(T & { clientAddress: string; freelancerAddress: string })[]> {
+): Promise<
+  (T & {
+    clientAddress: string;
+    freelancerAddress: string;
+    clientUsername: string | null;
+    freelancerUsername: string | null;
+  })[]
+> {
   if (dealRows.length === 0) return [];
 
   const uniqueUserIds = [
@@ -49,16 +56,18 @@ async function enrichDealsWithAddresses<T extends Deal>(
   ];
 
   const userRows = await db
-    .select({ id: users.id, walletAddress: users.walletAddress })
+    .select({ id: users.id, walletAddress: users.walletAddress, username: users.username })
     .from(users)
     .where(inArray(users.id, uniqueUserIds));
 
-  const userMap = new Map(userRows.map((u) => [u.id, u.walletAddress]));
+  const userMap = new Map(userRows.map((u) => [u.id, u]));
 
   return dealRows.map((d) => ({
     ...d,
-    clientAddress: userMap.get(d.clientId) ?? '',
-    freelancerAddress: userMap.get(d.freelancerId) ?? '',
+    clientAddress: userMap.get(d.clientId)?.walletAddress ?? '',
+    freelancerAddress: userMap.get(d.freelancerId)?.walletAddress ?? '',
+    clientUsername: userMap.get(d.clientId)?.username ?? null,
+    freelancerUsername: userMap.get(d.freelancerId)?.username ?? null,
   }));
 }
 

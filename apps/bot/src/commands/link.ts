@@ -169,14 +169,18 @@ export async function linkCommandHandler(ctx: Context): Promise<void> {
     // Tap-to-copy: Telegram renders `code` spans as monospace blocks that can be
     // copied with a long-press (Android) or tap-and-hold (iOS). Each value is
     // on its own line in a separate code span to make mobile copying easy.
+    const username = ctx.from?.username;
+    const usernameNote = username ? `\n👤 *Your Telegram Username:* @${username}\n` : '';
+
     await ctx.replyWithMarkdown(
       `✅ *Code received!*\n\n` +
         `Now go to the web dashboard → *Settings → Telegram* and enter both values:\n\n` +
         `🔑 *OTP Code* (tap to copy):\n` +
         `\`${parseResult.data}\`\n\n` +
         `📱 *Your Telegram ID* (tap to copy):\n` +
-        `\`${telegramUserId}\`\n\n` +
-        `Click *Verify & Link* on the dashboard to complete linking.\n` +
+        `\`${telegramUserId}\`` +
+        usernameNote +
+        `\n\nClick *Verify & Link* on the dashboard to complete linking.\n` +
         `_You'll receive a confirmation here once it's done._`
     );
 

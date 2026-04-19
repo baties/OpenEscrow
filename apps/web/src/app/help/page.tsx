@@ -453,6 +453,70 @@ export default function HelpPage() {
         </div>
       </section>
 
+      {/* Chat Room */}
+      <section className="rounded-xl border border-purple-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl" aria-hidden="true">
+            💬
+          </span>
+          <h2 className="text-xl font-semibold text-gray-900">Deal Chat Room</h2>
+        </div>
+        <p className="mt-3 text-sm text-gray-600">
+          Every deal has a private, persistent chat room for the client and freelancer to
+          communicate. Messages are routed through the Telegram bot as a privacy relay — neither
+          party&apos;s Telegram ID is ever revealed to the other.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <p className="font-medium text-sm text-gray-800">On the web dashboard</p>
+            <ul className="mt-2 space-y-1.5 text-sm text-gray-600">
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Open any deal and scroll to the <strong>Chat</strong> panel at the bottom.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                The panel is read-only — use the Telegram bot to send messages.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Click <strong>Load older messages</strong> to see the full history.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Messages show role icons: 🧑‍💼 Client / 🛠️ Freelancer.
+              </li>
+            </ul>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <p className="font-medium text-sm text-gray-800">Via Telegram bot</p>
+            <ul className="mt-2 space-y-1.5 text-sm text-gray-600">
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Tap the <strong>💬 Chat</strong> button on any deal status or notification.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Type a message to send it to your counterparty via the relay.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                Press <strong>🚪 Exit Chat Room</strong> (keyboard button) to leave.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-500 font-bold">→</span>
+                You must have the Telegram bot linked to use this feature.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 rounded-lg bg-purple-50 border border-purple-200 p-4 text-sm text-purple-800">
+          <strong>Privacy note:</strong> Your counterparty never sees your wallet address or
+          Telegram user ID. The platform uses display usernames to identify participants. All
+          messages are stored on the server for the deal record.
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-gray-900">Frequently Asked Questions</h2>
