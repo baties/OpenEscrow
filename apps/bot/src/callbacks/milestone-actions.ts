@@ -22,6 +22,7 @@ import {
   ApiClientError,
 } from '../api-client/index.js';
 import { logger } from '../lib/logger.js';
+import { formatTokenAmount } from '../lib/format.js';
 
 const log = logger.child({ module: 'callbacks.milestone-actions' });
 
@@ -404,11 +405,11 @@ export async function handleDealStatus(ctx: TelegrafContext, dealId: string): Pr
     const message =
       `*Deal \`${shortId}...\`*\n\n` +
       `Status: ${deal.status}\n` +
-      `Amount: ${deal.totalAmount} tokens\n\n` +
+      `Amount: ${formatTokenAmount(deal.totalAmount, deal.tokenAddress)}\n\n` +
       `*Milestones:*\n${milestoneLines.length > 0 ? milestoneLines : '_None_'}\n\n` +
       `_Use the web dashboard for detailed submissions and feedback._`;
 
-    // Build action buttons so the user doesn't need to type /status <UUID>
+    // Build action buttons — role-aware + always includes Chat
     const buttons: ReturnType<typeof Markup.button.callback>[][] = [];
 
     if (isClient) {
@@ -432,11 +433,10 @@ export async function handleDealStatus(ctx: TelegrafContext, dealId: string): Pr
       }
     }
 
-    if (buttons.length > 0) {
-      await ctx.replyWithMarkdown(message, Markup.inlineKeyboard(buttons));
-    } else {
-      await ctx.replyWithMarkdown(message);
-    }
+    // Chat button is always shown — available throughout the deal lifecycle
+    buttons.push([Markup.button.callback('💬 Chat', `chat:${deal.id}`)]);
+
+    await ctx.replyWithMarkdown(message, Markup.inlineKeyboard(buttons));
   } catch (err) {
     if (err instanceof ApiClientError) {
       log.error(

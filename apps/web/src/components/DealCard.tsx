@@ -33,6 +33,7 @@ export function DealCard({ deal, currentUserAddress }: DealCardProps) {
   const isClient = deal.clientAddress.toLowerCase() === currentUserAddress.toLowerCase();
   const counterparty = isClient ? deal.freelancerAddress : deal.clientAddress;
   const role = isClient ? 'Client' : 'Freelancer';
+  const shortId = deal.id.slice(0, 8);
 
   return (
     <Link
@@ -41,7 +42,12 @@ export function DealCard({ deal, currentUserAddress }: DealCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{role}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{role}</p>
+            <p className="font-mono text-xs text-gray-300" title={deal.id}>
+              #{shortId}…
+            </p>
+          </div>
           <p className="mt-0.5 truncate font-medium text-gray-900">
             {role === 'Client' ? 'To: ' : 'From: '}
             <span className="font-mono text-sm">{truncateAddress(counterparty)}</span>

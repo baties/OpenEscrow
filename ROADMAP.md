@@ -124,14 +124,14 @@ Fixes and enhancements discovered during live testing.
 
 ---
 
-## Improvement Phase IV — Planned
+## Improvement Phase IV — In Progress
 
-Privacy, identity, and administration layer. Not started.
+Privacy, identity, and administration layer.
 
-| #    | Feature                            | Priority | Status         | Notes                                                                                                                                                                                           |
-| ---- | ---------------------------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| IV-1 | Platform usernames + privacy model | High     | 🔄 In Progress | Auto-generated 8-char alphanumeric username per user. User-changeable (4–10 chars, unique). Wallet/Telegram IDs hidden from counterparty. Usernames shown on all deal views, bot, and timeline. |
-| IV-2 | Admin dashboard                    | Medium   | ⏸️ Planned     | Admin-only UI: user list (username, userId, wallet, Telegram), deal browser, deal event audit log, reporting. Backend: admin role + protected routes.                                           |
+| #    | Feature                            | Priority | Status         | Notes                                                                                                                                                                                                                                           |
+| ---- | ---------------------------------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IV-1 | Platform usernames + privacy model | High     | 🔄 In Progress | Auto-generated 8-char alphanumeric username per user. User-changeable (4–10 chars, unique). Wallet/Telegram IDs hidden from counterparty. Usernames shown on all deal views, bot, and timeline. DB migration 0002 required.                     |
+| IV-2 | Admin dashboard + settings         | Medium   | ⏸️ Planned     | Admin-only UI: user list (username, userId, wallet, Telegram), deal browser, deal event audit log, reporting. Configurable "Confidentiality" setting (hides all counterparty identifiers when enabled). Backend: admin role + protected routes. |
 
 ---
 

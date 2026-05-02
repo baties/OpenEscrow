@@ -17,8 +17,11 @@ vi.mock('../src/config/env.js', () => ({
     NODE_ENV: 'test',
     TELEGRAM_BOT_TOKEN: 'test-token-123456789',
     API_BASE_URL: 'http://localhost:3001',
+    BOT_API_SECRET: 'test-secret-32-chars-minimum-ok',
     POLL_INTERVAL_MS: 30000,
     LOG_LEVEL: 'silent',
+    USDC_ADDRESS: '',
+    USDT_ADDRESS: '',
   },
 }));
 
