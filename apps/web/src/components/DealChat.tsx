@@ -2,14 +2,16 @@
  * DealChat.tsx — OpenEscrow Web Dashboard
  *
  * Read-only chat history panel for a deal's client↔freelancer conversation.
- * Handles: displaying messages with role icons, polling for new messages,
- *          cursor-based "Load more" pagination for older messages.
+ * Handles: displaying messages in a fixed-height scrollable box with role icons,
+ *          polling for new messages, cursor-based "Load more" pagination for older
+ *          messages. Auto-scrolls to the latest message on load and new arrivals.
  * Does NOT: send messages (Telegram-only), manage auth state,
  *            call the API directly (all via useDealMessages hook).
  */
 
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { useDealMessages } from '@/hooks/use-deal-messages';
 import type { Message } from '@open-escrow/shared';
 
@@ -65,7 +67,9 @@ function MessageBubble({ message, isClient }: { message: Message; isClient: bool
 
 /**
  * Read-only chat history panel for a deal's client↔freelancer conversation.
- * Messages auto-refresh every 30 seconds. Older messages can be loaded via pagination.
+ * Displayed as a fixed-height scrollable box — newest messages at the bottom.
+ * Auto-scrolls to the bottom on initial load and when new messages arrive.
+ * Loading older messages (top pagination) preserves the current scroll position.
  *
  * @param dealId - UUID of the deal whose chat to show
  * @param clientId - UUID of the deal's client (used to derive sender role icons)
@@ -73,6 +77,31 @@ function MessageBubble({ message, isClient }: { message: Message; isClient: bool
  */
 export function DealChat({ dealId, clientId }: DealChatProps) {
   const { messages, isLoading, error, loadOlder, hasMore } = useDealMessages(dealId);
+
+  // Ref for the scrollable message container — used to scroll to bottom.
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Tracks whether the last messages change was from loading older (top) pagination.
+  // When true, we skip the scroll-to-bottom so the user stays where they were.
+  const loadingOlderRef = useRef(false);
+
+  // Scroll to the bottom whenever messages change, unless we just loaded older messages.
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    if (loadingOlderRef.current) {
+      loadingOlderRef.current = false;
+      return;
+    }
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
+
+  /**
+   * Loads older messages and suppresses the auto-scroll so the user stays in place.
+   */
+  function handleLoadOlder(): void {
+    loadingOlderRef.current = true;
+    void loadOlder();
+  }
 
   return (
     <div>
@@ -89,43 +118,49 @@ export function DealChat({ dealId, clientId }: DealChatProps) {
           </span>
         </div>
 
-        {/* Message list */}
-        <div className="divide-y divide-gray-50 px-5">
-          {/* Load more (older messages) button */}
+        {/* Scrollable message area — fixed height, newest messages at bottom */}
+        <div ref={scrollRef} className="h-80 overflow-y-auto px-5">
+          {/* Load older messages button — sits at the top of the scroll area */}
           {hasMore && !isLoading && (
             <div className="py-3 text-center">
               <button
-                onClick={() => void loadOlder()}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+                onClick={handleLoadOlder}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
               >
-                Load older messages
+                ↑ Load older messages
               </button>
             </div>
           )}
 
           {/* Initial loading state */}
           {isLoading && messages.length === 0 && (
-            <div className="py-6 text-center text-sm text-gray-400">Loading messages…</div>
+            <div className="flex h-full items-center justify-center text-sm text-gray-400">
+              Loading messages…
+            </div>
           )}
 
           {/* Error state */}
           {error && messages.length === 0 && (
-            <div className="py-6 text-center text-sm text-red-500">{error}</div>
+            <div className="flex h-full items-center justify-center text-sm text-red-500">
+              {error}
+            </div>
           )}
 
           {/* Empty state */}
           {!isLoading && !error && messages.length === 0 && (
-            <div className="py-6 text-center text-sm text-gray-400">
+            <div className="flex h-full items-center justify-center text-sm text-gray-400">
               No messages yet. Start the conversation via the Telegram bot.
             </div>
           )}
 
-          {/* Messages */}
-          {messages.map((msg) => (
-            <div key={msg.id} className="py-3">
-              <MessageBubble message={msg} isClient={msg.senderId === clientId} />
-            </div>
-          ))}
+          {/* Messages — divided by thin lines */}
+          <div className="divide-y divide-gray-50">
+            {messages.map((msg) => (
+              <div key={msg.id} className="py-3">
+                <MessageBubble message={msg} isClient={msg.senderId === clientId} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

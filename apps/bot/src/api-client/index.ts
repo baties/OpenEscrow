@@ -284,10 +284,12 @@ export async function getDeal(jwt: string, dealId: string): Promise<GetDealRespo
 /**
  * Retrieves the audit trail (deal_events) for a deal.
  * Calls GET /api/v1/deals/:id/timeline.
+ * Passes includeMessages=true so MESSAGE_RECEIVED events are included for
+ * bot notification polling — they are filtered from the web-facing timeline.
  *
  * @param jwt - JWT token for the authenticated user
  * @param dealId - UUID of the deal
- * @returns Array of deal events ordered chronologically
+ * @returns Array of deal events ordered chronologically (including MESSAGE_RECEIVED)
  * @throws {ApiClientError} On 404, 403, or other API errors
  */
 export async function getDealTimeline(jwt: string, dealId: string): Promise<GetTimelineResponse> {
@@ -295,7 +297,11 @@ export async function getDealTimeline(jwt: string, dealId: string): Promise<GetT
     { module: 'api-client', operation: 'getDealTimeline', dealId },
     'Fetching deal timeline'
   );
-  return request<GetTimelineResponse>('GET', `/api/v1/deals/${dealId}/timeline`, jwt);
+  return request<GetTimelineResponse>(
+    'GET',
+    `/api/v1/deals/${dealId}/timeline?includeMessages=true`,
+    jwt
+  );
 }
 
 /**

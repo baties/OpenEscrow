@@ -327,20 +327,21 @@ export const dealsApi = {
 
   /**
    * Records that the client has funded the deal on-chain.
-   * The API indexer will also detect this, but this endpoint allows
-   * the frontend to confirm immediately after the on-chain tx.
+   * The API indexer will also detect the DealFunded event automatically, but this
+   * endpoint lets the frontend confirm state immediately without waiting for the poll cycle.
    *
-   * @param dealId - The deal UUID
-   * @param txHash - The transaction hash of the funding transaction
+   * @param dealId          - The deal UUID
+   * @param transactionHash - Transaction hash of the on-chain deposit tx (0x + 64 hex)
+   * @param chainDealId     - On-chain deal ID returned by the contract's createDeal() (uint256 as string)
    * @returns Updated Deal object
    * @throws {AuthExpiredError} If JWT is invalid or expired
    * @throws {ApiCallError} On non-2xx response
    * @throws {NetworkError} On network failure
    */
-  async fund(dealId: string, txHash: string): Promise<FundResponse> {
+  async fund(dealId: string, transactionHash: string, chainDealId: string): Promise<FundResponse> {
     return request<FundResponse>(`/api/v1/deals/${encodeURIComponent(dealId)}/fund`, {
       method: 'POST',
-      body: JSON.stringify({ txHash }),
+      body: JSON.stringify({ transactionHash, chainDealId }),
     });
   },
 

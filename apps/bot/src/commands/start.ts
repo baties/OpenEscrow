@@ -10,6 +10,7 @@
 import type { Context } from 'telegraf';
 import { isLinked, getSession } from '../store/sessions.js';
 import { logger } from '../lib/logger.js';
+import { MAIN_MENU_KEYBOARD } from '../lib/keyboards.js';
 
 const log = logger.child({ module: 'commands.start' });
 
@@ -54,9 +55,9 @@ export async function startCommandHandler(ctx: Context): Promise<void> {
     if (telegramUserId !== undefined && isLinked(telegramUserId)) {
       const session = getSession(telegramUserId);
       const message = welcomeLinked(session?.walletAddress ?? '(unknown)');
-      await ctx.replyWithMarkdown(message);
+      await ctx.replyWithMarkdown(message, { reply_markup: MAIN_MENU_KEYBOARD });
     } else {
-      await ctx.replyWithMarkdown(WELCOME_UNLINKED);
+      await ctx.replyWithMarkdown(WELCOME_UNLINKED, { reply_markup: MAIN_MENU_KEYBOARD });
     }
   } catch (err) {
     log.error(

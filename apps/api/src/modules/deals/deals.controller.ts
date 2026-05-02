@@ -183,11 +183,12 @@ export async function cancelDealHandler(
  * @returns 200 with array of DealEvent objects
  */
 export async function getDealTimelineHandler(
-  request: FastifyRequest<{ Params: { id: string } }>,
+  request: FastifyRequest<{ Params: { id: string }; Querystring: { includeMessages?: string } }>,
   reply: FastifyReply
 ): Promise<void> {
   const dealId = request.params.id;
   const userId = request.user.userId;
+  const includeMessages = request.query.includeMessages === 'true';
 
   // Verify caller is a participant before returning timeline.
   const deal = await dealsService.getDeal(dealId);
@@ -207,6 +208,6 @@ export async function getDealTimelineHandler(
     return;
   }
 
-  const timeline = await dealsService.getDealTimeline(dealId);
+  const timeline = await dealsService.getDealTimeline(dealId, includeMessages);
   await reply.status(200).send(timeline);
 }

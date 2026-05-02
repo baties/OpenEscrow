@@ -151,13 +151,20 @@ export const telegramLinkSchema = z.object({
 export type TelegramLinkFormValues = z.infer<typeof telegramLinkSchema>;
 
 /**
- * Schema for the fund deal form (the tx hash after on-chain deposit).
+ * Schema for the manual fund deal form.
+ * Requires both the deposit tx hash and the on-chain deal ID returned by createDeal().
  */
 export const fundDealSchema = z.object({
-  txHash: z
+  /** Deposit transaction hash (0x + 64 hex chars). */
+  transactionHash: z
     .string()
     .trim()
     .regex(/^0x[0-9a-fA-F]{64}$/, 'Must be a valid transaction hash (0x followed by 64 hex chars)'),
+  /** On-chain deal ID — the uint256 returned by the contract createDeal() call. */
+  chainDealId: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, 'Must be a positive integer (the deal ID returned by createDeal)'),
 });
 
 export type FundDealFormValues = z.infer<typeof fundDealSchema>;

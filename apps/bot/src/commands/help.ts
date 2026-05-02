@@ -10,6 +10,7 @@
 
 import type { Context } from 'telegraf';
 import { logger } from '../lib/logger.js';
+import { MAIN_MENU_KEYBOARD } from '../lib/keyboards.js';
 
 const log = logger.child({ module: 'commands.help' });
 
@@ -69,7 +70,7 @@ export async function helpCommandHandler(ctx: Context): Promise<void> {
     `_Full documentation: visit the web dashboard, Help menu_`;
 
   try {
-    await ctx.replyWithMarkdown(helpText);
+    await ctx.replyWithMarkdown(helpText, { reply_markup: MAIN_MENU_KEYBOARD });
 
     log.info(
       { module: 'commands.help', operation: 'helpCommandHandler', telegramUserId, chatId },

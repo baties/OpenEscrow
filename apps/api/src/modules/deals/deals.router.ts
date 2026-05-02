@@ -95,7 +95,7 @@ export async function dealsRouter(fastify: FastifyInstance): Promise<void> {
   );
 
   // GET /api/v1/deals/:id/timeline — deal audit trail
-  fastify.get<{ Params: { id: string } }>(
+  fastify.get<{ Params: { id: string }; Querystring: { includeMessages?: string } }>(
     '/deals/:id/timeline',
     {
       preHandler: [requireAuth],

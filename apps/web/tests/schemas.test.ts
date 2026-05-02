@@ -228,23 +228,43 @@ describe('telegramLinkSchema', () => {
 
 describe('fundDealSchema', () => {
   const validTxHash = '0x' + 'a'.repeat(64);
+  const validChainDealId = '42';
 
-  it('accepts a valid 66-char hex transaction hash', () => {
-    expect(() => fundDealSchema.parse({ txHash: validTxHash })).not.toThrow();
+  it('accepts a valid transaction hash and chain deal ID', () => {
+    expect(() =>
+      fundDealSchema.parse({ transactionHash: validTxHash, chainDealId: validChainDealId })
+    ).not.toThrow();
   });
 
   it('rejects a hash without 0x prefix', () => {
-    const result = fundDealSchema.safeParse({ txHash: 'a'.repeat(64) });
+    const result = fundDealSchema.safeParse({
+      transactionHash: 'a'.repeat(64),
+      chainDealId: validChainDealId,
+    });
     expect(result.success).toBe(false);
   });
 
   it('rejects a hash that is too short', () => {
-    const result = fundDealSchema.safeParse({ txHash: '0x' + 'a'.repeat(63) });
+    const result = fundDealSchema.safeParse({
+      transactionHash: '0x' + 'a'.repeat(63),
+      chainDealId: validChainDealId,
+    });
     expect(result.success).toBe(false);
   });
 
   it('rejects a hash with non-hex characters', () => {
-    const result = fundDealSchema.safeParse({ txHash: '0x' + 'z'.repeat(64) });
+    const result = fundDealSchema.safeParse({
+      transactionHash: '0x' + 'z'.repeat(64),
+      chainDealId: validChainDealId,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a non-numeric chain deal ID', () => {
+    const result = fundDealSchema.safeParse({
+      transactionHash: validTxHash,
+      chainDealId: 'abc',
+    });
     expect(result.success).toBe(false);
   });
 });

@@ -19,6 +19,7 @@ import type { Context } from 'telegraf';
 import { getSession, setChatDealId } from '../store/sessions.js';
 import { sendDealMessage, ApiClientError } from '../api-client/index.js';
 import { logger } from '../lib/logger.js';
+import { MAIN_MENU_KEYBOARD } from '../lib/keyboards.js';
 
 const log = logger.child({ module: 'commands.chat-message' });
 
@@ -59,9 +60,9 @@ export async function chatMessageHandler(ctx: Context): Promise<void> {
         'User exited chat room'
       );
     }
-    // Remove the persistent reply keyboard regardless of whether they were in a room.
+    // Restore the main menu keyboard when exiting the chat room.
     await ctx.reply('Chat room closed. Use /deals to return to your deals.', {
-      reply_markup: { remove_keyboard: true },
+      reply_markup: MAIN_MENU_KEYBOARD,
     });
     return;
   }
@@ -110,7 +111,7 @@ export async function chatMessageHandler(ctx: Context): Promise<void> {
       if (err.statusCode === 403) {
         await ctx.reply('❌ You are no longer a participant in this deal.');
         setChatDealId(telegramUserId, null);
-        await ctx.reply('Chat room closed.', { reply_markup: { remove_keyboard: true } });
+        await ctx.reply('Chat room closed.', { reply_markup: MAIN_MENU_KEYBOARD });
         return;
       }
 

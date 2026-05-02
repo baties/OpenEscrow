@@ -39,9 +39,15 @@ const log = logger.child({ module: 'polling.notifier' });
  *
  * @param event - The deal event to format
  * @param userRole - 'client' or 'freelancer' so notifications are role-relevant
+ * @param inChatRoom - When true and event is MESSAGE_RECEIVED, returns a compact
+ *                     inline format (no "Open Chat" prompt) for already-open rooms
  * @returns Markdown notification string, or null if event should be skipped
  */
-function formatEventNotification(event: DealEvent, userRole: string): string | null {
+function formatEventNotification(
+  event: DealEvent,
+  userRole: string,
+  inChatRoom = false
+): string | null {
   const dealId =
     typeof event.metadata?.['dealId'] === 'string' ? event.metadata['dealId'] : event.dealId;
   const shortDealId = dealId.slice(0, 8);
@@ -142,9 +148,14 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
         (senderRole === 'freelancer' && userRole === 'freelancer');
       if (isFromSelf) return null; // Never notify the sender of their own message.
 
-      const senderIcon = senderRole === 'client' ? '🧑‍💼 Client' : '🛠️ Freelancer';
+      const senderIcon = senderRole === 'client' ? '🧑‍💼' : '🛠️';
       const preview =
         typeof event.metadata?.['preview'] === 'string' ? event.metadata['preview'] : 'New message';
+
+      // Compact inline format when recipient already has the chat room open.
+      if (inChatRoom) {
+        return `${senderIcon} ${preview}`;
+      }
 
       return (
         `💬 *New message — Deal \\#${shortDealId}*\n\n` +
@@ -187,7 +198,12 @@ function formatEventNotification(event: DealEvent, userRole: string): string | n
 async function pollUserNotifications(
   bot: Telegraf<Context>,
   telegramUserId: string,
-  session: { jwt: string; userId: string; lastSeenEventAt: string | null }
+  session: {
+    jwt: string;
+    userId: string;
+    lastSeenEventAt: string | null;
+    chatDealId: string | null;
+  }
 ): Promise<void> {
   try {
     const dealsResponse = await listDeals(session.jwt);
@@ -234,12 +250,14 @@ async function pollUserNotifications(
           : events.slice(-5); // On first poll, only show last 5 events to avoid spam
 
         for (const event of newEvents) {
-          const message = formatEventNotification(event, userRole);
+          // If recipient is already in this deal's chat room, use compact inline format.
+          const alreadyInRoom =
+            event.eventType === 'MESSAGE_RECEIVED' && session.chatDealId === deal.id;
+          const message = formatEventNotification(event, userRole, alreadyInRoom);
           if (message) {
             try {
-              // MESSAGE_RECEIVED notifications include an "Open Chat" inline button.
               const replyMarkup =
-                event.eventType === 'MESSAGE_RECEIVED'
+                event.eventType === 'MESSAGE_RECEIVED' && !alreadyInRoom
                   ? Markup.inlineKeyboard([
                       [Markup.button.callback('💬 Open Chat', `open_chat:${deal.id}`)],
                     ]).reply_markup

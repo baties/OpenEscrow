@@ -56,11 +56,12 @@ export interface UseDealActionsResult {
   /**
    * Records that the client has funded the deal on-chain.
    *
-   * @param dealId - The deal UUID
-   * @param txHash - The transaction hash of the on-chain deposit
+   * @param dealId          - The deal UUID
+   * @param transactionHash - Transaction hash of the on-chain deposit (0x + 64 hex)
+   * @param chainDealId     - On-chain deal ID returned by the contract's createDeal() (uint256 as string)
    * @returns Updated deal, or null on error
    */
-  fundDeal: (dealId: string, txHash: string) => Promise<Deal | null>;
+  fundDeal: (dealId: string, transactionHash: string, chainDealId: string) => Promise<Deal | null>;
 
   /**
    * Cancels the deal. Refund rules are applied server-side.
@@ -111,20 +112,23 @@ export function useDealActions(): UseDealActionsResult {
     }
   }, []);
 
-  const fundDeal = useCallback(async (dealId: string, txHash: string): Promise<Deal | null> => {
-    setFundState({ isLoading: true, error: null });
-    try {
-      // API returns the updated Deal directly
-      const deal = await dealsApi.fund(dealId, txHash);
-      setFundState({ isLoading: false, error: null });
-      return deal;
-    } catch (err) {
-      const message = getErrorMessage(err);
-      console.error('[useDealActions] fundDeal failed:', { dealId, error: message });
-      setFundState({ isLoading: false, error: message });
-      return null;
-    }
-  }, []);
+  const fundDeal = useCallback(
+    async (dealId: string, transactionHash: string, chainDealId: string): Promise<Deal | null> => {
+      setFundState({ isLoading: true, error: null });
+      try {
+        // API returns the updated Deal directly
+        const deal = await dealsApi.fund(dealId, transactionHash, chainDealId);
+        setFundState({ isLoading: false, error: null });
+        return deal;
+      } catch (err) {
+        const message = getErrorMessage(err);
+        console.error('[useDealActions] fundDeal failed:', { dealId, error: message });
+        setFundState({ isLoading: false, error: message });
+        return null;
+      }
+    },
+    []
+  );
 
   const cancelDeal = useCallback(async (dealId: string): Promise<Deal | null> => {
     setCancelState({ isLoading: true, error: null });

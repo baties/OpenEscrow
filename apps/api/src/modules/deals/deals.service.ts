@@ -608,7 +608,10 @@ export async function cancelDeal(
  * @throws {AppError} DEAL_NOT_FOUND if the deal does not exist
  * @throws {AppError} DEAL_TIMELINE_FAILED on database error
  */
-export async function getDealTimeline(dealId: string): Promise<DealEvent[]> {
+export async function getDealTimeline(
+  dealId: string,
+  includeMessages = false
+): Promise<DealEvent[]> {
   try {
     const [deal] = await db
       .select({ id: deals.id })
@@ -620,12 +623,16 @@ export async function getDealTimeline(dealId: string): Promise<DealEvent[]> {
       throw new AppError('DEAL_NOT_FOUND', `Deal ${dealId} not found`, { dealId });
     }
 
-    // MESSAGE_RECEIVED events are filtered out — they exist only for bot notification
-    // polling and should not appear in the public-facing audit trail.
+    // MESSAGE_RECEIVED events are excluded from the public audit trail (web timeline).
+    // The bot notification poller passes includeMessages=true to receive them for delivery.
+    const whereClause = includeMessages
+      ? eq(dealEvents.dealId, dealId)
+      : and(eq(dealEvents.dealId, dealId), ne(dealEvents.eventType, 'MESSAGE_RECEIVED'));
+
     const events = await db
       .select()
       .from(dealEvents)
-      .where(and(eq(dealEvents.dealId, dealId), ne(dealEvents.eventType, 'MESSAGE_RECEIVED')))
+      .where(whereClause)
       .orderBy(dealEvents.createdAt);
 
     return events;
