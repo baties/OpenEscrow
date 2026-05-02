@@ -8,6 +8,10 @@
 
 # ─── Stage 1: Dependencies ────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
+# python3 + make + g++ required by node-gyp to compile native addons:
+#   bufferutil, utf-8-validate (telegraf → ws → optional native bindings)
+# These stay in the deps stage only — they do NOT appear in the final runner image.
+RUN apk add --no-cache python3 make g++
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 

@@ -1,0 +1,46 @@
+###############################################################################
+# docker-compose.override.yml.example — LOCAL DEVELOPMENT TEMPLATE
+#
+# Copy this file to docker-compose.override.yml for local development.
+# The actual override file is gitignored and must NEVER be deployed to the VPS.
+#
+# What this does:
+#   - Publishes api:3001 and web:3000 to localhost so browsers can reach them.
+#   - Overrides NEXT_PUBLIC_API_URL to http://localhost:3001 (baked into the
+#     Next.js bundle at build time — must match where the browser reaches the API).
+#   - Makes app-network non-external (no smarthinking-website stack required locally).
+#
+# What this does NOT affect:
+#   - VPS: this file does not exist on the server. VPS uses docker-compose.yml as-is.
+#   - app-network on VPS remains external, shared with the nginx/smarthinking stack.
+#
+# Usage (local dev):
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#   docker compose up -d --build        # first time — bakes NEXT_PUBLIC_API_URL
+#   docker compose up -d                # subsequent starts (no rebuild needed)
+#
+# Usage (VPS — run from the server where this file does not exist):
+#   docker compose up -d --env-file .env.production
+###############################################################################
+
+services:
+  api:
+    ports:
+      - '3001:3001'
+    environment:
+      ALLOWED_ORIGIN: 'http://localhost:3000'
+
+  web:
+    ports:
+      - '3000:3000'
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: 'http://localhost:3001'
+    environment:
+      NEXT_PUBLIC_API_URL: 'http://localhost:3001'
+
+# Override app-network to be a local bridge — no dependency on the
+# smarthinking-website stack running locally.
+networks:
+  app-network:
+    external: false

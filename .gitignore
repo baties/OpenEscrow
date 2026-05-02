@@ -58,6 +58,12 @@ pino.log
 .DS_Store
 Thumbs.db
 
+# ─── Local Docker Compose overrides ──────────────────────────────────────────
+# docker-compose.override.yml publishes ports for local dev and sets
+# app-network to non-external. It must NEVER be deployed to the VPS.
+# Copy docker-compose.override.yml.example → docker-compose.override.yml locally.
+# docker-compose.override.yml
+
 # ─── Temporary files ──────────────────────────────────────────────────────────
 tmp/
 temp/
