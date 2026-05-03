@@ -4,40 +4,73 @@
 # Copy this file to docker-compose.override.yml for local development.
 # The actual override file is gitignored and must NEVER be deployed to the VPS.
 #
-# What this does:
-#   - Publishes api:3001 and web:3000 to localhost so browsers can reach them.
-#   - Overrides NEXT_PUBLIC_API_URL to http://localhost:3001 (baked into the
-#     Next.js bundle at build time — must match where the browser reaches the API).
-#   - Makes app-network non-external (no smarthinking-website stack required locally).
-#
-# What this does NOT affect:
-#   - VPS: this file does not exist on the server. VPS uses docker-compose.yml as-is.
-#   - app-network on VPS remains external, shared with the nginx/smarthinking stack.
+# What this fixes vs the base docker-compose.yml:
+#   1. Healthchecks: node:20-alpine runner does NOT have wget. Overrides all
+#      healthchecks to use `node -e` HTTP requests that are always available.
+#   2. Startup ordering: adds `condition: service_healthy` so postgres is fully
+#      ready before the API runs migrations, and API is ready before web/bot start.
+#   3. Ports: publishes 3001 and 3000 to localhost (base uses expose-only for nginx).
+#   4. NEXT_PUBLIC_API_URL: overrides the baked-in URL to point to localhost:3001.
+#   5. NEXT_PUBLIC_RPC_URL: uses a CORS-friendly Sepolia RPC instead of the default
+#      wagmi transport (eth.merkle.io blocks requests from localhost origins).
+#   6. Bot env: adds USDC_ADDRESS + USDT_ADDRESS needed for token display locally.
 #
 # Usage (local dev):
 #   cp docker-compose.override.yml.example docker-compose.override.yml
-#   docker compose up -d --build        # first time — bakes NEXT_PUBLIC_API_URL
-#   docker compose up -d                # subsequent starts (no rebuild needed)
-#
-# Usage (VPS — run from the server where this file does not exist):
-#   docker compose up -d --env-file .env.production
+#   docker compose down && docker compose up -d --build
 ###############################################################################
 
 services:
+  # ─── PostgreSQL ───────────────────────────────────────────────────────────────
+  # healthcheck is already correct (pg_isready is always available) — no change needed.
+
+  # ─── Backend API ──────────────────────────────────────────────────────────────
   api:
     ports:
       - '3001:3001'
     environment:
       ALLOWED_ORIGIN: 'http://localhost:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - 'CMD'
+        - 'node'
+        - '-e'
+        - >-
+          const h=require('http');
+          h.get('http://localhost:3001/api/v1/health',(r)=>{
+            process.exit(r.statusCode===200?0:1)
+          }).on('error',()=>process.exit(1))
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
+  # ─── Web Dashboard ────────────────────────────────────────────────────────────
   web:
     ports:
       - '3000:3000'
     build:
       args:
         NEXT_PUBLIC_API_URL: 'http://localhost:3001'
+        NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
     environment:
       NEXT_PUBLIC_API_URL: 'http://localhost:3001'
+      NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ─── Telegram Bot ─────────────────────────────────────────────────────────────
+  bot:
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      USDC_ADDRESS: ${USDC_ADDRESS}
+      USDT_ADDRESS: ${USDT_ADDRESS}
 
 # Override app-network to be a local bridge — no dependency on the
 # smarthinking-website stack running locally.
