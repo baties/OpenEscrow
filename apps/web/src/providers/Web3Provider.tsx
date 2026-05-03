@@ -70,14 +70,25 @@ function buildTransports() {
   return transports;
 }
 
+// ─── WalletConnect disable flag ───────────────────────────────────────────────
+// When NEXT_PUBLIC_DISABLE_WALLETCONNECT=true (set in docker-compose.override.yml
+// for local dev), WalletConnect and Rainbow wallets are excluded from the connector
+// list. This prevents the WalletConnect v2 SDK from initialising on page load and
+// making calls to eth.merkle.io, which blocks requests from localhost origins.
+// MetaMask and Coinbase wallets remain fully functional without WalletConnect.
+// This flag has no effect in production (it is never set on the VPS).
+const WALLETCONNECT_DISABLED = process.env.NEXT_PUBLIC_DISABLE_WALLETCONNECT === 'true';
+
 // ─── wagmi + RainbowKit configuration ────────────────────────────────────────
-// Limit to 4 common wallets so the compact modal stays genuinely compact.
-// getDefaultWallets() returns ~8 wallets which makes the dialog appear large.
+// In production: 4 wallets (MetaMask, Coinbase, WalletConnect, Rainbow).
+// Locally: 2 wallets (MetaMask, Coinbase) — WalletConnect SDK not initialised.
 const connectors = connectorsForWallets(
   [
     {
       groupName: 'Popular',
-      wallets: [metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet],
+      wallets: WALLETCONNECT_DISABLED
+        ? [metaMaskWallet, coinbaseWallet]
+        : [metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet],
     },
   ],
   {

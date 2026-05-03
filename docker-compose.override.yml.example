@@ -56,9 +56,11 @@ services:
       args:
         NEXT_PUBLIC_API_URL: 'http://localhost:3001'
         NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
+        NEXT_PUBLIC_DISABLE_WALLETCONNECT: 'true'
     environment:
       NEXT_PUBLIC_API_URL: 'http://localhost:3001'
       NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
+      NEXT_PUBLIC_DISABLE_WALLETCONNECT: 'true'
     depends_on:
       api:
         condition: service_healthy
