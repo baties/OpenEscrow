@@ -11,8 +11,10 @@
 #      ready before the API runs migrations, and API is ready before web/bot start.
 #   3. Ports: publishes 3001 and 3000 to localhost (base uses expose-only for nginx).
 #   4. NEXT_PUBLIC_API_URL: overrides the baked-in URL to point to localhost:3001.
-#   5. NEXT_PUBLIC_RPC_URL: uses a CORS-friendly Sepolia RPC instead of the default
-#      wagmi transport (eth.merkle.io blocks requests from localhost origins).
+#   5. RPC proxy: NEXT_PUBLIC_RPC_URL points to /api/rpc (Next.js server-side proxy).
+#      The proxy forwards to RPC_URL server-side, avoiding browser CORS restrictions.
+#      Public RPC endpoints (rpc.sepolia.org, eth.merkle.io) block browser requests
+#      from localhost origins — the proxy eliminates this entirely.
 #   6. Bot env: adds USDC_ADDRESS + USDT_ADDRESS needed for token display locally.
 #
 # Usage (local dev):
@@ -55,12 +57,18 @@ services:
     build:
       args:
         NEXT_PUBLIC_API_URL: 'http://localhost:3001'
-        NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
+        # Route wagmi RPC calls through the Next.js /api/rpc proxy (same-origin,
+        # no CORS). The proxy forwards server-side to RPC_URL (set below).
+        NEXT_PUBLIC_RPC_URL: 'http://localhost:3000/api/rpc'
         NEXT_PUBLIC_DISABLE_WALLETCONNECT: 'true'
     environment:
       NEXT_PUBLIC_API_URL: 'http://localhost:3001'
-      NEXT_PUBLIC_RPC_URL: 'https://rpc.sepolia.org'
+      NEXT_PUBLIC_RPC_URL: 'http://localhost:3000/api/rpc'
       NEXT_PUBLIC_DISABLE_WALLETCONNECT: 'true'
+      # Server-side only — the actual Sepolia RPC endpoint the /api/rpc proxy
+      # forwards to. Never exposed to the browser (no NEXT_PUBLIC_ prefix).
+      # Using publicnode instead of rpc.sepolia.org which returns 400 for Multicall3.
+      RPC_URL: 'https://ethereum-sepolia-rpc.publicnode.com'
     depends_on:
       api:
         condition: service_healthy

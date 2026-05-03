@@ -99,6 +99,9 @@ services:
         NEXT_PUBLIC_USDC_ADDRESS: ${USDC_ADDRESS}
         NEXT_PUBLIC_USDT_ADDRESS: ${USDT_ADDRESS}
         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${WALLETCONNECT_PROJECT_ID}
+        # Route wagmi RPC calls through the server-side /api/rpc proxy to avoid
+        # browser CORS restrictions on public RPC endpoints.
+        NEXT_PUBLIC_RPC_URL: ${NEXT_PUBLIC_RPC_URL:-https://openescrow.smarthinking.tech/api/rpc}
     container_name: open-escrow-web
     restart: unless-stopped
     depends_on:
@@ -111,6 +114,9 @@ services:
       NEXT_PUBLIC_USDC_ADDRESS: ${USDC_ADDRESS}
       NEXT_PUBLIC_USDT_ADDRESS: ${USDT_ADDRESS}
       NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${WALLETCONNECT_PROJECT_ID:?WALLETCONNECT_PROJECT_ID is required}
+      # Server-side only — the actual RPC endpoint the /api/rpc proxy forwards to.
+      # Reuses the same RPC_URL already set in the API service.
+      RPC_URL: ${RPC_URL:?RPC_URL is required}
     expose:
       - "3000"
     networks:

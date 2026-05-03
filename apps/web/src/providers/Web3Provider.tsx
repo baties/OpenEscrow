@@ -6,13 +6,18 @@
  * Does NOT: manage auth state (that's AuthProvider's job),
  *            make any API calls, or render any UI beyond the provider tree.
  *
- * Multi-chain: all 4 supported chains are registered in the wagmi config so
- * RainbowKit can handle chain switching. The "active" chain (where the contract
- * is deployed) is driven by NEXT_PUBLIC_CHAIN_ID. The app enforces that the
- * user's wallet is on the active chain before any transaction.
+ * One chain per deployment: only the active chain (NEXT_PUBLIC_CHAIN_ID) is
+ * registered in wagmiConfig. Registering all chains causes wagmi to make
+ * read calls against every chain's default RPC (e.g. eth.merkle.io for mainnet),
+ * which blocks CORS from localhost and wastes bandwidth in production.
+ * Chain display metadata for all supported chains lives in CHAIN_META (lib/config.ts).
  *
- * Supported chains: Sepolia (11155111), Ethereum Mainnet (1), BNB Smart Chain (56),
- * Polygon Mainnet (137). Add new chains here and to CHAIN_META in lib/config.ts.
+ * Supported chain IDs: 11155111 (Sepolia), 1 (Mainnet), 56 (BSC), 137 (Polygon).
+ * To add a chain: add it to the CHAIN_BY_ID map below and to CHAIN_META in config.ts.
+ *
+ * RPC transport: all wagmi read calls are routed through /api/rpc (a Next.js
+ * server-side proxy) when NEXT_PUBLIC_RPC_URL is configured. This avoids browser
+ * CORS restrictions on public RPC endpoints entirely.
  *
  * Dependency: wagmi — React hooks for Ethereum wallet connection.
  * Why: specified in CLAUDE.md Section E as the wallet connection library.
@@ -49,32 +54,26 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { config as appConfig } from '@/lib/config';
 
-// ─── Chain registry ───────────────────────────────────────────────────────────
-// All chains that OpenEscrow may be deployed on. New chains added here require
-// a matching entry in CHAIN_META in lib/config.ts.
-const ALL_CHAINS = [sepolia, mainnet, bsc, polygon] as const;
+// ─── Chain registry ────────────────────────────────────────────────────────────
+// Only the active chain is passed to wagmiConfig. All supported chain objects are
+// kept here for the lookup — add new chains here AND in CHAIN_META in config.ts.
+const CHAIN_BY_ID = {
+  11155111: sepolia,
+  1: mainnet,
+  56: bsc,
+  137: polygon,
+} as const;
 
-// ─── Transport configuration ──────────────────────────────────────────────────
-// If NEXT_PUBLIC_RPC_URL is set, use it for the active chain's transport to
-// avoid public RPC rate limits. All other chains fall back to their public RPCs.
-function buildTransports() {
-  const transports: Record<number, ReturnType<typeof http>> = {};
-  for (const chain of ALL_CHAINS) {
-    if (chain.id === appConfig.chainId && appConfig.rpcUrl) {
-      // Custom RPC for the active chain (avoids public endpoint rate limits)
-      transports[chain.id] = http(appConfig.rpcUrl);
-    } else {
-      transports[chain.id] = http();
-    }
-  }
-  return transports;
-}
+type SupportedChainId = keyof typeof CHAIN_BY_ID;
+
+/** The single wagmi chain for this deployment, driven by NEXT_PUBLIC_CHAIN_ID. */
+const activeChain = CHAIN_BY_ID[appConfig.chainId as SupportedChainId] ?? sepolia;
 
 // ─── WalletConnect disable flag ───────────────────────────────────────────────
 // When NEXT_PUBLIC_DISABLE_WALLETCONNECT=true (set in docker-compose.override.yml
 // for local dev), WalletConnect and Rainbow wallets are excluded from the connector
 // list. This prevents the WalletConnect v2 SDK from initialising on page load and
-// making calls to eth.merkle.io, which blocks requests from localhost origins.
+// making calls to external endpoints that block requests from localhost origins.
 // MetaMask and Coinbase wallets remain fully functional without WalletConnect.
 // This flag has no effect in production (it is never set on the VPS).
 const WALLETCONNECT_DISABLED = process.env.NEXT_PUBLIC_DISABLE_WALLETCONNECT === 'true';
@@ -98,15 +97,18 @@ const connectors = connectorsForWallets(
 );
 
 /**
- * wagmi client config — all 4 supported chains registered.
- * Active chain is determined by NEXT_PUBLIC_CHAIN_ID at build time.
+ * wagmi client config — only the active chain is registered.
+ * Transport routes through NEXT_PUBLIC_RPC_URL (/api/rpc proxy) when configured,
+ * otherwise falls back to the chain's built-in public RPC endpoint.
  * Uses HTTP transport only (no WebSocket per CLAUDE.md Section C).
  */
 const wagmiConfig = createConfig({
-  chains: ALL_CHAINS,
+  chains: [activeChain],
   connectors,
-  transports: buildTransports(),
-  ssr: true, // Required for Next.js App Router
+  transports: {
+    [activeChain.id]: appConfig.rpcUrl ? http(appConfig.rpcUrl) : http(),
+  } as Record<number, ReturnType<typeof http>>,
+  ssr: true,
 });
 
 /**
