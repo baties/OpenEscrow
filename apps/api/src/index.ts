@@ -83,6 +83,43 @@ export async function buildApp() {
     });
   });
 
+  // ─── RPC proxy (public — no auth) ─────────────────────────────────────────
+
+  /**
+   * POST /api/rpc
+   * Server-side proxy for Ethereum JSON-RPC requests from the web frontend.
+   * Forwards the JSON-RPC payload to the configured RPC_URL and returns the
+   * upstream response, eliminating browser CORS restrictions on public RPC
+   * endpoints. Registered here (not under /api/v1/) because nginx routes
+   * /api/* to this service — the web frontend calls its own origin's /api/rpc.
+   *
+   * @param request - Raw JSON-RPC POST body from the browser
+   * @returns Upstream JSON-RPC response, or 502 on upstream failure
+   * @throws Never — all errors returned as structured 502 responses
+   */
+  fastify.post('/api/rpc', async (request, reply) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10 s timeout
+
+    try {
+      const upstream = await fetch(env.RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request.body),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      const data = (await upstream.json()) as unknown;
+      await reply.status(upstream.status).send(data);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const message = err instanceof Error ? err.message : String(err);
+      log.error({ module: 'index', operation: 'rpcProxy', rpcUrl: env.RPC_URL, error: message });
+      await reply.status(502).send({ error: `RPC proxy error: ${message}` });
+    }
+  });
+
   // ─── Auth routes (public — no auth required) ──────────────────────────────
 
   /**
