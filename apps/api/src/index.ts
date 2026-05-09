@@ -110,7 +110,7 @@ export async function buildApp() {
       });
 
       clearTimeout(timeoutId);
-      const data = (await upstream.json()) as unknown;
+      const data = await upstream.json();
       await reply.status(upstream.status).send(data);
     } catch (err) {
       clearTimeout(timeoutId);
