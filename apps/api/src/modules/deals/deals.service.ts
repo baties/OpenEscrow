@@ -25,7 +25,7 @@ import {
 } from '../../database/schema.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
-import type { CreateDealInput, FundDealInput } from './deals.schema.js';
+import type { CreateDealInput, FundDealInput, RegisterChainDealInput } from './deals.schema.js';
 
 const log = logger.child({ module: 'deals.service' });
 
@@ -491,6 +491,102 @@ export async function fundDeal(
       'fundDeal transaction failed'
     );
     throw new AppError('DEAL_FUND_FAILED', 'Failed to record deal funding');
+  }
+}
+
+/**
+ * Records the on-chain deal ID immediately after the client calls createDeal on-chain.
+ * Stores chainDealId in the DB (even before deposit) and emits DEAL_CHAIN_CREATED so
+ * the bot can notify the freelancer to call agreeToDeal on-chain.
+ *
+ * Idempotent: if chainDealId is already set to the same value, returns early without error.
+ * Deal must be in AGREED status (client must not have already funded or cancelled it).
+ *
+ * @param dealId - UUID of the deal
+ * @param clientId - UUID of the client registering the chain deal
+ * @param input - Contains chainDealId (uint256 as decimal string)
+ * @returns Updated deal with milestones
+ * @throws {AppError} DEAL_NOT_FOUND if deal does not exist
+ * @throws {AppError} INVALID_STATE if deal is not in AGREED status
+ * @throws {AppError} DEAL_CHAIN_REGISTER_FAILED on database error
+ */
+export async function registerChainDeal(
+  dealId: string,
+  clientId: string,
+  input: RegisterChainDealInput
+): Promise<Deal & { milestones: Milestone[] }> {
+  log.info(
+    {
+      module: 'deals.service',
+      operation: 'registerChainDeal',
+      dealId,
+      clientId,
+      chainDealId: input.chainDealId,
+    },
+    'Registering on-chain deal ID'
+  );
+
+  const deal = await getDeal(dealId);
+  if (!deal) {
+    throw new AppError('DEAL_NOT_FOUND', `Deal ${dealId} not found`, { dealId });
+  }
+
+  if (deal.status !== 'AGREED') {
+    throw new AppError(
+      'INVALID_STATE',
+      `Deal must be in AGREED status to register chain deal ID (current: ${deal.status})`,
+      { dealId, currentStatus: deal.status }
+    );
+  }
+
+  // Idempotent: same chainDealId already stored — return current state.
+  if (deal.chainDealId === input.chainDealId) {
+    log.info(
+      { module: 'deals.service', operation: 'registerChainDeal', dealId, chainDealId: input.chainDealId },
+      'chainDealId already registered — skipping update'
+    );
+    return deal;
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(deals)
+        .set({ chainDealId: input.chainDealId })
+        .where(eq(deals.id, dealId));
+
+      await tx.insert(dealEvents).values({
+        dealId,
+        actorId: clientId,
+        eventType: 'DEAL_CHAIN_CREATED',
+        metadata: {
+          chainDealId: input.chainDealId,
+          note: 'Client registered on-chain deal ID — freelancer must call agreeToDeal on-chain',
+        },
+      });
+    });
+
+    log.info(
+      { module: 'deals.service', operation: 'registerChainDeal', dealId, chainDealId: input.chainDealId },
+      'On-chain deal ID registered successfully'
+    );
+
+    const updated = await getDeal(dealId);
+    return updated!;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    log.error(
+      {
+        module: 'deals.service',
+        operation: 'registerChainDeal',
+        dealId,
+        clientId,
+        chainDealId: input.chainDealId,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      'registerChainDeal transaction failed'
+    );
+    throw new AppError('DEAL_CHAIN_REGISTER_FAILED', 'Failed to register on-chain deal ID');
   }
 }
 

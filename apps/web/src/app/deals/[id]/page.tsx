@@ -29,6 +29,7 @@ import { RejectMilestoneModal } from '@/components/RejectMilestoneModal';
 import { formatTokenAmount, formatDate } from '@/lib/format';
 import { CopyButton } from '@/components/CopyButton';
 import { PartyRow } from '@/components/PartyRow';
+import { useAgreeDealOnchain } from '@/hooks/use-agree-deal-onchain';
 import { DealChat } from '@/components/DealChat';
 import { config as appConfig } from '@/lib/config';
 import type { SubmitMilestoneFormValues, RejectMilestoneFormValues } from '@/lib/schemas';
@@ -58,6 +59,7 @@ export default function DealDetailPage() {
     refresh: refreshTimeline,
   } = useDealTimeline(dealId);
   const { agreeDeal, cancelDeal, agreeState, cancelState } = useDealActions();
+  const agreeOnchain = useAgreeDealOnchain();
   const {
     submitMilestone,
     approveMilestone,
@@ -148,6 +150,9 @@ export default function DealDetailPage() {
 
   // Determine available deal-level actions.
   const canAgree = isFreelancer && deal.status === 'DRAFT';
+  // Freelancer must also agree on-chain after the client calls createDeal on-chain.
+  const canAgreeOnChain =
+    isFreelancer && deal.status === 'AGREED' && deal.chainDealId !== null;
   // Freelancer declining a DRAFT deal = cancel before funding (no refund needed).
   const canDecline = isFreelancer && deal.status === 'DRAFT';
   const canFund = isClient && deal.status === 'AGREED';
@@ -428,6 +433,67 @@ export default function DealDetailPage() {
           className="mt-3"
         />
       </div>
+
+      {/* On-chain agree section — shown to freelancer when client has registered chainDealId */}
+      {canAgreeOnChain && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm space-y-3">
+          <div>
+            <p className="font-semibold text-amber-900">On-Chain Agreement Required</p>
+            <p className="mt-1 text-sm text-amber-700">
+              The client has registered this deal on-chain (ID:{' '}
+              <code className="rounded bg-amber-100 px-1 font-mono font-bold">
+                {deal.chainDealId}
+              </code>
+              ). You must confirm your agreement on-chain before the client can deposit funds.
+            </p>
+          </div>
+
+          {agreeOnchain.step === 'idle' && (
+            <button
+              type="button"
+              onClick={() => {
+                void agreeOnchain.agree(deal.chainDealId!);
+              }}
+              className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+            >
+              Agree On-Chain via MetaMask
+            </button>
+          )}
+
+          {agreeOnchain.step === 'signing' && (
+            <div className="flex items-center gap-2 text-sm text-amber-700">
+              <LoadingSpinner size="sm" />
+              <span>Waiting for MetaMask signature…</span>
+            </div>
+          )}
+
+          {agreeOnchain.step === 'mining' && (
+            <div className="flex items-center gap-2 text-sm text-amber-700">
+              <LoadingSpinner size="sm" />
+              <span>Transaction submitted — waiting for confirmation…</span>
+            </div>
+          )}
+
+          {agreeOnchain.step === 'done' && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800 font-medium">
+              ✓ On-chain agreement confirmed! The client can now deposit funds.
+            </div>
+          )}
+
+          {agreeOnchain.step === 'error' && (
+            <div className="space-y-2">
+              <ErrorAlert message={agreeOnchain.error} />
+              <button
+                type="button"
+                onClick={agreeOnchain.reset}
+                className="text-sm text-amber-700 underline hover:text-amber-900"
+              >
+                Reset and try again
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Milestones */}
       <div>

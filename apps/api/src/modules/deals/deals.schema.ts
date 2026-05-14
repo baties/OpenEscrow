@@ -55,6 +55,16 @@ export const FundDealSchema = z.object({
 });
 
 /**
+ * Schema for POST /api/v1/deals/:id/chain-register.
+ * Called by the client after createDeal on-chain succeeds, to store the chainDealId in the
+ * DB and emit a DEAL_CHAIN_CREATED event so the freelancer gets notified via the bot.
+ */
+export const RegisterChainDealSchema = z.object({
+  /** On-chain deal ID returned by the contract's createDeal function (uint256 as decimal string). */
+  chainDealId: z.string().regex(/^\d+$/, 'chainDealId must be a non-negative integer string'),
+});
+
+/**
  * Schema for deal route params (all deal routes use :id).
  */
 export const DealParamsSchema = z.object({
@@ -63,4 +73,5 @@ export const DealParamsSchema = z.object({
 
 export type CreateDealInput = z.infer<typeof CreateDealSchema>;
 export type FundDealInput = z.infer<typeof FundDealSchema>;
+export type RegisterChainDealInput = z.infer<typeof RegisterChainDealSchema>;
 export type DealParams = z.infer<typeof DealParamsSchema>;

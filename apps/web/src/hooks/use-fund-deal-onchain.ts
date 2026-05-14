@@ -27,6 +27,7 @@ import { useState, useCallback } from 'react';
 import { useWriteContract, usePublicClient } from 'wagmi';
 import { decodeEventLog } from 'viem';
 import type { Deal } from '@open-escrow/shared';
+import { OnChainDealState } from '@open-escrow/shared';
 import { config } from '@/lib/config';
 
 // ─── Minimal contract ABIs ────────────────────────────────────────────────────
@@ -54,8 +55,9 @@ const ERC20_ABI = [
 ] as const;
 
 /**
- * OpenEscrow function ABIs needed for the fund flow.
- * createDeal creates the on-chain deal record; deposit locks the tokens.
+ * OpenEscrow function ABIs and custom error definitions needed for the fund flow.
+ * Including error types lets viem decode InvalidDealState / Unauthorized instead of
+ * showing raw hex, so handleError can surface a meaningful message to the user.
  */
 const ESCROW_ABI = [
   {
@@ -75,6 +77,51 @@ const ESCROW_ABI = [
     stateMutability: 'nonpayable' as const,
     inputs: [{ name: 'dealId', type: 'uint256' as const }],
     outputs: [],
+  },
+  // Custom errors — allow viem to decode contract reverts into readable messages.
+  {
+    name: 'InvalidDealState',
+    type: 'error' as const,
+    inputs: [
+      { name: 'dealId', type: 'uint256' as const },
+      { name: 'current', type: 'uint8' as const },
+      { name: 'required', type: 'uint8' as const },
+    ],
+  },
+  {
+    name: 'Unauthorized',
+    type: 'error' as const,
+    inputs: [
+      { name: 'caller', type: 'address' as const },
+      { name: 'expectedRole', type: 'string' as const },
+    ],
+  },
+  {
+    name: 'DealNotFound',
+    type: 'error' as const,
+    inputs: [{ name: 'dealId', type: 'uint256' as const }],
+  },
+] as const;
+
+/**
+ * Minimal ABI for the getDeal view function — used to read on-chain deal state
+ * before calling deposit, ensuring the freelancer has called agreeToDeal first.
+ */
+const GET_DEAL_ABI = [
+  {
+    name: 'getDeal',
+    type: 'function' as const,
+    stateMutability: 'view' as const,
+    inputs: [{ name: 'dealId', type: 'uint256' as const }],
+    outputs: [
+      { name: 'client', type: 'address' as const },
+      { name: 'freelancer', type: 'address' as const },
+      { name: 'token', type: 'address' as const },
+      { name: 'totalAmount', type: 'uint256' as const },
+      { name: 'state', type: 'uint8' as const },
+      { name: 'releasedAmount', type: 'uint256' as const },
+      { name: 'milestoneCount', type: 'uint256' as const },
+    ],
   },
 ] as const;
 
@@ -195,7 +242,13 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
         message = 'Transaction was rejected in MetaMask. Click Reset to try again.';
       } else if (msg.includes('invaliddealstate') || msg.includes('invalid deal state')) {
         message =
-          'Deal is not in the required on-chain state. Ensure the freelancer has called agreeToDeal first.';
+          'Deal is not in the required on-chain state. Ensure the freelancer has called agreeToDeal on-chain first, then click Reset and try again.';
+      } else if (msg.includes('gas limit too high') || msg.includes('gas_limit_too_high')) {
+        // Sepolia RPC node rejects eth_estimateGas when viem's gas upper-bound is too high.
+        // Should not occur with explicit gas limits set on writeContractAsync; if it does,
+        // the deal may be in the wrong on-chain state causing estimation to fail.
+        message =
+          'Gas estimation failed (RPC rejected the request). Ensure the freelancer has called agreeToDeal on-chain, then click Reset and try again.';
       } else if (msg.includes('insufficient') || msg.includes('allowance')) {
         message =
           'Insufficient token balance or allowance. Ensure you hold enough USDC/USDT on Sepolia.';
@@ -225,6 +278,30 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
       }
 
       try {
+        // ── Verify on-chain deal state is AGREED before spending gas ─────────
+        // If the freelancer hasn't called agreeToDeal on-chain, deposit will revert.
+        // This read-only check catches that case with a clear error before any tx.
+        const onChainDeal = await publicClient.readContract({
+          address: config.contractAddress,
+          abi: GET_DEAL_ABI,
+          functionName: 'getDeal',
+          args: [BigInt(resolvedId)],
+        });
+
+        if (onChainDeal.state !== OnChainDealState.AGREED) {
+          const stateLabel =
+            onChainDeal.state === OnChainDealState.DRAFT
+              ? 'DRAFT (freelancer has not agreed on-chain yet)'
+              : `state ${String(onChainDeal.state)}`;
+          setStep('error');
+          setError(
+            `Deal #${resolvedId} is still ${stateLabel}. ` +
+              `The freelancer must open the deal page and click "Agree On-Chain" first, ` +
+              `then come back and click Continue.`
+          );
+          return;
+        }
+
         // ── approve ─────────────────────────────────────────────────────────
         setStep('approving');
 
@@ -233,6 +310,7 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [config.contractAddress, BigInt(deal.totalAmount)],
+          gas: 100_000n, // explicit limit — avoids eth_estimateGas hitting publicnode's gas cap
         });
 
         setStep('approve_mining');
@@ -246,6 +324,7 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
           abi: ESCROW_ABI,
           functionName: 'deposit',
           args: [BigInt(resolvedId)],
+          gas: 200_000n, // explicit limit — avoids eth_estimateGas hitting publicnode's gas cap
         });
 
         setStep('deposit_mining');
@@ -295,6 +374,8 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
             deal.tokenAddress as `0x${string}`,
             milestoneAmounts,
           ],
+          // 300k covers struct + milestone array storage init; scales with milestone count
+          gas: BigInt(300_000 + deal.milestones.length * 50_000),
         });
 
         setStep('create_mining');

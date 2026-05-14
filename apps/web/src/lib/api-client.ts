@@ -326,6 +326,25 @@ export const dealsApi = {
   },
 
   /**
+   * Stores the on-chain deal ID right after the client's createDeal() tx is confirmed.
+   * Emits DEAL_CHAIN_CREATED so the bot notifies the freelancer to agree on-chain.
+   * Must be called before deposit — the freelancer needs the chainDealId to call agreeToDeal.
+   *
+   * @param dealId     - The deal UUID
+   * @param chainDealId - On-chain deal ID from the createDeal() receipt (uint256 as string)
+   * @returns Updated Deal object (status still AGREED, chainDealId now set)
+   * @throws {AuthExpiredError} If JWT is invalid or expired
+   * @throws {ApiCallError} On non-2xx response
+   * @throws {NetworkError} On network failure
+   */
+  async registerChainDeal(dealId: string, chainDealId: string): Promise<Deal> {
+    return request<Deal>(`/api/v1/deals/${encodeURIComponent(dealId)}/chain-register`, {
+      method: 'POST',
+      body: JSON.stringify({ chainDealId }),
+    });
+  },
+
+  /**
    * Records that the client has funded the deal on-chain.
    * The API indexer will also detect the DealFunded event automatically, but this
    * endpoint lets the frontend confirm state immediately without waiting for the poll cycle.

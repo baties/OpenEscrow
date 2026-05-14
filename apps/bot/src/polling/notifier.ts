@@ -65,6 +65,22 @@ function formatEventNotification(
       }
       return null;
 
+    case 'DEAL_CHAIN_CREATED':
+      // Notify freelancer they must call agreeToDeal on-chain before client can deposit
+      if (userRole === 'freelancer') {
+        const chainDealId =
+          typeof event.metadata?.['chainDealId'] === 'string'
+            ? event.metadata['chainDealId']
+            : '?';
+        return (
+          `⛓️ *On-Chain Agreement Required — Deal \\#${shortDealId}*\n\n` +
+          `The client has registered this deal on the blockchain \\(Chain ID: \`${chainDealId}\`\\)\\.\n\n` +
+          `You must confirm your agreement on\\-chain *before* the client can deposit funds\\.\n\n` +
+          `👉 Open the deal on the web dashboard and tap *Agree On\\-Chain via MetaMask*\\.`
+        );
+      }
+      return null;
+
     case 'DEAL_FUNDED':
       // Notify freelancer that deal was funded
       if (userRole === 'freelancer') {

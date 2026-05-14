@@ -120,6 +120,7 @@ export interface DealEvent {
 export type DealEventType =
   | 'DEAL_CREATED'
   | 'DEAL_AGREED'
+  | 'DEAL_CHAIN_CREATED'
   | 'DEAL_FUNDED'
   | 'DEAL_CANCELLED'
   | 'DEAL_COMPLETED'

@@ -25,6 +25,7 @@ import {
   getDealHandler,
   agreeToDealHandler,
   fundDealHandler,
+  registerChainDealHandler,
   cancelDealHandler,
   getDealTimelineHandler,
 } from './deals.controller.js';
@@ -83,6 +84,15 @@ export async function dealsRouter(fastify: FastifyInstance): Promise<void> {
       preHandler: [requireAuth, requireRole('client')],
     },
     fundDealHandler
+  );
+
+  // POST /api/v1/deals/:id/chain-register — client stores on-chain deal ID after createDeal()
+  fastify.post<{ Params: { id: string } }>(
+    '/deals/:id/chain-register',
+    {
+      preHandler: [requireAuth, requireRole('client')],
+    },
+    registerChainDealHandler
   );
 
   // POST /api/v1/deals/:id/cancel — either party cancels the deal

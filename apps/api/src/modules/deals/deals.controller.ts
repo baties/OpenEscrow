@@ -10,7 +10,7 @@
 
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as dealsService from './deals.service.js';
-import { CreateDealSchema, FundDealSchema } from './deals.schema.js';
+import { CreateDealSchema, FundDealSchema, RegisterChainDealSchema } from './deals.schema.js';
 import { logger } from '../../lib/logger.js';
 
 const log = logger.child({ module: 'deals.controller' });
@@ -152,6 +152,41 @@ export async function fundDealHandler(
   const clientId = request.user.userId;
 
   const deal = await dealsService.fundDeal(dealId, clientId, parsed.data);
+  await reply.status(200).send(deal);
+}
+
+/**
+ * POST /api/v1/deals/:id/chain-register
+ * Client stores the on-chain deal ID right after createDeal() is confirmed on-chain.
+ * Emits DEAL_CHAIN_CREATED event so the bot can notify the freelancer to agree on-chain.
+ *
+ * @param request - Fastify request with params.id, body (RegisterChainDealInput), and client JWT
+ * @param reply - Fastify reply
+ * @returns 200 with updated deal
+ */
+export async function registerChainDealHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+): Promise<void> {
+  const parsed = RegisterChainDealSchema.safeParse(request.body);
+  if (!parsed.success) {
+    await reply.status(400).send({
+      error: 'VALIDATION_ERROR',
+      message: 'Invalid request body',
+      details: parsed.error.flatten(),
+    });
+    return;
+  }
+
+  const dealId = request.params.id;
+  const clientId = request.user.userId;
+
+  log.info(
+    { module: 'deals.controller', operation: 'registerChainDealHandler', dealId, clientId },
+    'Handling chain-register request'
+  );
+
+  const deal = await dealsService.registerChainDeal(dealId, clientId, parsed.data);
   await reply.status(200).send(deal);
 }
 

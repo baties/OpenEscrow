@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useDeal } from '@/hooks/use-deal';
 import { useDealActions } from '@/hooks/use-deal-actions';
 import { useFundDealOnchain } from '@/hooks/use-fund-deal-onchain';
+import { dealsApi } from '@/lib/api-client';
 import { fundDealSchema } from '@/lib/schemas';
 import { formatTokenAmount, truncateAddress } from '@/lib/format';
 import { config } from '@/lib/config';
@@ -71,6 +72,18 @@ export default function FundDealPage() {
   const [txHashInput, setTxHashInput] = useState('');
   const [chainDealIdInput, setChainDealIdInput] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // After createDeal is confirmed on-chain, register the chainDealId with the API.
+  // This stores it in the DB and emits DEAL_CHAIN_CREATED so the bot notifies the freelancer.
+  // Fire-and-forget: failure is non-fatal — the fund flow can still proceed.
+  useEffect(() => {
+    if (onchain.step !== 'awaiting_agree' || !deal || !onchain.chainDealId) return;
+    void dealsApi.registerChainDeal(deal.id, onchain.chainDealId).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Non-fatal — log but do not block the fund flow. The freelancer can still proceed.
+      console.warn('[FundDealPage] registerChainDeal failed (non-fatal):', msg);
+    });
+  }, [onchain.step, onchain.chainDealId, deal]);
 
   // After auto-mode deposit is confirmed, immediately submit to API
   useEffect(() => {
