@@ -10,7 +10,9 @@
 import Link from 'next/link';
 import type { Deal } from '@open-escrow/shared';
 import { StatusBadge } from './StatusBadge';
-import { formatTokenAmount, truncateAddress, formatDate } from '@/lib/format';
+import { PartyRow } from './PartyRow';
+import { formatTokenAmount, formatDate } from '@/lib/format';
+import { config as appConfig } from '@/lib/config';
 
 /**
  * Props for the DealCard component.
@@ -31,9 +33,16 @@ interface DealCardProps {
  */
 export function DealCard({ deal, currentUserAddress }: DealCardProps) {
   const isClient = deal.clientAddress.toLowerCase() === currentUserAddress.toLowerCase();
-  const counterparty = isClient ? deal.freelancerAddress : deal.clientAddress;
   const role = isClient ? 'Client' : 'Freelancer';
   const shortId = deal.id.slice(0, 8);
+  const explorerBase = appConfig.chainMeta.explorerUrl;
+
+  const myId = isClient ? deal.clientId : deal.freelancerId;
+  const myAddress = isClient ? deal.clientAddress : deal.freelancerAddress;
+  const counterpartyId = isClient ? deal.freelancerId : deal.clientId;
+  const counterpartyAddress = isClient ? deal.freelancerAddress : deal.clientAddress;
+  const counterpartyLabel = isClient ? 'Freelancer ID' : 'Client ID';
+  const counterpartyAddressLabel = isClient ? 'To Address' : 'From Address';
 
   return (
     <Link
@@ -48,12 +57,25 @@ export function DealCard({ deal, currentUserAddress }: DealCardProps) {
               #{shortId}…
             </p>
           </div>
-          <p className="mt-0.5 truncate font-medium text-gray-900">
-            {role === 'Client' ? 'To: ' : 'From: '}
-            <span className="font-mono text-sm">{truncateAddress(counterparty)}</span>
-          </p>
         </div>
         <StatusBadge status={deal.status} className="shrink-0" />
+      </div>
+
+      <div className="mt-2 space-y-1">
+        <PartyRow label="Your ID" value={myId} action="copy" />
+        <PartyRow
+          label="Your Address"
+          value={myAddress}
+          action="explorer"
+          explorerUrl={`${explorerBase}/address/${myAddress}`}
+        />
+        <PartyRow label={counterpartyLabel} value={counterpartyId} action="copy" />
+        <PartyRow
+          label={counterpartyAddressLabel}
+          value={counterpartyAddress}
+          action="explorer"
+          explorerUrl={`${explorerBase}/address/${counterpartyAddress}`}
+        />
       </div>
 
       <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
