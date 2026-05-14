@@ -151,8 +151,7 @@ export default function DealDetailPage() {
   // Determine available deal-level actions.
   const canAgree = isFreelancer && deal.status === 'DRAFT';
   // Freelancer must also agree on-chain after the client calls createDeal on-chain.
-  const canAgreeOnChain =
-    isFreelancer && deal.status === 'AGREED' && deal.chainDealId !== null;
+  const canAgreeOnChain = isFreelancer && deal.status === 'AGREED' && deal.chainDealId !== null;
   // Freelancer declining a DRAFT deal = cancel before funding (no refund needed).
   const canDecline = isFreelancer && deal.status === 'DRAFT';
   const canFund = isClient && deal.status === 'AGREED';

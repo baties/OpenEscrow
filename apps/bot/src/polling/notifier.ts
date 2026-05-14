@@ -69,9 +69,7 @@ function formatEventNotification(
       // Notify freelancer they must call agreeToDeal on-chain before client can deposit
       if (userRole === 'freelancer') {
         const chainDealId =
-          typeof event.metadata?.['chainDealId'] === 'string'
-            ? event.metadata['chainDealId']
-            : '?';
+          typeof event.metadata?.['chainDealId'] === 'string' ? event.metadata['chainDealId'] : '?';
         return (
           `⛓️ *On-Chain Agreement Required — Deal \\#${shortDealId}*\n\n` +
           `The client has registered this deal on the blockchain \\(Chain ID: \`${chainDealId}\`\\)\\.\n\n` +

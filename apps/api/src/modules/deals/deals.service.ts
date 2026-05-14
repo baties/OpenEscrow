@@ -542,7 +542,12 @@ export async function registerChainDeal(
   // Idempotent: same chainDealId already stored — return current state.
   if (deal.chainDealId === input.chainDealId) {
     log.info(
-      { module: 'deals.service', operation: 'registerChainDeal', dealId, chainDealId: input.chainDealId },
+      {
+        module: 'deals.service',
+        operation: 'registerChainDeal',
+        dealId,
+        chainDealId: input.chainDealId,
+      },
       'chainDealId already registered — skipping update'
     );
     return deal;
@@ -550,10 +555,7 @@ export async function registerChainDeal(
 
   try {
     await db.transaction(async (tx) => {
-      await tx
-        .update(deals)
-        .set({ chainDealId: input.chainDealId })
-        .where(eq(deals.id, dealId));
+      await tx.update(deals).set({ chainDealId: input.chainDealId }).where(eq(deals.id, dealId));
 
       await tx.insert(dealEvents).values({
         dealId,
@@ -567,7 +569,12 @@ export async function registerChainDeal(
     });
 
     log.info(
-      { module: 'deals.service', operation: 'registerChainDeal', dealId, chainDealId: input.chainDealId },
+      {
+        module: 'deals.service',
+        operation: 'registerChainDeal',
+        dealId,
+        chainDealId: input.chainDealId,
+      },
       'On-chain deal ID registered successfully'
     );
 

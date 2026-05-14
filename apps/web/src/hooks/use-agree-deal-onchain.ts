@@ -110,7 +110,8 @@ export function useAgreeDealOnchain(): UseAgreeDealOnchainResult {
       if (msg.includes('user rejected') || msg.includes('user denied')) {
         message = 'Transaction was rejected in MetaMask.';
       } else if (msg.includes('invaliddealstate') || msg.includes('invalid deal state')) {
-        message = 'Deal is not in the expected on-chain state. It may have already been agreed or cancelled.';
+        message =
+          'Deal is not in the expected on-chain state. It may have already been agreed or cancelled.';
       } else if (msg.includes('unauthorized')) {
         message = 'Your wallet is not the freelancer for this deal on-chain.';
       } else if (msg.includes('dealnotfound') || msg.includes('deal not found')) {
