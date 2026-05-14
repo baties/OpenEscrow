@@ -288,11 +288,14 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
           args: [BigInt(resolvedId)],
         });
 
-        if (onChainDeal.state !== OnChainDealState.AGREED) {
+        // onChainDeal is a readonly tuple — named elements are not accessible by name in TS,
+        // index 4 is the 'state' field per GET_DEAL_ABI outputs order.
+        const onChainDealState = onChainDeal[4];
+        if (onChainDealState !== OnChainDealState.AGREED) {
           const stateLabel =
-            onChainDeal.state === OnChainDealState.DRAFT
+            onChainDealState === OnChainDealState.DRAFT
               ? 'DRAFT (freelancer has not agreed on-chain yet)'
-              : `state ${String(onChainDeal.state)}`;
+              : `state ${String(onChainDealState)}`;
           setStep('error');
           setError(
             `Deal #${resolvedId} is still ${stateLabel}. ` +

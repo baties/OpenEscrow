@@ -27,7 +27,9 @@ export type AppErrorCode =
   | 'DEAL_TIMELINE_FAILED'
   | 'DEAL_LIST_FAILED'
   | 'DEAL_GET_FAILED'
+  | 'DEAL_CHAIN_REGISTER_FAILED'
   | 'INVALID_TRANSITION'
+  | 'INVALID_STATE'
   | 'NOT_PARTICIPANT'
   // Milestones
   | 'MILESTONE_NOT_FOUND'
@@ -122,6 +124,7 @@ export function httpStatusForCode(code: AppErrorCode): number {
       return 404;
 
     case 'INVALID_TRANSITION':
+    case 'INVALID_STATE':
     case 'VALIDATION_ERROR':
     case 'INVALID_SIGNATURE':
     case 'TELEGRAM_CODE_INVALID':
