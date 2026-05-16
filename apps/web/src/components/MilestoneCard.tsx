@@ -70,7 +70,7 @@ export function MilestoneCard({
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">{milestone.description}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <StatusBadge status={milestone.status} />
+          <StatusBadge status={dealStatus === 'CANCELLED' ? 'CANCELLED' : milestone.status} />
           <span className="text-sm font-semibold text-gray-900">
             {formatTokenAmount(milestone.amount)} USDC/T
           </span>

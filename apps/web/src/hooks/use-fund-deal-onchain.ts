@@ -197,6 +197,13 @@ export interface UseFundDealOnchainResult {
   continueAfterAgree: (deal: Deal) => Promise<void>;
   /** Resets all state to 'idle'. Safe to call at any point. */
   reset: () => void;
+  /**
+   * Restores the awaiting_agree state from a chainDealId previously stored in the database.
+   * Used to recover the fund flow position after a page refresh.
+   *
+   * @param savedChainDealId - On-chain deal ID from the deal record (deal.chainDealId)
+   */
+  recover: (savedChainDealId: string) => void;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -439,5 +446,18 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
     [chainDealId, doApproveAndDeposit]
   );
 
-  return { step, chainDealId, depositTxHash, error, start, continueAfterAgree, reset };
+  /**
+   * Restores awaiting_agree state from a previously recorded chainDealId.
+   * Safe to call when step is 'idle' and deal.chainDealId is non-null (page refresh recovery).
+   *
+   * @param savedChainDealId - On-chain deal ID from deal.chainDealId in the database
+   */
+  const recover = useCallback((savedChainDealId: string): void => {
+    setStep('awaiting_agree');
+    setChainDealId(savedChainDealId);
+    setDepositTxHash(null);
+    setError(null);
+  }, []);
+
+  return { step, chainDealId, depositTxHash, error, start, continueAfterAgree, reset, recover };
 }

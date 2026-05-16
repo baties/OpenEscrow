@@ -93,6 +93,14 @@ export default function FundDealPage() {
     });
   }, [onchain.step, onchain.depositTxHash, onchain.chainDealId, deal, fundDeal, router]);
 
+  // Recover awaiting_agree state after a page refresh: if the deal already has a chainDealId
+  // stored in the DB (from a previous createDeal tx) and the hook is still idle, restore position.
+  const { recover } = onchain;
+  useEffect(() => {
+    if (mode !== 'auto' || onchain.step !== 'idle' || !deal?.chainDealId) return;
+    recover(deal.chainDealId);
+  }, [mode, onchain.step, deal?.chainDealId, recover]);
+
   // Auth guard
   useEffect(() => {
     if (!isAuthenticated) router.replace('/');

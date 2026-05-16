@@ -59,6 +59,14 @@ export function useDeals(): UseDealsResult {
     void fetchDeals();
   }, [fetchDeals]);
 
+  // Auto-refresh every 10 seconds so the deals list stays current without manual reload.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void fetchDeals();
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [fetchDeals]);
+
   return {
     deals,
     isLoading,

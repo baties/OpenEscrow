@@ -71,10 +71,10 @@ function formatEventNotification(
         const chainDealId =
           typeof event.metadata?.['chainDealId'] === 'string' ? event.metadata['chainDealId'] : '?';
         return (
-          `⛓️ *On-Chain Agreement Required — Deal \\#${shortDealId}*\n\n` +
-          `The client has registered this deal on the blockchain \\(Chain ID: \`${chainDealId}\`\\)\\.\n\n` +
-          `You must confirm your agreement on\\-chain *before* the client can deposit funds\\.\n\n` +
-          `👉 Open the deal on the web dashboard and tap *Agree On\\-Chain via MetaMask*\\.`
+          `⛓️ *On-Chain Agreement Required — Deal #${shortDealId}*\n\n` +
+          `The client has registered this deal on the blockchain (Chain ID: \`${chainDealId}\`).\n\n` +
+          `You must confirm your agreement on-chain *before* the client can deposit funds.\n\n` +
+          `👉 Open the deal on the web dashboard and tap *Agree On-Chain via MetaMask*.`
         );
       }
       return null;
@@ -192,8 +192,19 @@ function formatEventNotification(
       return null;
     }
 
+    case 'DEAL_CREATED':
+      // Notify the freelancer that a new deal has been proposed to them
+      if (userRole === 'freelancer') {
+        return (
+          `📋 *New Deal Proposal!*\n\n` +
+          `You have been invited to deal \`${shortDealId}...\`\n` +
+          `Review the milestones and agree to start working.\n\n` +
+          `_Use /deals to view and accept the deal._`
+        );
+      }
+      return null;
+
     default:
-      // DEAL_CREATED — don't notify (user created it themselves)
       return null;
   }
 }

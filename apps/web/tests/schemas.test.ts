@@ -31,12 +31,16 @@ describe('milestoneInputSchema', () => {
     expect(() => milestoneInputSchema.parse(valid)).not.toThrow();
   });
 
-  it('rejects a title that is too short', () => {
-    const result = milestoneInputSchema.safeParse({ ...valid, title: 'ab' });
+  it('rejects an empty title', () => {
+    const result = milestoneInputSchema.safeParse({ ...valid, title: '' });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toContain('3 characters');
+      expect(result.error.issues[0]?.message).toContain('required');
     }
+  });
+
+  it('accepts a short title (min is 1 character)', () => {
+    expect(() => milestoneInputSchema.parse({ ...valid, title: 'A' })).not.toThrow();
   });
 
   it('rejects a negative amount', () => {

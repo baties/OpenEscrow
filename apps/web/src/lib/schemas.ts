@@ -62,16 +62,16 @@ const httpUrl = z.string().trim().url('Must be a valid URL');
  * Schema for a single milestone entry in the create deal form.
  */
 export const milestoneInputSchema = z.object({
-  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(100, 'Title too long'),
+  title: z.string().trim().min(1, 'Title is required').max(100, 'Title too long'),
   description: z
     .string()
     .trim()
-    .min(10, 'Description must be at least 10 characters')
+    .min(1, 'Description is required')
     .max(2000, 'Description too long'),
   acceptanceCriteria: z
     .string()
     .trim()
-    .min(10, 'Acceptance criteria must be at least 10 characters')
+    .min(1, 'Acceptance criteria is required')
     .max(2000, 'Acceptance criteria too long'),
   amount: tokenAmount,
 });

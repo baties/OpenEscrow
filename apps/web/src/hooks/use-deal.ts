@@ -64,6 +64,15 @@ export function useDeal(dealId: string | null | undefined): UseDealResult {
     void fetchDeal();
   }, [fetchDeal]);
 
+  // Auto-refresh every 10 seconds so the detail page stays current without manual reload.
+  useEffect(() => {
+    if (!dealId) return;
+    const interval = setInterval(() => {
+      void fetchDeal();
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [dealId, fetchDeal]);
+
   return {
     deal,
     isLoading,
