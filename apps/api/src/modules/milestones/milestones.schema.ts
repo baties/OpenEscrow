@@ -33,8 +33,8 @@ export const RejectMilestoneSchema = z.object({
     .array(z.string().min(1).max(50))
     .min(1, 'At least one reason code is required')
     .max(10, 'Maximum 10 reason codes allowed'),
-  /** Human-readable explanation of why the milestone was rejected. */
-  freeText: z.string().min(1).max(5000),
+  /** Optional free-text explanation — may be empty if reason codes are self-explanatory. */
+  freeText: z.string().max(5000).default(''),
 });
 
 /**
