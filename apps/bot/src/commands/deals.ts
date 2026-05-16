@@ -180,18 +180,7 @@ export async function dealsCommandHandler(ctx: Context): Promise<void> {
         'API error fetching deals'
       );
 
-      if (err.statusCode === 401) {
-        await ctx.replyWithMarkdown(
-          '🔒 *Session expired.*\n\n' +
-            'Your session has expired. Please re-link your account:\n' +
-            '1. Go to web dashboard → Settings → Telegram\n' +
-            '2. Generate a new link code\n' +
-            '3. Send `/link <code>` here'
-        );
-        return;
-      }
-
-      await ctx.reply('Failed to fetch your deals. Please try again in a moment.');
+      await ctx.reply('Could not fetch your deals right now. Please try again in a moment.');
       return;
     }
 

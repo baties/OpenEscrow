@@ -266,14 +266,7 @@ export async function statusCommandHandler(ctx: Context): Promise<void> {
         return;
       }
 
-      if (err.statusCode === 401) {
-        await ctx.replyWithMarkdown(
-          '🔒 *Session expired.* Please re-link your account via the web dashboard.'
-        );
-        return;
-      }
-
-      await ctx.reply('Failed to fetch deal status. Please try again in a moment.');
+      await ctx.reply('Could not fetch deal status right now. Please try again in a moment.');
       return;
     }
 

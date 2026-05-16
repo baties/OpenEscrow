@@ -297,9 +297,10 @@ describe('/deals command', () => {
     const { dealsCommandHandler } = await import('../src/commands/deals.js');
     await dealsCommandHandler(ctx as never);
 
-    expect(ctx.replyWithMarkdown).toHaveBeenCalled();
-    const call = ctx.replyWithMarkdown.mock.calls[0]?.[0] as string;
-    expect(call).toContain('Session expired');
+    // 401 now shows a generic retry prompt instead of a misleading "Session expired" message
+    expect(ctx.reply).toHaveBeenCalled();
+    const call = ctx.reply.mock.calls[0]?.[0] as string;
+    expect(call).toContain('try again');
   });
 });
 
