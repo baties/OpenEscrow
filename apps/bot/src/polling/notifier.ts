@@ -112,7 +112,8 @@ function formatEventNotification(
         const seqLabel = typeof seq === 'number' ? ` #${seq}` : '';
         return (
           `✅ *Milestone${seqLabel} Approved!*\n\n` +
-          `Your milestone has been approved on deal \`${shortDealId}...\`\n\n` +
+          `Your milestone has been approved on deal \`${shortDealId}...\`\n` +
+          `Funds have been released to your wallet.\n\n` +
           `_Use /deals to see remaining milestones._`
         );
       }

@@ -30,6 +30,7 @@ import { formatTokenAmount, formatDate } from '@/lib/format';
 import { CopyButton } from '@/components/CopyButton';
 import { PartyRow } from '@/components/PartyRow';
 import { useAgreeDealOnchain } from '@/hooks/use-agree-deal-onchain';
+import { useApproveMilestoneOnchain } from '@/hooks/use-approve-milestone-onchain';
 import { DealChat } from '@/components/DealChat';
 import { config as appConfig } from '@/lib/config';
 import type { SubmitMilestoneFormValues, RejectMilestoneFormValues } from '@/lib/schemas';
@@ -60,6 +61,7 @@ export default function DealDetailPage() {
   } = useDealTimeline(dealId);
   const { agreeDeal, cancelDeal, agreeState, cancelState } = useDealActions();
   const agreeOnchain = useAgreeDealOnchain();
+  const approveOnchain = useApproveMilestoneOnchain();
   const {
     submitMilestone,
     approveMilestone,
@@ -206,14 +208,36 @@ export default function DealDetailPage() {
 
   /**
    * Handles milestone approval by the client.
+   * Sends approveMilestone(chainDealId, milestoneIndex) to MetaMask first, which transfers
+   * tokens directly to the freelancer's wallet. Then calls the API to update the DB.
    *
-   * @param milestoneId - The milestone to approve
+   * @param milestoneId - The DB UUID of the milestone to approve
    */
   async function handleApprove(milestoneId: string) {
+    if (!deal?.chainDealId) {
+      console.error('[handleApprove] deal.chainDealId is null — cannot approve on-chain');
+      return;
+    }
+
+    const milestone = deal.milestones.find((m) => m.id === milestoneId);
+    if (!milestone) return;
+
+    // Contract uses 0-based index; DB sequence is 1-based
+    const milestoneIndex = milestone.sequence - 1;
+
+    const onChainSuccess = await approveOnchain.approve(
+      milestoneId,
+      deal.chainDealId,
+      milestoneIndex
+    );
+    if (!onChainSuccess) return; // Error already in approveOnchain.error
+
+    // On-chain confirmed — sync the DB
     const updated = await approveMilestone(milestoneId);
     if (updated) {
       refreshDeal();
       refreshTimeline();
+      approveOnchain.reset();
     }
   }
 
@@ -428,9 +452,20 @@ export default function DealDetailPage() {
         {/* Action errors */}
         <ErrorAlert message={agreeState.error ?? cancelState.error} className="mt-3" />
         <ErrorAlert
-          message={approveState.error ?? rejectState.error ?? submitState.error}
+          message={
+            approveOnchain.error ?? approveState.error ?? rejectState.error ?? submitState.error
+          }
           className="mt-3"
         />
+        {approveOnchain.error && (
+          <button
+            type="button"
+            onClick={approveOnchain.reset}
+            className="mt-1 text-xs text-red-600 underline hover:text-red-800"
+          >
+            Reset and try again
+          </button>
+        )}
       </div>
 
       {/* On-chain agree section — shown to freelancer when client has registered chainDealId */}
@@ -503,20 +538,36 @@ export default function DealDetailPage() {
           {deal.milestones
             .slice()
             .sort((a, b) => a.sequence - b.sequence)
-            .map((milestone) => (
-              <MilestoneCard
-                key={milestone.id}
-                milestone={milestone}
-                isClient={isClient}
-                dealStatus={deal.status}
-                onSubmit={(mid) => setSubmitModalMilestoneId(mid)}
-                onApprove={(mid) => {
-                  void handleApprove(mid);
-                }}
-                onReject={(mid) => setRejectModalMilestoneId(mid)}
-                isActionsLoading={isMilestoneActionsLoading}
-              />
-            ))}
+            .map((milestone) => {
+              const isThisApproving =
+                approveOnchain.activeMilestoneId === milestone.id &&
+                (approveOnchain.step === 'signing' || approveOnchain.step === 'mining');
+              return (
+                <div key={milestone.id}>
+                  <MilestoneCard
+                    milestone={milestone}
+                    isClient={isClient}
+                    dealStatus={deal.status}
+                    onSubmit={(mid) => setSubmitModalMilestoneId(mid)}
+                    onApprove={(mid) => {
+                      void handleApprove(mid);
+                    }}
+                    onReject={(mid) => setRejectModalMilestoneId(mid)}
+                    isActionsLoading={isMilestoneActionsLoading || isThisApproving}
+                  />
+                  {isThisApproving && (
+                    <div className="mt-1 flex items-center gap-2 px-1 text-xs text-indigo-600">
+                      <LoadingSpinner size="sm" />
+                      <span>
+                        {approveOnchain.step === 'signing'
+                          ? 'Waiting for MetaMask signature…'
+                          : 'Transaction submitted — waiting for confirmation…'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
 
