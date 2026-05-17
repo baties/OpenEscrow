@@ -23,7 +23,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useWriteContract, usePublicClient } from 'wagmi';
 import { decodeEventLog } from 'viem';
 import type { Deal } from '@open-escrow/shared';
@@ -223,6 +223,11 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
   const [depositTxHash, setDepositTxHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Prevents concurrent async executions from double-clicks before React re-renders.
+  // useRef is used (not useState) because the guard must be synchronously visible
+  // across both invocations in the same event-loop tick.
+  const isInFlight = useRef(false);
+
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
 
@@ -359,15 +364,17 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
    */
   const start = useCallback(
     async (deal: Deal): Promise<void> => {
-      if (!publicClient) {
-        setStep('error');
-        setError('No RPC client available. Ensure your wallet is connected to Sepolia.');
-        return;
-      }
-
-      reset();
-
+      if (isInFlight.current) return;
+      isInFlight.current = true;
       try {
+        if (!publicClient) {
+          setStep('error');
+          setError('No RPC client available. Ensure your wallet is connected to Sepolia.');
+          return;
+        }
+
+        reset();
+
         // ── createDeal ────────────────────────────────────────────────────────
         setStep('creating');
 
@@ -422,6 +429,8 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
         setStep('awaiting_agree');
       } catch (err) {
         handleError(err);
+      } finally {
+        isInFlight.current = false;
       }
     },
     [writeContractAsync, publicClient, reset, handleError]
@@ -436,12 +445,18 @@ export function useFundDealOnchain(): UseFundDealOnchainResult {
    */
   const continueAfterAgree = useCallback(
     async (deal: Deal): Promise<void> => {
-      if (!chainDealId) {
-        setStep('error');
-        setError('Chain deal ID is missing. Please reset and start the flow again.');
-        return;
+      if (isInFlight.current) return;
+      isInFlight.current = true;
+      try {
+        if (!chainDealId) {
+          setStep('error');
+          setError('Chain deal ID is missing. Please reset and start the flow again.');
+          return;
+        }
+        await doApproveAndDeposit(deal, chainDealId);
+      } finally {
+        isInFlight.current = false;
       }
-      await doApproveAndDeposit(deal, chainDealId);
     },
     [chainDealId, doApproveAndDeposit]
   );
